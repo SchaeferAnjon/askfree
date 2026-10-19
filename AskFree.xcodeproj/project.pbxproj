@@ -1,0 +1,569 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02C53CBA5A6626510FE74AAF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C61EFF72CCCE0ADCD4F84F6 /* AppDelegate.swift */; };
+		02F3319DBE0D06932C33C2B1 /* AppDelegate+Recording.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9FAC19B16D160C4BB177ACC /* AppDelegate+Recording.swift */; };
+		09417E2CBCB33380E04C3D1B /* HotkeyRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A05B8A2971AC616DFD082C /* HotkeyRecorderView.swift */; };
+		09A5873513B1F7A881AC3718 /* SettingsHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13D703C7B0C13F171780EF7 /* SettingsHelpers.swift */; };
+		0E2D967D9AF19EBC362E290F /* FlippedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696DAB39442DFD247FE7FC3E /* FlippedView.swift */; };
+		14D89ADC72C3EB720D271315 /* OverlayStyleTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F295A46CBBE1FDEF35947A63 /* OverlayStyleTile.swift */; };
+		19A133F7C461B849A6E5BF39 /* statusbar-icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E5140CB88611661C2633A954 /* statusbar-icon@2x.png */; };
+		25244B374F85E1713BF99A84 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDFCE7E7E79711A93C53B2DE /* SettingsWindowController.swift */; };
+		25818365120B6301CE1BB575 /* AppDelegate+Windows.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9054C86F9BCBA0D2E435AEC /* AppDelegate+Windows.swift */; };
+		2760C26B81634CC7C403959D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D43DE03E5A88F954E258150 /* main.swift */; };
+		2992A910EE961244A14BF9C0 /* AskTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D8739DD44131F7601B5571 /* AskTiming.swift */; };
+		4033E8982B6CC0CAD71D9C6E /* OverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */; };
+		45A0A64AFCE6EFF575A20287 /* MicrophoneManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C65FF5D404E1E1042700722E /* MicrophoneManager.swift */; };
+		46B1DDD7385CE1C76BB689EA /* ScreenSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */; };
+		482006ADB670668A947C734F /* AppDelegate+Hotkeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF9EE32E716AB8A5AB31D4F6 /* AppDelegate+Hotkeys.swift */; };
+		4BDFFEC96CBADA2A8DB37368 /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0CB230834F1F8D755B800B1 /* StatusBarController.swift */; };
+		52ABF61493FE90C6445C1B1F /* VPSegmentedControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5DEC545BA9158859B4A53BB /* VPSegmentedControl.swift */; };
+		5E2D8A936D09015B6D832945 /* AskFree.icns in Resources */ = {isa = PBXBuildFile; fileRef = 1C16CC9C6099BAD32F8C1FE7 /* AskFree.icns */; };
+		61162A65A02FB19929A26EDD /* AppDelegate+Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D09DC5E4B368BEC52F0624 /* AppDelegate+Permissions.swift */; };
+		61345EA198B4F77E8EDB02C5 /* AppDelegate+AskAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 881D98F6CEC9229F27EA235F /* AppDelegate+AskAI.swift */; };
+		618B2BB8EB6B4BF342BE2CFE /* PendingAskScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5869458DC7AED482B7D73C /* PendingAskScreen.swift */; };
+		61D70A4D67195996B6B20FD5 /* AboutPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 919D0E64BCB97E278FD35F76 /* AboutPage.swift */; };
+		6227124BAC4A13A59D23A40B /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3380BDE8DB6A892B921F092A /* LaunchAtLogin.swift */; };
+		64356DE834A637629573CD1F /* MicrophonePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F4B42C39CB68F974F2AB10 /* MicrophonePickerSheet.swift */; };
+		6A3C147E480778A69009DDF5 /* HotkeyMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A6B3A31E09DEE64F15D649 /* HotkeyMenu.swift */; };
+		7164EBD3F29287C2332C4261 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32ED7A931B40AAB6742E528D /* SettingsStore.swift */; };
+		75E3E4CB0E58968D1429A966 /* VUMeterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0A64D620F7019E21A2378C /* VUMeterView.swift */; };
+		77D2C1E379BBC0D1F2F05BC4 /* NSColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F4E2FD870B9AF6E99863BE1 /* NSColor+Hex.swift */; };
+		7D0D7B081D546EBC5FA1B725 /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D2191AB123F8F085C5C3CD /* SettingsPage.swift */; };
+		7D9E5E930E7BCD941CF15C18 /* VPDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068FC8DCE2CDB7D862F23899 /* VPDropdown.swift */; };
+		8C7931070D50CE5A4199CFF2 /* ModelsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C9892DC8AC3F3FEA46F8D6 /* ModelsPage.swift */; };
+		9A5769A27A780CC3D923D05C /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */; };
+		9AA198274D98861BB31843E5 /* HomePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6951C06920BF05DFD4305B9 /* HomePage.swift */; };
+		9BF896E95B79D1DE29F7E522 /* VPButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A518FA7F65153DCDE424E500 /* VPButton.swift */; };
+		AE4C64FD964D4AAC3EF689BF /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */; };
+		B8F065C9A2A3F0259EEDD576 /* KeyAwareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDEF40A2A336E870D54DFD6D /* KeyAwareView.swift */; };
+		BAC3B30528F08B8B7365F887 /* MicrophoneRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBD6B87FE20993017771AFE /* MicrophoneRowView.swift */; };
+		C5C3AF0798126B52EE26790C /* AskFreeCore in Frameworks */ = {isa = PBXBuildFile; productRef = D724F3889579F56C96885303 /* AskFreeCore */; };
+		C6A7D5D7EA54676EE7AAA6EB /* VPToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16175C4AF7F3D2EC6358E96A /* VPToggle.swift */; };
+		CEFE8F43AE100748B50C95EB /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF5DC5CBB30D7DD4243165E /* AppAppearance.swift */; };
+		D276659611C34E1606B8E4D7 /* AnswerPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1D4887D3CC754AFEDF22CF /* AnswerPanel.swift */; };
+		DA910A11F57413C0395846A4 /* statusbar-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 35BC95FD9432395907798308 /* statusbar-icon.png */; };
+		E5DE709D7BDCFE2402671D91 /* AskAISettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B3CFC5CC2982969682AEBE /* AskAISettings.swift */; };
+		E8C66C765F7708DE8C65688D /* AppDelegate+DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC45ADCF4DCFFB553A5BAED9 /* AppDelegate+DebugLog.swift */; };
+		F67698DA7F8DEDB22180ED07 /* OverlayStylePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6703830B76A16ADE3B7230A5 /* OverlayStylePreview.swift */; };
+		FD07FD9F250E756FBC23C829 /* SidebarRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61B79BAAEAB05EC8CFEAB41C /* SidebarRow.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		00CE6605DF3AA97BF21E2705 /* AskFree.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AskFree.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		02C9892DC8AC3F3FEA46F8D6 /* ModelsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsPage.swift; sourceTree = "<group>"; };
+		068FC8DCE2CDB7D862F23899 /* VPDropdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPDropdown.swift; sourceTree = "<group>"; };
+		0FF5C5EEFC5746B3481E83FF /* AskFreeCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AskFreeCore; path = AskFreeCore; sourceTree = SOURCE_ROOT; };
+		16175C4AF7F3D2EC6358E96A /* VPToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPToggle.swift; sourceTree = "<group>"; };
+		1C16CC9C6099BAD32F8C1FE7 /* AskFree.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AskFree.icns; sourceTree = "<group>"; };
+		1D43DE03E5A88F954E258150 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		32ED7A931B40AAB6742E528D /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		3380BDE8DB6A892B921F092A /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
+		35BC95FD9432395907798308 /* statusbar-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "statusbar-icon.png"; sourceTree = "<group>"; };
+		3C61EFF72CCCE0ADCD4F84F6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		3D1D4887D3CC754AFEDF22CF /* AnswerPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerPanel.swift; sourceTree = "<group>"; };
+		47F4B42C39CB68F974F2AB10 /* MicrophonePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophonePickerSheet.swift; sourceTree = "<group>"; };
+		5D0A64D620F7019E21A2378C /* VUMeterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VUMeterView.swift; sourceTree = "<group>"; };
+		61B79BAAEAB05EC8CFEAB41C /* SidebarRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarRow.swift; sourceTree = "<group>"; };
+		6703830B76A16ADE3B7230A5 /* OverlayStylePreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayStylePreview.swift; sourceTree = "<group>"; };
+		696DAB39442DFD247FE7FC3E /* FlippedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlippedView.swift; sourceTree = "<group>"; };
+		6E5869458DC7AED482B7D73C /* PendingAskScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingAskScreen.swift; sourceTree = "<group>"; };
+		6F4E2FD870B9AF6E99863BE1 /* NSColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Hex.swift"; sourceTree = "<group>"; };
+		86A6B3A31E09DEE64F15D649 /* HotkeyMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyMenu.swift; sourceTree = "<group>"; };
+		881D98F6CEC9229F27EA235F /* AppDelegate+AskAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+AskAI.swift"; sourceTree = "<group>"; };
+		88B3CFC5CC2982969682AEBE /* AskAISettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAISettings.swift; sourceTree = "<group>"; };
+		89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
+		9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
+		919D0E64BCB97E278FD35F76 /* AboutPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPage.swift; sourceTree = "<group>"; };
+		92A05B8A2971AC616DFD082C /* HotkeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyRecorderView.swift; sourceTree = "<group>"; };
+		93D2191AB123F8F085C5C3CD /* SettingsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
+		A0CB230834F1F8D755B800B1 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
+		A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshot.swift; sourceTree = "<group>"; };
+		A518FA7F65153DCDE424E500 /* VPButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPButton.swift; sourceTree = "<group>"; };
+		A7D8739DD44131F7601B5571 /* AskTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskTiming.swift; sourceTree = "<group>"; };
+		AF9EE32E716AB8A5AB31D4F6 /* AppDelegate+Hotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Hotkeys.swift"; sourceTree = "<group>"; };
+		B5DEC545BA9158859B4A53BB /* VPSegmentedControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSegmentedControl.swift; sourceTree = "<group>"; };
+		BDEF40A2A336E870D54DFD6D /* KeyAwareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyAwareView.swift; sourceTree = "<group>"; };
+		BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		C65FF5D404E1E1042700722E /* MicrophoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophoneManager.swift; sourceTree = "<group>"; };
+		C7D09DC5E4B368BEC52F0624 /* AppDelegate+Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Permissions.swift"; sourceTree = "<group>"; };
+		E5140CB88611661C2633A954 /* statusbar-icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "statusbar-icon@2x.png"; sourceTree = "<group>"; };
+		E6951C06920BF05DFD4305B9 /* HomePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePage.swift; sourceTree = "<group>"; };
+		E9FAC19B16D160C4BB177ACC /* AppDelegate+Recording.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Recording.swift"; sourceTree = "<group>"; };
+		EDFCE7E7E79711A93C53B2DE /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		EFBD6B87FE20993017771AFE /* MicrophoneRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophoneRowView.swift; sourceTree = "<group>"; };
+		F13D703C7B0C13F171780EF7 /* SettingsHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsHelpers.swift; sourceTree = "<group>"; };
+		F295A46CBBE1FDEF35947A63 /* OverlayStyleTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayStyleTile.swift; sourceTree = "<group>"; };
+		F9054C86F9BCBA0D2E435AEC /* AppDelegate+Windows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Windows.swift"; sourceTree = "<group>"; };
+		FC45ADCF4DCFFB553A5BAED9 /* AppDelegate+DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+DebugLog.swift"; sourceTree = "<group>"; };
+		FDF5DC5CBB30D7DD4243165E /* AppAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAppearance.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2C0BCD48112027B0688FF68F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C5C3AF0798126B52EE26790C /* AskFreeCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1005B18C173A34F0BC7E3FA1 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A7D8739DD44131F7601B5571 /* AskTiming.swift */,
+				6E5869458DC7AED482B7D73C /* PendingAskScreen.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		104A0FD85C6C38284705BC89 = {
+			isa = PBXGroup;
+			children = (
+				637DA6C85B659F635BAB28B5 /* Packages */,
+				965775E55BFFBA7DDF4C7931 /* Resources */,
+				8D0F65EDE2630B3CD295E0D4 /* Sources */,
+				77B34E617216CCF84B9D5B9C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		15A94ED407CBC1549CB91E04 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				3C61EFF72CCCE0ADCD4F84F6 /* AppDelegate.swift */,
+				881D98F6CEC9229F27EA235F /* AppDelegate+AskAI.swift */,
+				FC45ADCF4DCFFB553A5BAED9 /* AppDelegate+DebugLog.swift */,
+				AF9EE32E716AB8A5AB31D4F6 /* AppDelegate+Hotkeys.swift */,
+				C7D09DC5E4B368BEC52F0624 /* AppDelegate+Permissions.swift */,
+				E9FAC19B16D160C4BB177ACC /* AppDelegate+Recording.swift */,
+				F9054C86F9BCBA0D2E435AEC /* AppDelegate+Windows.swift */,
+				1005B18C173A34F0BC7E3FA1 /* Components */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		637DA6C85B659F635BAB28B5 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				0FF5C5EEFC5746B3481E83FF /* AskFreeCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		77B34E617216CCF84B9D5B9C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				00CE6605DF3AA97BF21E2705 /* AskFree.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8D0F65EDE2630B3CD295E0D4 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				3D1D4887D3CC754AFEDF22CF /* AnswerPanel.swift */,
+				FDF5DC5CBB30D7DD4243165E /* AppAppearance.swift */,
+				BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */,
+				9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */,
+				3380BDE8DB6A892B921F092A /* LaunchAtLogin.swift */,
+				1D43DE03E5A88F954E258150 /* main.swift */,
+				C65FF5D404E1E1042700722E /* MicrophoneManager.swift */,
+				89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */,
+				A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */,
+				32ED7A931B40AAB6742E528D /* SettingsStore.swift */,
+				35BC95FD9432395907798308 /* statusbar-icon.png */,
+				E5140CB88611661C2633A954 /* statusbar-icon@2x.png */,
+				A0CB230834F1F8D755B800B1 /* StatusBarController.swift */,
+				15A94ED407CBC1549CB91E04 /* App */,
+				BD0DB2803BFD9E0F8E8BF1CE /* Settings */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		965775E55BFFBA7DDF4C7931 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				1C16CC9C6099BAD32F8C1FE7 /* AskFree.icns */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		BD0DB2803BFD9E0F8E8BF1CE /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				919D0E64BCB97E278FD35F76 /* AboutPage.swift */,
+				88B3CFC5CC2982969682AEBE /* AskAISettings.swift */,
+				E6951C06920BF05DFD4305B9 /* HomePage.swift */,
+				86A6B3A31E09DEE64F15D649 /* HotkeyMenu.swift */,
+				02C9892DC8AC3F3FEA46F8D6 /* ModelsPage.swift */,
+				F13D703C7B0C13F171780EF7 /* SettingsHelpers.swift */,
+				93D2191AB123F8F085C5C3CD /* SettingsPage.swift */,
+				EDFCE7E7E79711A93C53B2DE /* SettingsWindowController.swift */,
+				D26ECBA4E8C3E4024579AE15 /* Components */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		D26ECBA4E8C3E4024579AE15 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				696DAB39442DFD247FE7FC3E /* FlippedView.swift */,
+				92A05B8A2971AC616DFD082C /* HotkeyRecorderView.swift */,
+				BDEF40A2A336E870D54DFD6D /* KeyAwareView.swift */,
+				47F4B42C39CB68F974F2AB10 /* MicrophonePickerSheet.swift */,
+				EFBD6B87FE20993017771AFE /* MicrophoneRowView.swift */,
+				6F4E2FD870B9AF6E99863BE1 /* NSColor+Hex.swift */,
+				6703830B76A16ADE3B7230A5 /* OverlayStylePreview.swift */,
+				F295A46CBBE1FDEF35947A63 /* OverlayStyleTile.swift */,
+				61B79BAAEAB05EC8CFEAB41C /* SidebarRow.swift */,
+				A518FA7F65153DCDE424E500 /* VPButton.swift */,
+				068FC8DCE2CDB7D862F23899 /* VPDropdown.swift */,
+				B5DEC545BA9158859B4A53BB /* VPSegmentedControl.swift */,
+				16175C4AF7F3D2EC6358E96A /* VPToggle.swift */,
+				5D0A64D620F7019E21A2378C /* VUMeterView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F7566F3A9FD65E6C5A98B441 /* AskFree */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0739FFD43BC0BB0B9CF14C2C /* Build configuration list for PBXNativeTarget "AskFree" */;
+			buildPhases = (
+				ED23BA9F6A436384EE6ED497 /* Sources */,
+				6E81023FBF325222B35994EC /* Resources */,
+				2C0BCD48112027B0688FF68F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AskFree;
+			packageProductDependencies = (
+				D724F3889579F56C96885303 /* AskFreeCore */,
+			);
+			productName = AskFree;
+			productReference = 00CE6605DF3AA97BF21E2705 /* AskFree.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CBF66C68E1BB0CDA18704459 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					F7566F3A9FD65E6C5A98B441 = {
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 612E7841EADA55C8C5DAD05B /* Build configuration list for PBXProject "AskFree" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 104A0FD85C6C38284705BC89;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9C03C442E96BE4445BE68522 /* XCLocalSwiftPackageReference "AskFreeCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 77B34E617216CCF84B9D5B9C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F7566F3A9FD65E6C5A98B441 /* AskFree */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6E81023FBF325222B35994EC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5E2D8A936D09015B6D832945 /* AskFree.icns in Resources */,
+				DA910A11F57413C0395846A4 /* statusbar-icon.png in Resources */,
+				19A133F7C461B849A6E5BF39 /* statusbar-icon@2x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		ED23BA9F6A436384EE6ED497 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				61D70A4D67195996B6B20FD5 /* AboutPage.swift in Sources */,
+				D276659611C34E1606B8E4D7 /* AnswerPanel.swift in Sources */,
+				CEFE8F43AE100748B50C95EB /* AppAppearance.swift in Sources */,
+				61345EA198B4F77E8EDB02C5 /* AppDelegate+AskAI.swift in Sources */,
+				E8C66C765F7708DE8C65688D /* AppDelegate+DebugLog.swift in Sources */,
+				482006ADB670668A947C734F /* AppDelegate+Hotkeys.swift in Sources */,
+				61162A65A02FB19929A26EDD /* AppDelegate+Permissions.swift in Sources */,
+				02F3319DBE0D06932C33C2B1 /* AppDelegate+Recording.swift in Sources */,
+				25818365120B6301CE1BB575 /* AppDelegate+Windows.swift in Sources */,
+				02C53CBA5A6626510FE74AAF /* AppDelegate.swift in Sources */,
+				E5DE709D7BDCFE2402671D91 /* AskAISettings.swift in Sources */,
+				2992A910EE961244A14BF9C0 /* AskTiming.swift in Sources */,
+				9A5769A27A780CC3D923D05C /* AudioRecorder.swift in Sources */,
+				0E2D967D9AF19EBC362E290F /* FlippedView.swift in Sources */,
+				9AA198274D98861BB31843E5 /* HomePage.swift in Sources */,
+				AE4C64FD964D4AAC3EF689BF /* HotkeyManager.swift in Sources */,
+				6A3C147E480778A69009DDF5 /* HotkeyMenu.swift in Sources */,
+				09417E2CBCB33380E04C3D1B /* HotkeyRecorderView.swift in Sources */,
+				B8F065C9A2A3F0259EEDD576 /* KeyAwareView.swift in Sources */,
+				6227124BAC4A13A59D23A40B /* LaunchAtLogin.swift in Sources */,
+				45A0A64AFCE6EFF575A20287 /* MicrophoneManager.swift in Sources */,
+				64356DE834A637629573CD1F /* MicrophonePickerSheet.swift in Sources */,
+				BAC3B30528F08B8B7365F887 /* MicrophoneRowView.swift in Sources */,
+				8C7931070D50CE5A4199CFF2 /* ModelsPage.swift in Sources */,
+				77D2C1E379BBC0D1F2F05BC4 /* NSColor+Hex.swift in Sources */,
+				F67698DA7F8DEDB22180ED07 /* OverlayStylePreview.swift in Sources */,
+				14D89ADC72C3EB720D271315 /* OverlayStyleTile.swift in Sources */,
+				4033E8982B6CC0CAD71D9C6E /* OverlayWindow.swift in Sources */,
+				618B2BB8EB6B4BF342BE2CFE /* PendingAskScreen.swift in Sources */,
+				46B1DDD7385CE1C76BB689EA /* ScreenSnapshot.swift in Sources */,
+				09A5873513B1F7A881AC3718 /* SettingsHelpers.swift in Sources */,
+				7D0D7B081D546EBC5FA1B725 /* SettingsPage.swift in Sources */,
+				7164EBD3F29287C2332C4261 /* SettingsStore.swift in Sources */,
+				25244B374F85E1713BF99A84 /* SettingsWindowController.swift in Sources */,
+				FD07FD9F250E756FBC23C829 /* SidebarRow.swift in Sources */,
+				4BDFFEC96CBADA2A8DB37368 /* StatusBarController.swift in Sources */,
+				9BF896E95B79D1DE29F7E522 /* VPButton.swift in Sources */,
+				7D9E5E930E7BCD941CF15C18 /* VPDropdown.swift in Sources */,
+				52ABF61493FE90C6445C1B1F /* VPSegmentedControl.swift in Sources */,
+				C6A7D5D7EA54676EE7AAA6EB /* VPToggle.swift in Sources */,
+				75E3E4CB0E58968D1429A966 /* VUMeterView.swift in Sources */,
+				2760C26B81634CC7C403959D /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		4A2A0728F323EE2E276BCF59 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/AskFree.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = AskFree;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.schaeferanjon.askfree;
+				PRODUCT_MODULE_NAME = AskFree;
+				PRODUCT_NAME = "Ask Free";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4C5CA18977A36AAC2873CE74 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E2F17CFFFE9E4D822097AD84 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F80645ACD9FC419F964C9F9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/AskFree.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = AskFree;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.schaeferanjon.askfree;
+				PRODUCT_MODULE_NAME = AskFree;
+				PRODUCT_NAME = "Ask Free";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0739FFD43BC0BB0B9CF14C2C /* Build configuration list for PBXNativeTarget "AskFree" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A2A0728F323EE2E276BCF59 /* Debug */,
+				F80645ACD9FC419F964C9F9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		612E7841EADA55C8C5DAD05B /* Build configuration list for PBXProject "AskFree" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C5CA18977A36AAC2873CE74 /* Debug */,
+				E2F17CFFFE9E4D822097AD84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		9C03C442E96BE4445BE68522 /* XCLocalSwiftPackageReference "AskFreeCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = AskFreeCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D724F3889579F56C96885303 /* AskFreeCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AskFreeCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = CBF66C68E1BB0CDA18704459 /* Project object */;
+}

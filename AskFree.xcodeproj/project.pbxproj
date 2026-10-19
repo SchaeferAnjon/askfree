@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		02C53CBA5A6626510FE74AAF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C61EFF72CCCE0ADCD4F84F6 /* AppDelegate.swift */; };
 		02F3319DBE0D06932C33C2B1 /* AppDelegate+Recording.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9FAC19B16D160C4BB177ACC /* AppDelegate+Recording.swift */; };
+		06E5CA6745F2A9A79E55B490 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92AFC008A783675431DEE1D /* BrandMark.swift */; };
 		09417E2CBCB33380E04C3D1B /* HotkeyRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A05B8A2971AC616DFD082C /* HotkeyRecorderView.swift */; };
 		09A5873513B1F7A881AC3718 /* SettingsHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13D703C7B0C13F171780EF7 /* SettingsHelpers.swift */; };
 		0E2D967D9AF19EBC362E290F /* FlippedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 696DAB39442DFD247FE7FC3E /* FlippedView.swift */; };
@@ -93,6 +94,7 @@
 		BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		C65FF5D404E1E1042700722E /* MicrophoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophoneManager.swift; sourceTree = "<group>"; };
 		C7D09DC5E4B368BEC52F0624 /* AppDelegate+Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Permissions.swift"; sourceTree = "<group>"; };
+		C92AFC008A783675431DEE1D /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
 		E5140CB88611661C2633A954 /* statusbar-icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "statusbar-icon@2x.png"; sourceTree = "<group>"; };
 		E6951C06920BF05DFD4305B9 /* HomePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePage.swift; sourceTree = "<group>"; };
 		E9FAC19B16D160C4BB177ACC /* AppDelegate+Recording.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Recording.swift"; sourceTree = "<group>"; };
@@ -173,6 +175,7 @@
 				3D1D4887D3CC754AFEDF22CF /* AnswerPanel.swift */,
 				FDF5DC5CBB30D7DD4243165E /* AppAppearance.swift */,
 				BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */,
+				C92AFC008A783675431DEE1D /* BrandMark.swift */,
 				9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */,
 				3380BDE8DB6A892B921F092A /* LaunchAtLogin.swift */,
 				1D43DE03E5A88F954E258150 /* main.swift */,
@@ -324,6 +327,7 @@
 				E5DE709D7BDCFE2402671D91 /* AskAISettings.swift in Sources */,
 				2992A910EE961244A14BF9C0 /* AskTiming.swift in Sources */,
 				9A5769A27A780CC3D923D05C /* AudioRecorder.swift in Sources */,
+				06E5CA6745F2A9A79E55B490 /* BrandMark.swift in Sources */,
 				0E2D967D9AF19EBC362E290F /* FlippedView.swift in Sources */,
 				9AA198274D98861BB31843E5 /* HomePage.swift in Sources */,
 				AE4C64FD964D4AAC3EF689BF /* HotkeyManager.swift in Sources */,

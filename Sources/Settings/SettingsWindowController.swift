@@ -368,7 +368,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
         let header = NSView()
         header.translatesAutoresizingMaskIntoConstraints = false
 
-        let logo = makeWaveformMark(box: 28, corner: 8, boxColor: theme.accent, waveColor: theme.onAccent)
+        let logo = makeBrandMark(box: 28, corner: 8, boxColor: theme.accent, inkColor: theme.onAccent)
 
         let title = NSTextField(labelWithString: "Ask Free")
         title.font = .systemFont(ofSize: 14, weight: .semibold)

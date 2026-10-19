@@ -421,39 +421,14 @@ extension SettingsWindowController {
         return card
     }
 
-    /// 声波品牌标：圆角盒子 + 钟形声波（与 App 图标同款）。小盒(<40)用 3 根、大盒用 5 根；
-    /// 深色盒子上波形用浅色(onAccent)。用 CALayer 画实心柱，原生清晰。
-    func makeWaveformMark(box: CGFloat, corner: CGFloat, boxColor: NSColor, waveColor: NSColor) -> NSView {
-        // viewBox 0..100 柱子：(x, 宽, y, 高, 圆角)
-        let bars5: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
-            (11, 10, 37.2, 25.6, 5), (28, 10, 26, 48, 5), (45, 10, 18, 64, 5),
-            (62, 10, 29.2, 41.6, 5), (79, 10, 38.8, 22.4, 5)
-        ]
-        let bars3: [(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)] = [
-            (10, 18, 30.2, 39.7, 9), (41, 18, 18, 64, 9), (72, 18, 33.4, 33.3, 9)
-        ]
-        let bars = box < 40 ? bars3 : bars5
-        let mark = box * 0.68            // 波形占盒子 68%
-        let off = (box - mark) / 2
-        let k = mark / 100.0
-
-        let v = NSView()
-        v.wantsLayer = true
-        v.layer?.cornerRadius = corner
-        v.layer?.setAppearanceBackground(boxColor)
+    /// 品牌标：圆角盒子 + 指针问号（与 App 图标同一份形状，见 BrandMark）。图形用 inkColor，问号用盒子色抠出来
+    func makeBrandMark(box: CGFloat, corner: CGFloat, boxColor: NSColor, inkColor: NSColor) -> NSView {
+        let v = BrandMarkView(corner: corner, boxColor: boxColor, inkColor: inkColor)
         v.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             v.widthAnchor.constraint(equalToConstant: box),
             v.heightAnchor.constraint(equalToConstant: box),
         ])
-        for (x, w, y, h, r) in bars {
-            let bar = CALayer()
-            bar.setAppearanceBackground(waveColor)
-            // CALayer 默认 y 向上、viewBox y 向下 → 翻转：柱底 = box - off - (y+h)*k
-            bar.frame = CGRect(x: off + x*k, y: box - off - (y+h)*k, width: w*k, height: h*k)
-            bar.cornerRadius = r*k
-            v.layer?.addSublayer(bar)
-        }
         return v
     }
 
@@ -897,5 +872,34 @@ extension SettingsWindowController {
         let msg = errorMessage(error)
         if msg.count > 60 { return String(msg.prefix(60)) + "…" }
         return msg
+    }
+}
+
+/// 主窗口侧栏和关于页的品牌标。颜色是随深浅色变化的 NSColor，draw 时按当前外观取值
+final class BrandMarkView: NSView {
+    private let corner: CGFloat
+    private let boxColor: NSColor
+    private let inkColor: NSColor
+
+    init(corner: CGFloat, boxColor: NSColor, inkColor: NSColor) {
+        self.corner = corner
+        self.boxColor = boxColor
+        self.inkColor = inkColor
+        super.init(frame: .zero)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        boxColor.setFill()
+        NSBezierPath(roundedRect: bounds, xRadius: corner, yRadius: corner).fill()
+        BrandMark.drawGlyph(in: ctx, rect: bounds, source: BrandMark.plate,
+                            ink: inkColor.cgColor, question: boxColor.cgColor)
     }
 }

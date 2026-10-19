@@ -14,7 +14,7 @@ extension SettingsWindowController {
         // Logo card
         let card = makeCard()
 
-        let logoBox = makeWaveformMark(box: 64, corner: 16, boxColor: theme.accent, waveColor: theme.onAccent)
+        let logoBox = makeBrandMark(box: 64, corner: 16, boxColor: theme.accent, inkColor: theme.onAccent)
 
         let name = label("Ask Free", size: 22, weight: .semibold, color: theme.text)
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String

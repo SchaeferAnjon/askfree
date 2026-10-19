@@ -56,13 +56,13 @@ enum LaunchAtLogin {
 
 // MARK: - Dock 图标
 
-/// 「在 Dock 中显示」（默认开）。关掉 = 切成 accessory：Dock 和 ⌘Tab 里都不再出现，和纯菜单栏 App 一样；
+/// 「在 Dock 中显示」（默认关，只在菜单栏）。关掉 = 切成 accessory：Dock 和 ⌘Tab 里都不再出现，和纯菜单栏 App 一样；
 /// 菜单栏图标照常在（「打开 Ask Free」从那里进），在访达 / 启动台再次打开 App 也会弹出主窗口。
 enum DockIcon {
     static let configKey = "show_dock_icon"
 
     static var isShown: Bool {
-        AskFreeConfig.shared.bool(forKey: configKey, defaultValue: true)
+        AskFreeConfig.shared.bool(forKey: configKey, defaultValue: false)
     }
 
     /// 设置页开关回调：存下选择并立即生效。

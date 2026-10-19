@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 import AskFreeCore
 #endif
 
-/// 触发瞬间的屏幕快照：一张整屏上下文图 + 一张指针附近的放大图，两张都用细红框框住了指针附近。
+/// 触发瞬间的屏幕快照：一张整屏上下文图 + 一张指针附近的放大图，两张都用细红框框住了指针附近、小红圈圈住指针那一点。
 /// 模型认画出来的标记比认坐标数字可靠得多，所以只画标记、不给坐标。
 struct ScreenSnapshot {
     let overviewJPEG: Data
@@ -189,15 +189,17 @@ enum ScreenSnapshotCapturer {
         let rect = CGRect(x: (box.minX - source.minX) * outputScale,
                           y: CGFloat(height) - (box.maxY - source.minY) * outputScale,
                           width: box.width * outputScale, height: box.height * outputScale)
-        drawMarker(in: ctx, rect: rect.insetBy(dx: 1, dy: 1))
+        drawMarker(in: ctx, rect: rect.insetBy(dx: 1, dy: 1), ringDiameter: AskVision.markerRingPointDiameter * scale * outputScale)
         return ctx.makeImage()
     }
 
-    /// 细红线矩形：只描边不填充，框里框外的内容都不挡（用户 2026-10-19：大准星 + 粗圆圈把旁边的东西挡住了）
-    private static func drawMarker(in ctx: CGContext, rect: CGRect) {
+    /// 细红线矩形 + 正中心一个小细圈：只描边不填充，框里框外的内容都不挡（用户 2026-10-19：大准星 + 粗圆圈把旁边的东西挡住了）
+    private static func drawMarker(in ctx: CGContext, rect: CGRect, ringDiameter: CGFloat) {
         ctx.setLineWidth(2)
         ctx.setStrokeColor(CGColor(red: 1, green: 0.13, blue: 0.13, alpha: 1))
         ctx.stroke(rect)
+        ctx.strokeEllipse(in: CGRect(x: rect.midX - ringDiameter / 2, y: rect.midY - ringDiameter / 2,
+                                     width: ringDiameter, height: ringDiameter))
     }
 
     private static func jpeg(_ image: CGImage, quality: CGFloat) -> Data? {

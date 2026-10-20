@@ -209,19 +209,40 @@ final class AskVisionTests: XCTestCase {
     /// 工具名和参数都可能分片到达
     func testToolCallAccumulatorJoinsFragments() {
         var acc = ToolCallAccumulator()
-        XCTAssertFalse(acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "web_"]]]], lookingFor: "web_search"))
-        XCTAssertTrue(acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "search", "arguments": "{\"qu"]]]], lookingFor: "web_search"))
-        _ = acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["arguments": "ery\": \"x\"}"]]]], lookingFor: "web_search")
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "web_"]]]])
+        XCTAssertFalse(acc.called("web_search"))
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "search", "arguments": "{\"qu"]]]])
+        XCTAssertTrue(acc.called("web_search"))
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["arguments": "ery\": \"x\"}"]]]])
         XCTAssertEqual(acc.argumentsJSON(at: 0), "{\"query\": \"x\"}")
+        XCTAssertEqual(acc.searchQuery(for: "web_search"), "x")
     }
 
     /// 普通出字的块、别的工具名都不算
     func testToolCallAccumulatorIgnoresContentAndOtherTools() {
         var acc = ToolCallAccumulator()
-        XCTAssertFalse(acc.ingest(delta: ["content": "你好"], lookingFor: "web_search"))
-        XCTAssertFalse(acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "other_tool"]]]], lookingFor: "web_search"))
+        acc.ingest(delta: ["content": "你好"])
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "other_tool"]]]])
+        XCTAssertFalse(acc.called("web_search"))
         // 同一块里既有 content 又有工具调用；并排第二个调用才是要找的
-        XCTAssertTrue(acc.ingest(delta: ["content": "我查一下", "tool_calls": [["index": 1, "function": ["name": "web_search"]]]], lookingFor: "web_search"))
+        acc.ingest(delta: ["content": "我查一下", "tool_calls": [["index": 1, "function": ["name": "web_search"]]]])
+        XCTAssertTrue(acc.called("web_search"))
+    }
+
+    /// 看屏幕和联网并排发起时两个都认得出（上层先看屏幕）
+    func testToolCallAccumulatorSeesScreenAndSearchSideBySide() {
+        var acc = ToolCallAccumulator()
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": AskScreenTool.toolName, "arguments": "{}"]],
+                                          ["index": 1, "function": ["name": AskSearch.toolName, "arguments": "{\"query\":\"y\"}"]]]])
+        XCTAssertTrue(acc.called(AskScreenTool.toolName))
+        XCTAssertEqual(acc.searchQuery(for: AskSearch.toolName), "y")
+    }
+
+    func testScreenToolOnlyWhereFunctionToolsWork() {
+        XCTAssertTrue(AskScreenTool.isSupported(provider: "deepseek"))
+        XCTAssertTrue(AskScreenTool.isSupported(provider: "zhipu"))
+        XCTAssertFalse(AskScreenTool.isSupported(provider: "doubao"))
+        XCTAssertFalse(AskScreenTool.isSupported(provider: nil))
     }
 
     func testDeepSeekIsAProviderWithThinkingDisabledAndASecretKey() {
@@ -236,9 +257,9 @@ final class AskVisionTests: XCTestCase {
     /// 搜索词是模型看完屏幕后写的，转千问时靠它带上屏幕上下文（那一问不带图）
     func testSearchQueryIsExtractedAndAttachedToTheQuestion() {
         var acc = ToolCallAccumulator()
-        _ = acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "web_search", "arguments": "{\"query\": \"RTX 5090"]]]], lookingFor: "web_search")
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["name": "web_search", "arguments": "{\"query\": \"RTX 5090"]]]])
         XCTAssertNil(acc.searchQuery(for: "web_search"), "参数还没吐完，不是合法 JSON")
-        _ = acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["arguments": " 价格\"}"]]]], lookingFor: "web_search")
+        acc.ingest(delta: ["tool_calls": [["index": 0, "function": ["arguments": " 价格\"}"]]]])
         XCTAssertEqual(acc.searchQuery(for: "web_search"), "RTX 5090 价格")
 
         XCTAssertEqual(AskSearch.searchQuestion("这个多少钱", query: nil), "这个多少钱")

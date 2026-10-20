@@ -50,7 +50,8 @@ extension AppDelegate {
                         self.askRound += 1
                         let round = self.askRound
                         if appending { self.answerPanel.appendQuestion(question) } else { self.answerPanel.startThread(question: question) }
-                        // 图只随当轮发：历史里只留文字，多轮追问不重复传图，历史文件里更不会有截图
+                        // 图只随当轮发：历史里只留文字，多轮追问不重复传图，历史文件里更不会有截图。
+                        // 追问照样截图，但先只发文字，模型说要看屏幕才发（AskScreenTool）
                         self.resolveAskScreen { screen, note in
                             self.sendAsk(question: question, history: history, screen: screen,
                                          screenNote: note, round: round)
@@ -96,7 +97,6 @@ extension AppDelegate {
         // 问题已经发出，回答在面板里流式显示：放开录音，别让所有快捷键在回答的十几秒里都没反应
         finishAsk()
         if let screenNote { answerPanel.setNote(screenNote) }
-        if let screen { answerPanel.setScreenshot(overviewJPEG: screen.overviewJPEG, closeUpJPEG: screen.closeUpJPEG) }
 
         // 首字迟迟不来就在面板里说一声，别让用户盯着「正在思考…」干等
         askSlowHintWork?.cancel()
@@ -117,6 +117,10 @@ extension AppDelegate {
             // 只挂在还是这一话题、这一轮的浮窗上；用户已经问了下一题就丢掉
             guard let self, self.askRound == round, self.answerPanel.threadID == thread else { return }
             self.answerPanel.setImages(images)
+        }, onScreenUsed: { [weak self] in
+            // 追问时模型不一定看屏幕：真发给它了才挂截图，没挂就是只按前面的对话答的
+            guard let self, let screen, self.askRound == round else { return }
+            self.answerPanel.setScreenshot(overviewJPEG: screen.overviewJPEG, closeUpJPEG: screen.closeUpJPEG)
         }, onRouteNote: { [weak self] note in
             // 这一问转去联网了：「正在联网查…」→ 出字后换成「已联网查询」。
             // 已经有「没能看屏幕」的说明时不盖掉它，那条对用户更要紧

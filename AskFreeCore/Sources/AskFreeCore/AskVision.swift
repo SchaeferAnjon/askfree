@@ -247,6 +247,41 @@ public enum AskSearch {
     }
 }
 
+/// 追问时屏幕按需看：按键那一刻照样截好图，但这一问先只带文字和前几轮问答，给模型一个 look_at_screen 工具。
+/// 每轮都把新截图塞给它，它就被屏幕上的新东西带跑：刚聊完《请以你的名字呼唤我》，接着问「这是关于男同的吗」，
+/// 它去答屏幕上正在放的约会节目了（2026-10-20）。「这」指话题还是指屏幕，关键词分不出来，交给模型判断。
+public enum AskScreenTool {
+    public static let toolName = "look_at_screen"
+
+    /// 这家的接口认 function 类型的 tools 才能按需看；其余家追问照旧每轮带图
+    public static func isSupported(provider: String?) -> Bool {
+        provider.map(AskSearch.supportsFunctionTools) ?? false
+    }
+
+    public static func tool() -> [String: Any] {
+        [
+            "type": "function",
+            "function": [
+                "name": toolName,
+                "description": "查看用户提问这一刻的屏幕截图。只在这一问指的是屏幕上现在显示的东西、光靠前面的对话答不了时调用。",
+                "parameters": ["type": "object", "properties": [String: Any]()],
+            ],
+        ]
+    }
+
+    /// 只带文字的追问：追加到 system prompt
+    public static let promptSuffix = """
+
+    这是同一话题里的追问，前面的问答就是上下文。先按前面的对话理解这一问：「这」「这个」「它」「那」默认指刚才聊到的东西，能接着答就直接答。以下情况调用 look_at_screen：问题明说屏幕、画面、页面（「屏幕上这个」「现在这个画面」）；或者问到的人和东西前面的对话里没出现过（前面没聊到哪个女生却问「这个女生」），或说法套不上前面的话题（聊电影时问「配对成功了吗」）。其余直接接着答。
+    """
+
+    /// 追问带了截图（模型要看，或这家不支持按需看）：截图只是补充，话题还是前面那个
+    public static let followUpScreenNote = """
+
+    这一问是同一话题里的追问：先按前面的对话理解问题，「这」「这个」默认指刚才聊到的东西；截图只用来补充，除非问题明显在问屏幕上的东西。
+    """
+}
+
 /// 流式里 tool_calls 增量的拼接。名字和参数都可能分片到达，也可能和 content 同时出现在一个块里；
 /// 同一轮还可能并排发起多个调用（DeepSeek 实测会发两个，index 分别是 0 和 1），所以按 index 分开攒。
 public struct ToolCallAccumulator: Equatable, Sendable {
@@ -255,11 +290,9 @@ public struct ToolCallAccumulator: Equatable, Sendable {
 
     public init() {}
 
-    /// 吃一份 choices[0].delta。返回 true = 此刻已经拼出了 target 这个工具名。
-    @discardableResult
-    public mutating func ingest(delta: [String: Any], lookingFor target: String) -> Bool {
-        guard let calls = delta["tool_calls"] as? [[String: Any]] else { return false }
-        var hit = false
+    /// 吃一份 choices[0].delta
+    public mutating func ingest(delta: [String: Any]) {
+        guard let calls = delta["tool_calls"] as? [[String: Any]] else { return }
         for call in calls {
             let index = (call["index"] as? Int) ?? 0
             guard let function = call["function"] as? [String: Any] else { continue }
@@ -269,9 +302,12 @@ public struct ToolCallAccumulator: Equatable, Sendable {
             if let fragment = function["arguments"] as? String, !fragment.isEmpty {
                 arguments[index, default: ""] += fragment
             }
-            if names[index] == target { hit = true }
         }
-        return hit
+    }
+
+    /// 此刻已经拼出了这个工具名
+    public func called(_ tool: String) -> Bool {
+        names.values.contains(tool)
     }
 
     /// 已经拼完整的工具名（调试用）

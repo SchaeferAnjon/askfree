@@ -143,6 +143,8 @@ public class AskAI {
     /// 用「模型」页配置的模型回答一个问题（千问附带联网搜索；问题带时效词时强制搜）。
     /// history：本话题之前的问答对（多轮续聊时带上，最多 6 轮）。
     /// screen：这一轮附带的屏幕内容，非 nil 时换成同一家的视觉模型、走 OpenAI 兼容的 content 数组。
+    /// 追问（history 非空）时屏幕按需看：先只发文字，模型调用 look_at_screen 才把 screen 发过去（AskScreenTool）。
+    /// onScreenUsed：这一问真的把 screen 发给了模型（主线程回调），面板据此挂截图。
     /// onPartial：流式输出，每收到一段就回调累计文本。
     /// onStats：一段可以直接拼进日志的元信息（模型、思考字数、首字耗时），不含任何问答内容。
     public func answer(question: String,
@@ -150,6 +152,7 @@ public class AskAI {
                        screen: AskScreenContext? = nil,
                        onPartial: ((String) -> Void)? = nil,
                        onImages: (([AskImage]) -> Void)? = nil,
+                       onScreenUsed: (() -> Void)? = nil,
                        onRouteNote: ((String) -> Void)? = nil,
                        onThinking: (() -> Void)? = nil,
                        onStats: ((String) -> Void)? = nil,
@@ -168,6 +171,10 @@ public class AskAI {
             completion(.success(display))
         }
         let ownProvider = askProvider()
+        let looksOnRequest = screen != nil && !history.isEmpty && AskScreenTool.isSupported(provider: ownProvider?.name)
+        // 已经发给模型的屏幕：按需看的追问一开始没有，模型要看之后才有；联网作答时跟着它走
+        var sentScreen = looksOnRequest ? nil : screen
+        if sentScreen != nil { onScreenUsed?() }
         let qwenKey = AskFreeConfig.shared.string(forKey: "dashscope_api_key", envKey: "DASHSCOPE_API_KEY") ?? ""
         let searchProvider: (name: String, url: URL, model: String, apiKey: String)? = {
             guard !qwenKey.isEmpty, let url = AskVision.qwenChatCompletions else { return nil }
@@ -222,8 +229,8 @@ public class AskAI {
                 let stats: (String) -> Void = { line in
                     onStats?("decide=\(decidedMs.map { "\($0)ms" } ?? "explicit") webSearch=\(searchMs)ms " + line)
                 }
-                if let screen {
-                    self.answerWithScreen(question: question, history: history, screen: screen, provider: provider,
+                if let sentScreen {
+                    self.answerWithScreen(question: question, history: history, screen: sentScreen, provider: provider,
                                           route: .deepseekSearch, offerSearchTool: false, searchContext: context,
                                           onPartial: partial, onThinking: onThinking, onStats: stats, completion: completion)
                 } else {
@@ -247,7 +254,17 @@ public class AskAI {
         // 其余问题带一个 web_search 函数工具让当前模型自己判断：它一调用，这条流就被掐掉、
         // 以 needsWebSearch 失败返回，这里接住去搜（DeepSeek 自己搜，其他家转千问）；它直接回答则和平时完全一样，不多花时间。
         let offerTool = AskSearch.shouldOfferTool(provider: ownProvider?.name, hasQwenKey: searchProvider != nil)
-        let routed: (Result<String, Error>) -> Void = { result in
+        // 追问时模型要看屏幕（needsScreen）：带上按键那一刻的截图重问一次，这一轮照样能再要联网
+        func routed(_ result: Result<String, Error>) {
+            if case .failure(let err) = result, case AskError.needsScreen(let ms) = err, let screen, let ownProvider {
+                debugLog?("Ask follow-up looks at screen decide=\(ms)ms")
+                sentScreen = screen
+                DispatchQueue.main.async { onScreenUsed?() }
+                answerWithScreen(question: question, history: history, screen: screen, provider: ownProvider,
+                                 route: .direct, offerSearchTool: offerTool, onPartial: onPartial,
+                                 onThinking: onThinking, onStats: onStats, completion: routed)
+                return
+            }
             if case .failure(let err) = result, case AskError.needsWebSearch(let ms, let query) = err {
                 if let ownProvider, ownProvider.name == "deepseek" {
                     askDeepSeekSearch(ownProvider, decidedMs: ms, query: query)
@@ -261,8 +278,8 @@ public class AskAI {
             completion(result)
         }
 
-        if let screen, let provider = ownProvider {
-            answerWithScreen(question: question, history: history, screen: screen, provider: provider,
+        if let sentScreen, let provider = ownProvider {
+            answerWithScreen(question: question, history: history, screen: sentScreen, provider: provider,
                              route: .direct, offerSearchTool: offerTool, onPartial: onPartial,
                              onThinking: onThinking, onStats: onStats, completion: routed)
             return
@@ -273,8 +290,8 @@ public class AskAI {
             return
         }
         answerDirectText(question: question, history: history, provider: provider, route: .direct,
-                         offerSearchTool: offerTool, onPartial: onPartial, onThinking: onThinking,
-                         onStats: onStats, completion: routed)
+                         offerSearchTool: offerTool, offerScreenTool: looksOnRequest, onPartial: onPartial,
+                         onThinking: onThinking, onStats: onStats, completion: routed)
     }
 
     /// 找几张图，和回答并行：模型点名的搜索词，或联网时顺手用搜索词（它看过屏幕），都没有就用问题本身。
@@ -304,14 +321,16 @@ public class AskAI {
                                   provider: (name: String, url: URL, model: String, apiKey: String),
                                   route: AskVision.AskRoute,
                                   offerSearchTool: Bool,
+                                  offerScreenTool: Bool = false,
                                   searchContext: String? = nil,
                                   allowThinking: Bool = true,
                                   onPartial: ((String) -> Void)?,
                                   onThinking: (() -> Void)?,
                                   onStats: ((String) -> Void)?,
                                   completion: @escaping (Result<String, Error>) -> Void) {
-        let system = Self.askSystemPrompt + Self.imagePromptSuffix + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine()
-            + (searchContext ?? "")
+        let system = Self.askSystemPrompt + Self.imagePromptSuffix + (offerSearchTool ? AskSearch.toolPromptSuffix : "")
+            + (offerScreenTool ? AskScreenTool.promptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")
+        let tools = (offerSearchTool ? AskSearch.tools() : []) + (offerScreenTool ? [AskScreenTool.tool()] : [])
         var messages: [[String: Any]] = [["role": "system", "content": system]]
         for turn in history.suffix(6) {
             messages.append(["role": "user", "content": turn.question])
@@ -322,7 +341,7 @@ public class AskAI {
         let forceSearch = Self.isTimeSensitive(question)
         // 转千问联网的那一问不思考：它要的是查到的事实，再想几秒不值
         let thinking = (route == .qwenSearch || !allowThinking) ? nil : AskThinkingSettings.current
-        debugLog?("Ask route=\(route.rawValue) provider=\(provider.name) model=\(provider.model) forceSearch=\(forceSearch) thinking=\(thinking?.rawValue ?? "off") history=\(history.count)")
+        debugLog?("Ask route=\(route.rawValue) provider=\(provider.name) model=\(provider.model) forceSearch=\(forceSearch) thinking=\(thinking?.rawValue ?? "off") history=\(history.count) screenTool=\(offerScreenTool)")
         func makeBody(_ model: String, search: Bool) -> [String: Any] {
             var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
             if provider.name == "qwen" {
@@ -340,10 +359,11 @@ public class AskAI {
                     : (AskVision.forcesThinking(model: model) ? 2048 : 1200)
                 AskVision.applyThinkingSettings(in: &body, provider: provider.name, model: model, thinking: thinking)
             }
-            if offerSearchTool { body["tools"] = AskSearch.tools() }
+            if !tools.isEmpty { body["tools"] = tools }
             if let choice = AskSearch.forcedToolChoice(provider: provider.name, question: question,
                                                        offered: offerSearchTool, thinking: thinking != nil) {
-                body["tool_choice"] = choice
+                // 带时效词的追问也可能是在问屏幕（「现在这个画面是哪集」）：只要求它调一个工具，联网还是看屏幕由它定
+                body["tool_choice"] = offerScreenTool ? "required" : choice
             }
             return body
         }
@@ -359,7 +379,7 @@ public class AskAI {
             let model = candidates[index]
             streamChat(url: provider.url, apiKey: provider.apiKey, body: makeBody(model, search: search),
                        onPartial: onPartial, onThinking: onThinking,
-                       searchToolName: offerSearchTool ? AskSearch.toolName : nil,
+                       toolNames: tools.compactMap { ($0["function"] as? [String: Any])?["name"] as? String },
                        thinkingDeadline: thinking?.deadline,
                        onStats: { reasoningChars, firstTokenMs in
                            let first = firstTokenMs.map { "\($0)ms" } ?? "n/a"
@@ -373,7 +393,8 @@ public class AskAI {
                         // 开着思考时偶发：想了一大段却没有正文。关掉思考重问一次，保证用户拿得到答案
                         self.debugLog?("Ask: \(err.localizedDescription) → 关思考重问")
                         self.answerDirectText(question: question, history: history, provider: provider, route: route,
-                                              offerSearchTool: offerSearchTool, searchContext: searchContext,
+                                              offerSearchTool: offerSearchTool, offerScreenTool: offerScreenTool,
+                                              searchContext: searchContext,
                                               allowThinking: false, onPartial: onPartial,
                                               onThinking: onThinking, onStats: onStats, completion: completion)
                         return
@@ -424,7 +445,7 @@ public class AskAI {
 
         var messages: [[String: Any]] = [
             ["role": "system", "content": Self.askSystemPrompt + Self.imagePromptSuffix + AskVision.screenPromptSuffix
-                + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")]
+                + (history.isEmpty ? "" : AskScreenTool.followUpScreenNote) + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")]
         ]
         for turn in history.suffix(6) {
             messages.append(["role": "user", "content": turn.question])
@@ -468,7 +489,7 @@ public class AskAI {
                        // 开了思考，难题可能想很久，30 秒不够
                        timeout: thinking != nil ? 120 : AskVision.requestTimeout, onPartial: onPartial,
                        onThinking: onThinking,
-                       searchToolName: offerSearchTool ? AskSearch.toolName : nil,
+                       toolNames: offerSearchTool ? [AskSearch.toolName] : [],
                        thinkingDeadline: thinking?.deadline,
                        onStats: { reasoningChars, firstTokenMs in
                            let first = firstTokenMs.map { "\($0)ms" } ?? "n/a"
@@ -504,7 +525,7 @@ public class AskAI {
                             timeout: TimeInterval = 90,
                             onPartial: ((String) -> Void)?,
                             onThinking: (() -> Void)? = nil,
-                            searchToolName: String? = nil,
+                            toolNames: [String] = [],
                             thinkingDeadline: TimeInterval? = nil,
                             onStats: ((Int, Int?) -> Void)? = nil,
                             completion: @escaping (Result<String, Error>) -> Void) {
@@ -515,7 +536,7 @@ public class AskAI {
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         request.timeoutInterval = timeout
         let reader = SSEReader(onPartial: onPartial, onThinking: onThinking,
-                               searchToolName: searchToolName, onStats: onStats, completion: completion)
+                               toolNames: toolNames, onStats: onStats, completion: completion)
         reader.armThinkingDeadline(thinkingDeadline)
         // 带截图的请求体有几百 KB，序列化和发出去放到后台：调用方多半在主线程上，
         // 堵住它的这几百毫秒里回答浮窗没法重新布局
@@ -596,8 +617,8 @@ public class AskAI {
         private let onPartial: ((String) -> Void)?
         /// 模型开始吐思考内容了（智谱 GLM-5.3 系列关不掉思考），只在第一段时回调一次
         private let onThinking: (() -> Void)?
-        /// 非 nil = 这条流带了函数工具，拼出这个名字就中止，交给上层转千问联网
-        private let searchToolName: String?
+        /// 这条流带的函数工具：模型调用其中一个就不再当回答显示，交给上层联网或看屏幕
+        private let toolNames: [String]
         /// (思考内容字数, 首字耗时 ms)。关得掉思考的模型这里应该是 0，不是 0 说明参数没生效。
         private let onStats: ((Int, Int?) -> Void)?
         private let completion: (Result<String, Error>) -> Void
@@ -622,24 +643,24 @@ public class AskAI {
             DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + seconds) { [weak self] in
                 guard let self else { return }
                 self.stateLock.lock()
-                let stillThinking = !self.finished && self.firstTokenMs == nil && self.searchDecidedMs == nil
+                let stillThinking = !self.finished && self.firstTokenMs == nil && self.toolDecidedMs == nil
                 if stillThinking { self.finishReason = "thinking-timeout" }
                 self.stateLock.unlock()
                 if stillThinking { self.task?.cancel() }
             }
         }
-        /// 已经因为「模型要联网」掐掉这条流：判定耗时记在这里
-        private var searchDecidedMs: Int?
+        /// 模型发起了工具调用（联网 / 看屏幕）：判定耗时记在这里
+        private var toolDecidedMs: Int?
         weak var task: URLSessionTask?
 
         init(onPartial: ((String) -> Void)?,
              onThinking: (() -> Void)? = nil,
-             searchToolName: String? = nil,
+             toolNames: [String] = [],
              onStats: ((Int, Int?) -> Void)? = nil,
              completion: @escaping (Result<String, Error>) -> Void) {
             self.onPartial = onPartial
             self.onThinking = onThinking
-            self.searchToolName = searchToolName
+            self.toolNames = toolNames
             self.onStats = onStats
             self.completion = completion
         }
@@ -663,14 +684,14 @@ public class AskAI {
                 let delta = choice["delta"] as? [String: Any]
                 let message = choice["message"] as? [String: Any]
                 if let reason = choice["finish_reason"] as? String, !reason.isEmpty { finishReason = reason }
-                // 模型要联网：不把工具调用当回答显示。不立刻掐流，让它把参数（搜索词）吐完，
+                // 模型要联网 / 看屏幕：不把工具调用当回答显示。不立刻掐流，让它把参数（搜索词）吐完，
                 // 整个工具调用实测 0.1 秒内就结束；搜索词是模型看完屏幕后写的，转千问时要带上。
-                if let target = searchToolName, let delta {
-                    let hit = toolCalls.ingest(delta: delta, lookingFor: target)
-                    if hit, searchDecidedMs == nil {
-                        searchDecidedMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
+                if !toolNames.isEmpty, let delta {
+                    toolCalls.ingest(delta: delta)
+                    if toolDecidedMs == nil, toolNames.contains(where: toolCalls.called) {
+                        toolDecidedMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
                     }
-                    if searchDecidedMs != nil { continue }
+                    if toolDecidedMs != nil { continue }
                 }
                 // 思考内容：关掉之后应该一个字都没有，收到了就说明参数没生效，记进日志好排查
                 if let reasoning = (delta?["reasoning_content"] as? String) ?? (message?["reasoning_content"] as? String),
@@ -693,13 +714,17 @@ public class AskAI {
         func finish(error: Error?) {
             guard !finished else { return }
             finished = true
-            // 模型发起了联网工具调用：不报错、不给残缺的文字，只告诉上层「这一问要联网」和它想搜什么
-            // 只给了模型 web_search 这一个工具：流以 tool_calls 结束就是它要联网，名字没对上也算
-            if searchDecidedMs == nil, searchToolName != nil, finishReason == "tool_calls" {
-                searchDecidedMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
+            // 模型发起了工具调用：不报错、不给残缺的文字，只告诉上层「这一问要看屏幕」或「要联网、想搜什么」。
+            // 流以 tool_calls 结束但名字没对上：只带了一个工具就算它，带了两个按联网算。并排调了两个时先看屏幕
+            if toolDecidedMs == nil, !toolNames.isEmpty, finishReason == "tool_calls" {
+                toolDecidedMs = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
             }
-            if let decided = searchDecidedMs {
-                completion(.failure(AskError.needsWebSearch(decided, toolCalls.searchQuery(for: searchToolName ?? ""))))
+            if let decided = toolDecidedMs {
+                if toolCalls.called(AskScreenTool.toolName) || toolNames == [AskScreenTool.toolName] {
+                    completion(.failure(AskError.needsScreen(decided)))
+                } else {
+                    completion(.failure(AskError.needsWebSearch(decided, toolCalls.searchQuery(for: AskSearch.toolName))))
+                }
                 return
             }
             let reasoning = reasoningChars
@@ -736,6 +761,8 @@ public class AskAI {
         case quotaExhausted(String)   // 403 额度类失败（免费额度用完即停/欠费），自动路由靠它降级
         /// 模型自己判断这一问要联网；参数是判定耗时（ms）和它写的搜索词。不会让用户看见，上层拿它转千问。
         case needsWebSearch(Int, String?)
+        /// 追问时模型要看屏幕；参数是判定耗时（ms）。不会让用户看见，上层带上截图重问
+        case needsScreen(Int)
         /// 流正常结束但回答是空的（开思考时偶发：想了一大段，然后没有正文）
         case emptyAnswer(finish: String, reasoningChars: Int, tools: String)
 
@@ -745,6 +772,7 @@ public class AskAI {
             case .apiError(let msg): return msg
             case .quotaExhausted(let msg): return msg
             case .needsWebSearch: return "这一问需要联网"
+            case .needsScreen: return "这一问需要看屏幕"
             case .emptyAnswer(let finish, let reasoning, let tools):
                 return "模型没有给出回答（finish=\(finish) reasoning=\(reasoning)ch tools=\(tools.isEmpty ? "-" : tools)）"
             }

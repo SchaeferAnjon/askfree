@@ -308,4 +308,21 @@ final class AskVisionTests: XCTestCase {
         XCTAssertEqual(images[1].thumb, "https://x/b.jpg", "没缩略图就用原图")
         XCTAssertEqual(AskSearch.stripExplicitSearchPrefix("搜一下 牵引绳的红旗"), "牵引绳的红旗")
     }
+
+    func testImageMarker() {
+        let full = ImageSearch.extractMarker("[[图片: Selena Gomez]]\n她是美国歌手、演员。")
+        XCTAssertEqual(full.query, "Selena Gomez")
+        XCTAssertEqual(full.display, "她是美国歌手、演员。", "标记行不给用户看")
+        XCTAssertEqual(ImageSearch.extractMarker("[[图片：埃菲尔铁塔 夜景]]").query, "埃菲尔铁塔 夜景", "全角冒号也认")
+        XCTAssertEqual(ImageSearch.extractMarker("答案在这。\n[[图片: Golden Gate Bridge]]").display, "答案在这。", "写在末尾也去掉")
+        // 流式中途：标记还没写完，先藏起来，不闪
+        XCTAssertEqual(ImageSearch.extractMarker("[[图片: Sel").display, "")
+        XCTAssertNil(ImageSearch.extractMarker("[[图片: Sel").query)
+        // 普通回答原样
+        let plain = ImageSearch.extractMarker("一句普通回答。")
+        XCTAssertEqual(plain.display, "一句普通回答。")
+        XCTAssertNil(plain.query)
+        // 完整回答里没合上的 [[ 是正文
+        XCTAssertEqual(ImageSearch.extractMarker("数组写法 a[[0]", isFinal: true).display, "数组写法 a[[0]")
+    }
 }

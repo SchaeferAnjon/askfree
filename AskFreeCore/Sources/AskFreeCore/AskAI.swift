@@ -1,5 +1,25 @@
 import Foundation
 
+/// 一问里的图只认一份：模型点名的 `[[图片: …]]` 优先，联网路线顺手找的图在点名之后到就丢掉。
+/// 回调来自不同线程，用锁。
+final class AskImageRequest: @unchecked Sendable {
+    private let lock = NSLock()
+    private var named = false
+
+    /// 第一次点名返回 true（只找一次图）
+    func markNamed() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if named { return false }
+        named = true
+        return true
+    }
+
+    var isNamed: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return named
+    }
+}
+
 /// 语音问答：把问题（可带屏幕截图）交给用户配置的模型，流式返回回答；要联网时自己搜或转千问联网。
 public class AskAI {
     private static let defaultDoubaoModel = "doubao-seed-2-0-pro-260215"
@@ -76,6 +96,9 @@ public class AskAI {
     排版用轻量 Markdown（面板会渲染）：段落之间空一行，每段只说一件事；列举多项时逐条分行，用「1. 」或「- 」开头；内容分几组时用「### 组名」做小标题；每条里的关键词用 **加粗** 标出（一条最多一处）；不用表格、引用、代码块。
     """
 
+    /// 设置里开着「附图」才告诉模型面板能放图
+    static var imagePromptSuffix: String { ImageSearch.isEnabled ? ImageSearch.promptSuffix : "" }
+
     /// 模型没有时钟：每次提问都把「现在」写进提示词。不写的话它只能从搜到的网页里猜今天几号
     /// （网页常是前一两天发的，2026-09-11 实测 4 次全答成前一天），问「现在几点」也答不出。
     static func askTimeLine(now: Date = Date(), timeZone: TimeZone = .current) -> String {
@@ -131,6 +154,19 @@ public class AskAI {
                        onThinking: (() -> Void)? = nil,
                        onStats: ((String) -> Void)? = nil,
                        completion: @escaping (Result<String, Error>) -> Void) {
+        // 模型点名要图（`[[图片: 搜索词]]`）：标记行不给用户看，一出现就去找图，和回答并行
+        let imageRequest = AskImageRequest()
+        let onPartial: (String) -> Void = { [weak self] text in
+            let (display, query) = ImageSearch.extractMarker(text)
+            if let query, imageRequest.markNamed() { self?.searchImages(query: query, question: question, onImages: onImages) }
+            onPartial?(display)
+        }
+        let completion: (Result<String, Error>) -> Void = { [weak self] result in
+            guard case .success(let text) = result else { completion(result); return }
+            let (display, query) = ImageSearch.extractMarker(text, isFinal: true)
+            if let query, imageRequest.markNamed() { self?.searchImages(query: query, question: question, onImages: onImages) }
+            completion(.success(display))
+        }
         let ownProvider = askProvider()
         let qwenKey = AskFreeConfig.shared.string(forKey: "dashscope_api_key", envKey: "DASHSCOPE_API_KEY") ?? ""
         let searchProvider: (name: String, url: URL, model: String, apiKey: String)? = {
@@ -145,11 +181,11 @@ public class AskAI {
         func askQwenSearch(_ provider: (name: String, url: URL, model: String, apiKey: String), decidedMs: Int?, query: String?) {
             debugLog?("Ask route=qwen-search model=\(provider.model) decide=\(decidedMs.map { "\($0)ms" } ?? "explicit") hasQuery=\(query?.isEmpty == false)")
             onRouteNote?(AskSearch.searchingNotice)
-            searchImages(query: query, question: question, onImages: onImages)
+            searchImages(query: query, question: question, onImages: onImages, unlessNamed: imageRequest)
             var announced = false
             let partial: (String) -> Void = { text in
                 if !announced { announced = true; onRouteNote?(AskSearch.searchedNotice) }
-                onPartial?(text)
+                onPartial(text)
             }
             let stats: (String) -> Void = { line in
                 onStats?("decide=\(decidedMs.map { "\($0)ms" } ?? "explicit") " + line)
@@ -164,7 +200,7 @@ public class AskAI {
         func askDeepSeekSearch(_ provider: (name: String, url: URL, model: String, apiKey: String), decidedMs: Int?, query: String?) {
             let q = (query?.isEmpty == false) ? query! : AskSearch.stripExplicitSearchPrefix(question)
             onRouteNote?(AskSearch.searchingNotice)
-            searchImages(query: query, question: question, onImages: onImages)
+            searchImages(query: query, question: question, onImages: onImages, unlessNamed: imageRequest)
             let started = ProcessInfo.processInfo.systemUptime
             DeepSeekSearch.search(query: q, apiKey: provider.apiKey) { [weak self] result in
                 guard let self else { return }
@@ -181,7 +217,7 @@ public class AskAI {
                 var announced = context == nil
                 let partial: (String) -> Void = { text in
                     if !announced { announced = true; onRouteNote?(AskSearch.searchedNotice) }
-                    onPartial?(text)
+                    onPartial(text)
                 }
                 let stats: (String) -> Void = { line in
                     onStats?("decide=\(decidedMs.map { "\($0)ms" } ?? "explicit") webSearch=\(searchMs)ms " + line)
@@ -241,15 +277,20 @@ public class AskAI {
                          onStats: onStats, completion: routed)
     }
 
-    /// 联网的问题顺便找几张图，和回答并行；搜索词优先用模型写的（它看过屏幕），没有就用问题本身
-    private func searchImages(query: String?, question: String, onImages: (([AskImage]) -> Void)?) {
+    /// 找几张图，和回答并行：模型点名的搜索词，或联网时顺手用搜索词（它看过屏幕），都没有就用问题本身。
+    /// unlessNamed：联网顺手找的图，模型已经点名要图时就不用了（点名的词更准）
+    private func searchImages(query: String?, question: String, onImages: (([AskImage]) -> Void)?,
+                              unlessNamed request: AskImageRequest? = nil) {
         guard ImageSearch.isEnabled, let onImages else { return }
         let imageQuery = (query?.isEmpty == false) ? query! : AskSearch.stripExplicitSearchPrefix(question)
         let started = ProcessInfo.processInfo.systemUptime
         ImageSearch.search(imageQuery) { [weak self] images in
             let ms = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
-            self?.debugLog?("Ask images: \(images.count) in \(ms)ms")
-            DispatchQueue.main.async { onImages(images) }
+            self?.debugLog?("Ask images: \(images.count) in \(ms)ms (\(request == nil ? "named" : "search"))")
+            DispatchQueue.main.async {
+                if let request, request.isNamed { return }
+                onImages(images)
+            }
         }
     }
 
@@ -269,7 +310,7 @@ public class AskAI {
                                   onThinking: (() -> Void)?,
                                   onStats: ((String) -> Void)?,
                                   completion: @escaping (Result<String, Error>) -> Void) {
-        let system = Self.askSystemPrompt + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine()
+        let system = Self.askSystemPrompt + Self.imagePromptSuffix + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine()
             + (searchContext ?? "")
         var messages: [[String: Any]] = [["role": "system", "content": system]]
         for turn in history.suffix(6) {
@@ -382,7 +423,7 @@ public class AskAI {
         }
 
         var messages: [[String: Any]] = [
-            ["role": "system", "content": Self.askSystemPrompt + AskVision.screenPromptSuffix
+            ["role": "system", "content": Self.askSystemPrompt + Self.imagePromptSuffix + AskVision.screenPromptSuffix
                 + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")]
         ]
         for turn in history.suffix(6) {

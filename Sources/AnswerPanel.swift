@@ -1043,23 +1043,29 @@ struct AskScreenshotRow: View {
     }
 }
 
-/// 联网回答下面的一排图：固定 3 格、每格 116x86，点一张用默认浏览器打开原图（来源网页在悬停提示里）。
-/// 尺寸固定是为了图片加载完成时不用再重排浮窗。
+/// 回答下面的一排图（模型点名要图，或联网时顺手找的）：固定 3 格、竖长方形，人像照片也看得清脸；
+/// 点一张用默认浏览器打开原图（来源网页在悬停提示里）。尺寸固定是为了图片加载完成时不用再重排浮窗。
 struct AskImagesRow: View {
     let images: [AskImage]
     @State private var hovering: String?
+    private static let spacing: CGFloat = 8
+    private static let cellWidth = (AnswerPanel.contentWidth - spacing * 2) / 3
+    private static let cellHeight: CGFloat = 160
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Self.spacing) {
             ForEach(images) { image in
                 AsyncImage(url: URL(string: image.thumb)) { phase in
                     switch phase {
-                    case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
+                    // 填满格子、从顶上裁：人像的脸一般在上半部
+                    case .success(let img):
+                        img.resizable().aspectRatio(contentMode: .fill)
+                            .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
                     case .failure: Image(systemName: "photo").foregroundStyle(.tertiary)
                     default: ProgressView().controlSize(.small)
                     }
                 }
-                .frame(width: 116, height: 86)
+                .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(hovering == image.id ? 0.35 : 0.08)))
                 .onHover { hovering = $0 ? image.id : nil }

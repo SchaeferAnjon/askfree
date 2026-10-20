@@ -35,6 +35,31 @@ public enum ImageSearch {
         return URLSession(configuration: config)
     }()
 
+    /// 模型点名要配图时在回答里单独写一行 `[[图片: 搜索词]]`（提示词见 promptSuffix）。
+    /// 返回去掉这行后给用户看的文字，和搜索词。流式中途 `[[` 还没合上时先把这截藏起来，免得闪一下标记；
+    /// 完整回答（isFinal）里没合上的 `[[` 是正文，原样显示。
+    public static func extractMarker(_ text: String, isFinal: Bool = false) -> (display: String, query: String?) {
+        let ns = text as NSString
+        if let m = markerRegex.firstMatch(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let query = ns.substring(with: m.range(at: 1)).trimmingCharacters(in: .whitespaces)
+            let display = ns.replacingCharacters(in: m.range, with: "")
+                .trimmingCharacters(in: .newlines)
+            return (display, query.isEmpty ? nil : query)
+        }
+        if !isFinal, let open = text.range(of: "[[", options: .backwards), text[open.upperBound...].range(of: "]]") == nil {
+            return (String(text[..<open.lowerBound]).trimmingCharacters(in: .newlines), nil)
+        }
+        return (text, nil)
+    }
+
+    private static let markerRegex = try! NSRegularExpression(pattern: #"\[\[\s*图片\s*[:：]\s*([^\]\n]+?)\s*\]\][ \t]*\n?"#)
+
+    /// 拼进系统提示词：告诉模型面板能放图、什么时候要图、怎么点名
+    public static let promptSuffix = """
+
+    面板能在回答下方放几张网上的图片。用户想看照片、长相、样子（如「找个照片我看一下」「长什么样」「给我看看」），回答的第一行单独写 `[[图片: 搜索词]]`，搜索词写最容易搜到图的说法（人名、物名、地名用原文，如 Selena Gomez），再换行照常回答；面板会把这一行换成图片。这种时候不要说你没法发图。用户没想看图就不要写这一行。
+    """
+
     /// 页面里的一次性 token：vqd="…" 或 vqd='…'
     public static func parseVqd(_ html: String) -> String? {
         guard let range = html.range(of: #"vqd=['"]([^'"]+)['"]"#, options: .regularExpression) else { return nil }

@@ -44,7 +44,7 @@ extension AppDelegate {
         typeAskPanel.show(placeholder: placeholder, below: answerPanel.isVisible ? answerPanel.frame : nil)
         // 打字那几秒里把 TLS 握手做掉
         DispatchQueue.global(qos: .utility).async { [weak self] in self?.askAI.warmUpConnection() }
-        debugLog("TA: begin at \(Int(point.x)),\(Int(point.y)) continuesThread=\(continuesThread)")
+        debugLog("TA: begin at \(Int(point.x)),\(Int(point.y)) continuesThread=\(continuesThread) \(answerPanel.stateSummary)")
     }
 
     private func dropPendingAskScreen() {

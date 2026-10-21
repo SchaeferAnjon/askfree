@@ -201,7 +201,7 @@ extension AppDelegate {
         }
         // 用户说话那几秒里把 TLS 握手做掉，首字能早几百毫秒
         DispatchQueue.global(qos: .utility).async { [weak self] in self?.askAI.warmUpConnection() }
-        debugLog("AC: begin trigger=\(trigger) at \(Int(point.x)),\(Int(point.y))")
+        debugLog("AC: begin trigger=\(trigger) at \(Int(point.x)),\(Int(point.y)) continuesThread=\(askContinuesThread) \(answerPanel.stateSummary)")
         return true
     }
 

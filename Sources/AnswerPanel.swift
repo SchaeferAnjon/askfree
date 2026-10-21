@@ -63,6 +63,10 @@ final class AnswerPanel {
     var canContinueThread: Bool {
         isVisible && !history.isEmpty && Date().timeIntervalSince(lastActivityAt) < AskThreading.staleAfter
     }
+    /// 日志用：为什么这一问接着聊 / 另起话题
+    var stateSummary: String {
+        "panel(visible=\(isVisible) hiding=\(isHiding) collapsed=\(model.collapsed) answered=\(history.count) idle=\(Int(Date().timeIntervalSince(lastActivityAt)))s)"
+    }
     /// 本话题已完成的问答对，续聊时作为上下文
     var history: [(question: String, answer: String)] {
         model.turns.filter { $0.state == .answered }.map { ($0.question, $0.answer) }

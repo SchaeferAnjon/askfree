@@ -62,6 +62,8 @@ extension SettingsWindowController {
         leftStack.setCustomSpacing(14, after: desc)
         leftStack.addArrangedSubview(makeAskHotkeyHomeRow(.plain, suffix: "只提问，不看屏幕",
                                                           note: "不截屏，更快一点。"))
+        leftStack.setCustomSpacing(10, after: leftStack.arrangedSubviews.last!)
+        leftStack.addArrangedSubview(makeTypeAskHomeRow())
 
         // 问 AI 的几个用法：不列出来没人知道有（追问、换话题、联网、取消）
         let askHints = NSStackView()
@@ -112,6 +114,23 @@ extension SettingsWindowController {
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 8
+        return row
+    }
+
+    /// 首页上的一行：「[双击 ⌃ Control ▾] 打字问 AI，看屏幕」
+    private func makeTypeAskHomeRow() -> NSView {
+        let suffixLabel = label("打字问 AI，看屏幕", size: 15, weight: .medium, color: theme.text)
+        suffixLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let note = "不方便说话时用，回车发送。"
+        let noteLabel = label(note, size: 12, weight: .regular, color: theme.text3)
+        noteLabel.subscribe(SettingsStore.shared.$typeAsk.map(\.conflict).removeDuplicates()) { view, conflict in
+            view.stringValue = conflict.map { "⚠️ \($0)，现在不会响应" } ?? note
+        }
+        let row = NSStackView(views: [makeTypeAskDropdown(), suffixLabel, noteLabel])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 8
+        row.setCustomSpacing(14, after: suffixLabel)
         return row
     }
 

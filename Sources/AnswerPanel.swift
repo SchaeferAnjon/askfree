@@ -50,6 +50,8 @@ final class AnswerPanel {
 
     /// 正在滑出的面板不算在屏上（马上就收起了）
     var isVisible: Bool { (panel?.isVisible ?? false) && !isHiding }
+    /// 面板在屏幕上的位置（打字问的输入框贴在它下面）
+    var frame: NSRect? { panel?.frame }
     /// 滑出动画进行中；动画回调只在这一轮没被新的 present 打断时才 orderOut
     private var isHiding = false
     private var hideGeneration = 0

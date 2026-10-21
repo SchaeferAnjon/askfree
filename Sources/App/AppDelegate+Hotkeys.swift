@@ -4,6 +4,13 @@ import AskFreeCore
 #endif
 
 extension AppDelegate {
+    func stopAskHotkeys() {
+        askHotkeyManagers.forEach { $0.stop() }
+        askHotkeyManagers = []
+        typeAskMonitor?.stop()
+        typeAskMonitor = nil
+    }
+
     func resetHotkeyGestures() {
         askHotkeyManagers.forEach { $0.recordingDidLeaveActiveState() }
     }
@@ -14,6 +21,8 @@ extension AppDelegate {
     /// 手势：按住说、松开结束；轻点一下锁定、再点一下结束；按住期间 Esc 取消。
     func ensureAskHotkeyManagers() {
         guard askHotkeyManagers.isEmpty else { return }
+        typeAskMonitor = DoubleTapMonitor { [weak self] in self?.toggleTypeAsk() }
+        debugLog("TA: shortcut=\(TypeAskHotkey.displayName())\(TypeAskHotkey.conflict().map { " conflict=\($0)" } ?? "")")
         for (hotkey, captureScreen) in [(AskHotkey.screen, true), (AskHotkey.plain, false)] {
             let manager = HotkeyManager(
                 profile: .ask(hotkey),

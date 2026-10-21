@@ -50,6 +50,16 @@ final class SettingsStore: ObservableObject {
     }
 
     @Published private(set) var hotkeys: Hotkeys
+    /// 打字问 AI 的双击键。撞键提示取决于说话提问的两套键，跟着 hotkeys 一起重读
+    struct TypeAsk: Equatable {
+        var modifier: RecordingHotkeyModifier?
+        var conflict: String?
+
+        static func load(from config: AskFreeConfig) -> TypeAsk {
+            TypeAsk(modifier: TypeAskHotkey.current(in: config), conflict: TypeAskHotkey.conflict(in: config))
+        }
+    }
+    @Published private(set) var typeAsk: TypeAsk
     /// 联网回答下方附图
     @Published private(set) var askImagesEnabled: Bool
     /// 回答前先思考
@@ -62,6 +72,7 @@ final class SettingsStore: ObservableObject {
     private init(config: AskFreeConfig = .shared) {
         self.config = config
         hotkeys = Hotkeys.load(from: config)
+        typeAsk = TypeAsk.load(from: config)
         askImagesEnabled = ImageSearch.isEnabled
         askThinkingEnabled = AskThinkingSettings.isEnabled
         askThinkingEffort = AskThinkingSettings.effort
@@ -88,6 +99,7 @@ final class SettingsStore: ObservableObject {
 
     private func reloadHotkeys() {
         update(\.hotkeys, Hotkeys.load(from: config))
+        update(\.typeAsk, TypeAsk.load(from: config))
     }
 
     // MARK: 写
@@ -97,6 +109,11 @@ final class SettingsStore: ObservableObject {
     func hotkeysDidChange() {
         NotificationCenter.default.post(name: .askFreeHotkeyDidChange, object: nil)
         reloadHotkeys()   // 通知在后台线程发出时 observer 会异步重读，这里保证主线程调用方返回前已是新值
+    }
+
+    func setTypeAsk(_ modifier: RecordingHotkeyModifier?) {
+        TypeAskHotkey.set(modifier, in: config)
+        hotkeysDidChange()
     }
 
     func setAskImagesEnabled(_ on: Bool) {

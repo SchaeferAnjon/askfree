@@ -35,27 +35,8 @@ extension AppDelegate {
                     case .success(let raw):
                         let spoken = raw.trimmingCharacters(in: .whitespacesAndNewlines)
                             .trimmingCharacters(in: CharacterSet(charactersIn: "。．.，,！!？?；;"))
-                        // 浮窗还在但想换话题：用「新话题」开头，这几个字不算进问题里
-                        let (question, wantsNewThread) = AskThreading.stripNewThreadPrefix(spoken)
-                        let continuesThread = continuesThread && !wantsNewThread
-                        guard !question.isEmpty else { noSpeech(); return }
                         self.askTiming.transcribeMs = Int(Date().timeIntervalSince(transcribeStartedAt) * 1000)
-                        self.debugLog("ASK question chars=\(question.count) followUp=\(followUp) continuesThread=\(continuesThread)")
-                        self.overlayWindow.hide()
-                        self.answerPanel.setListening(.idle)
-                        // 带不带历史和追加还是新开话题用同一个判断：识别期间浮窗被关掉了就是新话题，不能带旧历史
-                        let appending = continuesThread && self.answerPanel.isVisible && !self.askInFlight
-                        let history = appending ? self.answerPanel.history : []
-                        // 面板上换成这一轮之前先换编号：上一轮还在路上的回调从这一刻起就不能再写进面板
-                        self.askRound += 1
-                        let round = self.askRound
-                        if appending { self.answerPanel.appendQuestion(question) } else { self.answerPanel.startThread(question: question) }
-                        // 图只随当轮发：历史里只留文字，多轮追问不重复传图，历史文件里更不会有截图。
-                        // 追问照样截图，但先只发文字，模型说要看屏幕才发（AskScreenTool）
-                        self.resolveAskScreen { screen, note in
-                            self.sendAsk(question: question, history: history, screen: screen,
-                                         screenNote: note, round: round)
-                        }
+                        if !self.submitQuestion(spoken, continuesThread: continuesThread) { noSpeech() }
                     case .failure(let err):
                         // 没听到有效语音：安静地提示一次，不走红框 + 文字条的两段式报错
                         if case CloudASRTranscriber.TranscriptionError.noSpeech = err { noSpeech(); return }
@@ -67,6 +48,32 @@ extension AppDelegate {
                 }
             }
         }
+    }
+
+    /// 问题文字到手（语音识别出来的、打字的）：定下接着聊还是新话题，带上屏幕发出去。
+    /// 返回 false = 去掉「新话题」几个字后什么都不剩，没发
+    @discardableResult
+    func submitQuestion(_ text: String, continuesThread: Bool) -> Bool {
+        // 浮窗还在但想换话题：用「新话题」开头，这几个字不算进问题里
+        let (question, wantsNewThread) = AskThreading.stripNewThreadPrefix(text)
+        let continuesThread = continuesThread && !wantsNewThread
+        guard !question.isEmpty else { return false }
+        debugLog("ASK question chars=\(question.count) trigger=\(askTiming.trigger) continuesThread=\(continuesThread)")
+        overlayWindow.hide()
+        answerPanel.setListening(.idle)
+        // 带不带历史和追加还是新开话题用同一个判断：识别期间浮窗被关掉了就是新话题，不能带旧历史
+        let appending = continuesThread && answerPanel.isVisible && !askInFlight
+        let history = appending ? answerPanel.history : []
+        // 面板上换成这一轮之前先换编号：上一轮还在路上的回调从这一刻起就不能再写进面板
+        askRound += 1
+        let round = askRound
+        if appending { answerPanel.appendQuestion(question) } else { answerPanel.startThread(question: question) }
+        // 图只随当轮发：历史里只留文字，多轮追问不重复传图，历史文件里更不会有截图。
+        // 追问照样截图，但先只发文字，模型说要看屏幕才发（AskScreenTool）
+        resolveAskScreen { screen, note in
+            self.sendAsk(question: question, history: history, screen: screen, screenNote: note, round: round)
+        }
+        return true
     }
 
     /// 启动参数 -askText：在指针处截屏，把这句话当成识别出的问题发出去（开发实测用，跳过录音和识别）
@@ -173,6 +180,7 @@ extension AppDelegate {
             return false
         }
         askTiming.reset(trigger: trigger, mode: "hotkey")
+        typeAskPanel.dismiss()
         voiceQuestionFollowUp = false
         // 回答浮窗还在屏幕上（展开、小条、钉住都算）且话题还新鲜：接着聊。浮窗没了就是新话题
         askContinuesThread = answerPanel.canContinueThread
@@ -260,7 +268,7 @@ extension AppDelegate {
             case nil:
                 self.askTiming.fallback = "slowCapture"
                 self.debugLog("AC: screenshot not ready in time → text only")
-                callback(nil, "截屏没赶上，这次只按语音回答。")
+                callback(nil, "截屏没赶上，这次只按问题回答。")
             }
         }
     }

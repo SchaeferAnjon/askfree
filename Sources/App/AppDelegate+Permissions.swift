@@ -55,8 +55,7 @@ extension AppDelegate {
         debugLog("Accessibility trusted=\(hasAccessibility)")
 
         guard hasAccessibility else {
-            askHotkeyManagers.forEach { $0.stop() }
-            askHotkeyManagers = []
+            stopAskHotkeys()
             startAccessibilityWatcher()
             if !didPromptForAccessibility {
                 let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary

@@ -26,6 +26,8 @@ extension SettingsWindowController {
 
             只提问：不截屏。适合问和屏幕无关的问题，或者屏幕上有不想发出去的内容的时候。
 
+            打字问：双击 Control（可在「设置 → 快捷键」换），双击那一刻截下屏幕，右上角弹出输入框，打完回车发送，Esc 取消。再双击一次也是收起。
+
             联网：DeepSeek 自己能搜；智谱、豆包的接口不能联网，同时填了千问 Key 时，需要最新信息的问题模型会自己判断、自动转给千问联网回答；也可以用「搜一下……」开头直接联网。
 
             撞键：两个快捷键设成同一个时，「看屏幕问 AI」优先，「只提问」不响应。一个用 Option、另一个用右 Option 时，前者只认左边那颗 Option。
@@ -93,6 +95,33 @@ extension SettingsWindowController {
         return makeAskCursorRow(title: hotkey.title, desc: desc, control: button) { descLabel in
             // 和别的键撞了就把说明换成撞键提示，改好了换回来
             descLabel.subscribe(SettingsStore.shared.$hotkeys.map { $0.conflict(of: hotkey) }.removeDuplicates()) { view, conflict in
+                view.stringValue = conflict.map { "⚠️ \($0)，现在不会响应。" } ?? desc
+            }
+        }
+    }
+
+    /// 打字问 AI 的双击键选择（首页和设置页共用）。跟着 store 换选中项
+    func makeTypeAskDropdown() -> VPDropdown {
+        let store = SettingsStore.shared
+        let items = TypeAskHotkey.choices.map { VPDropdown.Item(value: $0.rawValue, title: "双击 \($0.symbol) \($0.displayName)") }
+            + [VPDropdown.Item(value: "none", title: "不设置")]
+        let popup = VPDropdown(items: items, selectedValue: store.typeAsk.modifier?.rawValue ?? "none",
+                               trackBg: theme.card,
+                               trackBorder: Self.dropdownBorder,
+                               textColor: theme.text, chevronColor: theme.text3)
+        popup.setAccessibilityLabel("\(TypeAskHotkey.title)快捷键")
+        popup.widthAnchor.constraint(equalToConstant: 150).isActive = true
+        popup.onSelect = { store.setTypeAsk(RecordingHotkeyModifier(rawValue: $0)) }
+        popup.subscribe(store.$typeAsk.map { $0.modifier?.rawValue ?? "none" }.removeDuplicates()) { popup, value in
+            if popup.selectedValue != value { popup.setSelectedValue(value) }
+        }
+        return popup
+    }
+
+    func makeTypeAskRow() -> NSView {
+        let desc = "截下此刻的屏幕，弹出输入框打字提问，回车发送。不方便说话的时候用。回答浮窗还在时就是追问。"
+        return makeAskCursorRow(title: TypeAskHotkey.title, desc: desc, control: makeTypeAskDropdown()) { descLabel in
+            descLabel.subscribe(SettingsStore.shared.$typeAsk.map(\.conflict).removeDuplicates()) { view, conflict in
                 view.stringValue = conflict.map { "⚠️ \($0)，现在不会响应。" } ?? desc
             }
         }

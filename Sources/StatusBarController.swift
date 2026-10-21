@@ -101,6 +101,7 @@ class StatusBarController {
     private func updateHotkeyHint() {
         hotkeyHintItem.isEnabled = false
         let hints = [AskHotkey.screen, AskHotkey.plain].filter(\.isActive).map { "\($0.title) \($0.displayName)" }
+            + (TypeAskHotkey.isActive() ? ["\(TypeAskHotkey.title) \(TypeAskHotkey.displayName())"] : [])
         hotkeyHintItem.title = hints.isEmpty ? "快捷键：未设置（在设置里选择）" : "快捷键：" + hints.joined(separator: " · ")
     }
 

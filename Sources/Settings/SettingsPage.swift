@@ -285,6 +285,7 @@ extension SettingsWindowController {
         let rows: [NSView] = [
             makeAskHotkeyRow(.screen, desc: "按下那一刻鼠标指在哪，AI 就重点看哪。回答浮窗还在时再按就是追问。"),
             makeAskHotkeyRow(.plain, desc: "不截屏，更快一点，屏幕上的内容也不会发出去。"),
+            makeTypeAskRow(),
         ]
         for row in rows {
             column.addArrangedSubview(row)

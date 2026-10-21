@@ -247,3 +247,48 @@ class HotkeyManager {
                                     isPressedNow: isHotkeyCurrentlyPressed(shortcut)))
     }
 }
+
+/// 打字问 AI 的双击监听（默认双击 Control）。和 HotkeyManager 一样只旁听，不拦事件；双击规则在 Core 的 DoubleTapDetector。
+final class DoubleTapMonitor {
+    private var monitors: [Any] = []
+    private var detector = DoubleTapDetector(target: [])
+    /// nil = 没设或和说话提问的键撞了，这时不响应。config 每读一次都要读盘，所以只在设置变了时重读
+    private var modifier: RecordingHotkeyModifier?
+    private let onDoubleTap: () -> Void
+
+    init(onDoubleTap: @escaping () -> Void) {
+        self.onDoubleTap = onDoubleTap
+        reload()
+        let flags = NSEvent.EventTypeMask.flagsChanged
+        let interrupts: NSEvent.EventTypeMask = [.keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown]
+        monitors = [
+            NSEvent.addGlobalMonitorForEvents(matching: flags) { [weak self] in self?.handle($0) },
+            NSEvent.addLocalMonitorForEvents(matching: flags) { [weak self] in self?.handle($0); return $0 },
+            NSEvent.addGlobalMonitorForEvents(matching: interrupts) { [weak self] _ in self?.interrupt() },
+            NSEvent.addLocalMonitorForEvents(matching: interrupts) { [weak self] in self?.interrupt(); return $0 },
+        ].compactMap { $0 }
+        NotificationCenter.default.addObserver(self, selector: #selector(reload), name: .askFreeHotkeyDidChange, object: nil)
+    }
+
+    func stop() {
+        monitors.forEach(NSEvent.removeMonitor)
+        monitors = []
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func handle(_ event: NSEvent) {
+        guard modifier != nil, !HotkeyManager.isSuspended else { return }
+        if detector.handle(.flagsChanged(rawFlags: UInt64(event.modifierFlags.rawValue), at: event.timestamp)) {
+            onDoubleTap()
+        }
+    }
+
+    private func interrupt() {
+        _ = detector.handle(.interrupt)
+    }
+
+    @objc private func reload() {
+        modifier = TypeAskHotkey.isActive() ? TypeAskHotkey.current() : nil
+        detector = DoubleTapDetector(target: modifier?.flag ?? [])
+    }
+}

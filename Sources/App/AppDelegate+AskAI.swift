@@ -156,12 +156,23 @@ extension AppDelegate {
                 case .success(let answer):
                     self.debugLog("ASK answered chars=\(answer.count) \(self.askTiming.summary(totalMs: totalMs))")
                     self.answerPanel.finish(answer: answer)
+                    self.recordHistory(thread: thread, question: question, answer: answer)
                 case .failure(let err):
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
                     self.debugLog("ASK failed: \(reason) \(self.askTiming.summary(totalMs: totalMs))")
                     self.answerPanel.fail("回答失败：\(reason)")
                 }
             }
+        }
+    }
+
+    /// 答完的一轮记进历史（只有文字），开着的历史页跟着刷新
+    private func recordHistory(thread: String, question: String, answer: String) {
+        do {
+            try AskHistoryStore.shared.append(AskHistoryTurn(thread: thread, question: question, answer: answer))
+            NotificationCenter.default.post(name: .askFreeHistoryDidChange, object: nil)
+        } catch {
+            debugLog("ASK history write failed: \(error)")
         }
     }
 

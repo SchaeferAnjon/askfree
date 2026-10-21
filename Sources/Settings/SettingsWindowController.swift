@@ -19,6 +19,7 @@ protocol SettingsWindowDelegate: AnyObject {
 final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTextFieldDelegate {
     enum Page: CaseIterable {
         case home
+        case history
         case model
         case settings
         case about
@@ -26,6 +27,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
         var title: String {
             switch self {
             case .home: return "首页"
+            case .history: return "历史"
             case .model: return "模型"
             case .settings: return "设置"
             case .about: return "关于"
@@ -35,6 +37,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
         var symbolName: String {
             switch self {
             case .home: return "house"
+            case .history: return "clock.arrow.circlepath"
             case .model: return "cpu"
             case .settings: return "gearshape"
             case .about: return "info.circle"
@@ -158,6 +161,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
             self,
             selector: #selector(permissionsMayHaveChanged),
             name: .askFreeAccessibilityGranted,
+            object: nil
+        )
+        // 刚答完一题：历史页开着就把它加进列表
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(historyDidChange),
+            name: .askFreeHistoryDidChange,
             object: nil
         )
         // 「设置 → 外观」切换，或系统深浅切换（含「自动」模式天黑天亮）：重新套外观
@@ -323,7 +333,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
         stack.setCustomSpacing(14, after: brand)
 
         let groups: [(String?, [(Page, String?)])] = [
-            ("工作台", [(.home, nil)]),
+            ("工作台", [(.home, nil), (.history, nil)]),
             ("配置", [(.model, nil), (.settings, nil)]),
             (nil, [(.about, nil)]),
         ]
@@ -506,6 +516,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
 
         switch page {
         case .home: buildHome(into: stack)
+        case .history: buildHistory(into: stack)
         case .model: buildModel(into: stack)
         case .settings: buildSettings(into: stack)
         case .about: buildAbout(into: stack)
@@ -570,6 +581,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTe
     var hotkeyMenuTarget: AskHotkey = .screen
     /// 展开了说明的卡片
     var expandedCards = Set<String>()
+
+    /// 历史页：话题列表（搜索、展开、删除时只重建它，搜索框不丢焦点）
+    weak var historyList: NSStackView?
+    weak var historyClearButton: VPButton?
+    var historyQuery = ""
+    var historyExpanded = Set<String>()
+    var historyLimit = HistoryPage.pageSize
 
     /// 问答模型分段当前显示的服务商顺序（豆包默认隐藏，见 makeAskModelCard）
     var askSegProviders: [String] = ["qwen", "deepseek", "none"]

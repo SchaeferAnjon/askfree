@@ -11,7 +11,7 @@ enum AppLinks {
 }
 
 /// 启动参数（scripts/dev_run.sh 透传）：
-/// - `-openPage <home|models|settings|about>`：启动后打开主窗口并切到该页，正式版也认
+/// - `-openPage <home|history|models|settings|about>`：启动后打开主窗口并切到该页，正式版也认
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效
 enum DevLaunchOptions {
@@ -21,6 +21,7 @@ enum DevLaunchOptions {
         guard let i = arguments.firstIndex(of: "-openPage"), i + 1 < arguments.count else { return nil }
         switch arguments[i + 1].lowercased() {
         case "home": return .home
+        case "history": return .history
         case "models", "model": return .model
         case "settings": return .settings
         case "about": return .about

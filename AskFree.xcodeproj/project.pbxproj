@@ -49,6 +49,7 @@
 		BAC3B30528F08B8B7365F887 /* MicrophoneRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBD6B87FE20993017771AFE /* MicrophoneRowView.swift */; };
 		C5C3AF0798126B52EE26790C /* AskFreeCore in Frameworks */ = {isa = PBXBuildFile; productRef = D724F3889579F56C96885303 /* AskFreeCore */; };
 		C6A7D5D7EA54676EE7AAA6EB /* VPToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16175C4AF7F3D2EC6358E96A /* VPToggle.swift */; };
+		C73D20172E7EBDADEAB034C1 /* HistoryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A76EF1461AECFA287D544670 /* HistoryPage.swift */; };
 		CEFE8F43AE100748B50C95EB /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF5DC5CBB30D7DD4243165E /* AppAppearance.swift */; };
 		D276659611C34E1606B8E4D7 /* AnswerPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1D4887D3CC754AFEDF22CF /* AnswerPanel.swift */; };
 		DA910A11F57413C0395846A4 /* statusbar-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 35BC95FD9432395907798308 /* statusbar-icon.png */; };
@@ -89,6 +90,7 @@
 		A0CB230834F1F8D755B800B1 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshot.swift; sourceTree = "<group>"; };
 		A518FA7F65153DCDE424E500 /* VPButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPButton.swift; sourceTree = "<group>"; };
+		A76EF1461AECFA287D544670 /* HistoryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPage.swift; sourceTree = "<group>"; };
 		A7D8739DD44131F7601B5571 /* AskTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskTiming.swift; sourceTree = "<group>"; };
 		AF9EE32E716AB8A5AB31D4F6 /* AppDelegate+Hotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Hotkeys.swift"; sourceTree = "<group>"; };
 		B5DEC545BA9158859B4A53BB /* VPSegmentedControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPSegmentedControl.swift; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 			children = (
 				919D0E64BCB97E278FD35F76 /* AboutPage.swift */,
 				88B3CFC5CC2982969682AEBE /* AskAISettings.swift */,
+				A76EF1461AECFA287D544670 /* HistoryPage.swift */,
 				E6951C06920BF05DFD4305B9 /* HomePage.swift */,
 				86A6B3A31E09DEE64F15D649 /* HotkeyMenu.swift */,
 				02C9892DC8AC3F3FEA46F8D6 /* ModelsPage.swift */,
@@ -336,6 +339,7 @@
 				9A5769A27A780CC3D923D05C /* AudioRecorder.swift in Sources */,
 				06E5CA6745F2A9A79E55B490 /* BrandMark.swift in Sources */,
 				0E2D967D9AF19EBC362E290F /* FlippedView.swift in Sources */,
+				C73D20172E7EBDADEAB034C1 /* HistoryPage.swift in Sources */,
 				9AA198274D98861BB31843E5 /* HomePage.swift in Sources */,
 				AE4C64FD964D4AAC3EF689BF /* HotkeyManager.swift in Sources */,
 				6A3C147E480778A69009DDF5 /* HotkeyMenu.swift in Sources */,

@@ -22,6 +22,8 @@ class StatusBarController {
         let menu = NSMenu()
         menu.addItem(withTitle: "打开 Ask Free", action: #selector(openSettingsCenter), keyEquivalent: "")
             .target = self
+        menu.addItem(withTitle: "历史记录", action: #selector(openHistory), keyEquivalent: "")
+            .target = self
         menu.addItem(NSMenuItem.separator())
         menu.addItem(micItem)
         rebuildMicSubmenu()
@@ -141,6 +143,13 @@ class StatusBarController {
     @objc private func openSettingsCenter() {
         DispatchQueue.main.async {
             self.delegate?.showSettingsCenter()
+        }
+    }
+
+    @objc private func openHistory() {
+        DispatchQueue.main.async {
+            guard let delegate = self.delegate else { return }
+            SettingsWindowController.show(delegate: delegate, initialPage: .history)
         }
     }
 

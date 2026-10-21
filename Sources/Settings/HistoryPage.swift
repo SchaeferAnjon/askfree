@@ -23,7 +23,7 @@ extension SettingsWindowController {
 
     func buildHistory(into stack: NSStackView) {
         stack.addArrangedSubview(pageHeader(eyebrow: "ASK FREE / 历史", title: "历史",
-                                             sub: "问过的问题和回答只存在这台 Mac 上，只有文字，不存截图。"))
+                                             sub: "问过的问题、回答、发给 AI 的截图和找到的图，只存在这台 Mac 上。"))
         stack.setCustomSpacing(20, after: stack.arrangedSubviews.last!)
 
         let search = NSSearchField()
@@ -177,6 +177,8 @@ extension SettingsWindowController {
         body.alignment = .leading
         body.spacing = 10
         body.edgeInsets = NSEdgeInsets(top: 0, left: 20 + time.intrinsicContentSize.width + 14, bottom: 16, right: 20)
+        // 截图、图片这几排按自己的宽度摆，不拉满
+        var rowsAtOwnWidth: [NSView] = []
         for (i, turn) in thread.turns.enumerated() {
             if i > 0 {
                 let eyebrow = label("追问 · \(Self.historyTimeFormatter.string(from: turn.at))", size: 11, weight: .medium, color: theme.text3)
@@ -190,8 +192,20 @@ extension SettingsWindowController {
             answer.maximumNumberOfLines = 0
             answer.lineBreakMode = .byWordWrapping
             answer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            if turn.hasScreenshot {
+                let shots = makeHistoryScreenshotRow(turn)
+                body.addArrangedSubview(shots)
+                rowsAtOwnWidth.append(shots)
+            }
             body.addArrangedSubview(answer)
             body.setCustomSpacing(18, after: answer)
+            if !turn.images.isEmpty {
+                let images = makeHistoryImagesRow(turn)
+                body.setCustomSpacing(12, after: answer)
+                body.addArrangedSubview(images)
+                body.setCustomSpacing(18, after: images)
+                rowsAtOwnWidth.append(images)
+            }
         }
 
         let copy = VPButton(title: "复制", style: .secondary, size: .small,
@@ -205,12 +219,58 @@ extension SettingsWindowController {
         actions.spacing = 8
         body.addArrangedSubview(actions)
 
-        for v in body.arrangedSubviews where v !== actions {
+        rowsAtOwnWidth.append(actions)
+        for v in body.arrangedSubviews where !rowsAtOwnWidth.contains(v) {
             v.widthAnchor.constraint(equalTo: body.widthAnchor,
                                      constant: -(body.edgeInsets.left + body.edgeInsets.right)).isActive = true
         }
         row.addArrangedSubview(body)
         body.widthAnchor.constraint(equalTo: row.widthAnchor).isActive = true
+        return row
+    }
+
+    /// 这一轮发给 AI 的两张截图（指针附近、整屏），点开用「预览」看原图
+    private func makeHistoryScreenshotRow(_ turn: AskHistoryTurn) -> NSView {
+        let urls = AskHistoryStore.shared.screenshotURLs(turnID: turn.id)
+        let height: CGFloat = 96
+        let thumbs: [NSView] = [urls.closeUp, urls.overview].compactMap { url in
+            guard let image = NSImage(contentsOf: url) else { return nil }
+            let aspect = image.size.height > 0 ? image.size.width / image.size.height : 1
+            let thumb = HistoryThumbView(size: NSSize(width: min(height * aspect, 280), height: height), theme: theme) {
+                NSWorkspace.shared.open(url)
+            }
+            thumb.image = image
+            thumb.toolTip = "发给 AI 的画面，红框框住的是你指着的地方。点开看原图"
+            return thumb
+        }
+        let row = NSStackView(views: thumbs)
+        row.orientation = .horizontal
+        row.spacing = 8
+        return row
+    }
+
+    /// 回答附的图：先用存在本机的缩略图，没存下来的再去网上取；点开用浏览器看原图
+    private func makeHistoryImagesRow(_ turn: AskHistoryTurn) -> NSView {
+        let thumbs: [NSView] = turn.images.enumerated().map { i, image in
+            let thumb = HistoryThumbView(size: NSSize(width: 120, height: 160), theme: theme) {
+                if let url = URL(string: image.full) { NSWorkspace.shared.open(url) }
+            }
+            thumb.toolTip = image.title.isEmpty ? image.pageURL : image.title
+            if let local = NSImage(contentsOf: AskHistoryStore.shared.imageThumbURL(turnID: turn.id, index: i)) {
+                thumb.image = local
+            } else if let url = URL(string: image.thumb) {
+                var request = URLRequest(url: url)
+                request.timeoutInterval = 15
+                URLSession.shared.dataTask(with: request) { [weak thumb] data, _, _ in
+                    guard let data, let image = NSImage(data: data) else { return }
+                    DispatchQueue.main.async { thumb?.image = image }
+                }.resume()
+            }
+            return thumb
+        }
+        let row = NSStackView(views: thumbs)
+        row.orientation = .horizontal
+        row.spacing = 8
         return row
     }
 
@@ -357,5 +417,42 @@ extension SettingsWindowController {
         }
         historyExpanded.removeAll()
         reloadHistoryList()
+    }
+}
+
+/// 历史里的一张小图：填满格子、圆角细边，点一下打开
+private final class HistoryThumbView: NSView {
+    private let onClick: () -> Void
+    var image: NSImage? {
+        didSet { layer?.contents = image }
+    }
+
+    init(size: NSSize, theme: VPTheme, onClick: @escaping () -> Void) {
+        self.onClick = onClick
+        super.init(frame: NSRect(origin: .zero, size: size))
+        wantsLayer = true
+        layer?.cornerRadius = 6
+        layer?.masksToBounds = true
+        layer?.borderWidth = 1
+        layer?.setAppearanceBorder(theme.sep)
+        layer?.setAppearanceBackground(theme.cardAlt)
+        layer?.contentsGravity = .resizeAspectFill
+        translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalToConstant: size.width),
+            heightAnchor.constraint(equalToConstant: size.height),
+        ])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        if bounds.contains(convert(event.locationInWindow, from: nil)) { onClick() }
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
     }
 }

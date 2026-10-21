@@ -125,7 +125,7 @@ public class AskAI {
         return cues.contains { question.contains($0) }
     }
 
-    /// 提问时附带的屏幕内容。只随当轮发送：历史里只留文字，不重复传图，也不写进历史文件。
+    /// 提问时附带的屏幕内容。只随当轮发送：对话上下文里只留文字，不重复传图（历史另存一份，见 AskHistoryStore）。
     public struct AskScreenContext {
         public let overviewJPEG: Data
         public let closeUpJPEG: Data

@@ -21,7 +21,7 @@
    - **问答模型**：DeepSeek（最快，需要时自己联网，[控制台](https://platform.deepseek.com/api_keys)）或阿里百炼千问（自带联网搜索，[控制台](https://bailian.console.aliyun.com/)）。
 3. 三项系统权限：麦克风、辅助功能（全局快捷键）、屏幕录制（看屏幕问）。
 
-Key 存在系统钥匙串里，配置在 `~/.config/askfree/`。语音和问题直连你选的服务商，不经过任何中间服务器；截图只用于当次提问，不保存。问答历史只存文字，在 `~/.config/askfree/history.jsonl`（仅本机、仅你可读）。
+Key 存在系统钥匙串里，配置在 `~/.config/askfree/`。语音和问题直连你选的服务商，不经过任何中间服务器；问答历史存在本机 `~/.config/askfree/`（仅你可读）：文字在 `history.jsonl`，发给模型的截图和找到的图的缩略图在 `history-images/`，在「历史」页能删。
 
 ## 从源码编译
 

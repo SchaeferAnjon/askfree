@@ -1,7 +1,7 @@
 import Foundation
 
 /// 联网回答附的图。thumb 给回答下方的小图，full 点开看大图，pageURL 是图所在的网页（来源）。
-public struct AskImage: Equatable, Sendable, Identifiable {
+public struct AskImage: Codable, Equatable, Sendable, Identifiable {
     public var id: String { full }
     public let thumb: String
     public let full: String

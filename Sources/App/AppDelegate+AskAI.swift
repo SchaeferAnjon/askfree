@@ -68,7 +68,7 @@ extension AppDelegate {
         askRound += 1
         let round = askRound
         if appending { answerPanel.appendQuestion(question) } else { answerPanel.startThread(question: question) }
-        // 图只随当轮发：历史里只留文字，多轮追问不重复传图，历史文件里更不会有截图。
+        // 图只随当轮发：多轮追问不重复传图（截图另存进历史，见 recordHistory）。
         // 追问照样截图，但先只发文字，模型说要看屏幕才发（AskScreenTool）
         resolveAskScreen { screen, note in
             self.sendAsk(question: question, history: history, screen: screen, screenNote: note, round: round)
@@ -100,6 +100,7 @@ extension AppDelegate {
                          screenNote: String?,
                          round: Int) {
         let thread = answerPanel.threadID
+        let draft = AskHistoryDraft()
         askInFlight = true
         // 问题已经发出，回答在面板里流式显示：放开录音，别让所有快捷键在回答的十几秒里都没反应
         finishAsk()
@@ -121,10 +122,12 @@ extension AppDelegate {
             self.askSlowHintWork?.cancel()
             self.answerPanel.updatePartial(partial)
         }, onImages: { [weak self] images in
+            self?.recordHistoryImages(images, draft: draft)
             // 只挂在还是这一话题、这一轮的浮窗上；用户已经问了下一题就丢掉
             guard let self, self.askRound == round, self.answerPanel.threadID == thread else { return }
             self.answerPanel.setImages(images)
         }, onScreenUsed: { [weak self] in
+            draft.screenUsed = true
             // 追问时模型不一定看屏幕：真发给它了才挂截图，没挂就是只按前面的对话答的
             guard let self, let screen, self.askRound == round else { return }
             self.answerPanel.setScreenshot(overviewJPEG: screen.overviewJPEG, closeUpJPEG: screen.closeUpJPEG)
@@ -156,7 +159,8 @@ extension AppDelegate {
                 case .success(let answer):
                     self.debugLog("ASK answered chars=\(answer.count) \(self.askTiming.summary(totalMs: totalMs))")
                     self.answerPanel.finish(answer: answer)
-                    self.recordHistory(thread: thread, question: question, answer: answer)
+                    self.recordHistory(draft, thread: thread, question: question, answer: answer,
+                                       screen: draft.screenUsed ? screen : nil)
                 case .failure(let err):
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
                     self.debugLog("ASK failed: \(reason) \(self.askTiming.summary(totalMs: totalMs))")
@@ -166,13 +170,37 @@ extension AppDelegate {
         }
     }
 
-    /// 答完的一轮记进历史（只有文字），开着的历史页跟着刷新
-    private func recordHistory(thread: String, question: String, answer: String) {
+    /// 答完的一轮记进历史：文字、真发给模型的截图、已经到了的图；开着的历史页跟着刷新
+    private func recordHistory(_ draft: AskHistoryDraft, thread: String, question: String, answer: String,
+                               screen: AskAI.AskScreenContext?) {
+        let turn = AskHistoryTurn(id: draft.id, thread: thread, question: question, answer: answer, images: draft.images)
         do {
-            try AskHistoryStore.shared.append(AskHistoryTurn(thread: thread, question: question, answer: answer))
+            try AskHistoryStore.shared.append(turn, screenshot: screen.map { ($0.overviewJPEG, $0.closeUpJPEG) })
+            draft.recorded = true
             NotificationCenter.default.post(name: .askFreeHistoryDidChange, object: nil)
         } catch {
             debugLog("ASK history write failed: \(error)")
+        }
+        saveHistoryThumbs(draft)
+    }
+
+    /// 图和回答谁先到不一定：回答没记下就先放着，记下了就补进那一轮
+    private func recordHistoryImages(_ images: [AskImage], draft: AskHistoryDraft) {
+        draft.images = images
+        guard draft.recorded else { return }
+        do {
+            try AskHistoryStore.shared.setImages(images, turnID: draft.id)
+        } catch {
+            debugLog("ASK history images write failed: \(error)")
+        }
+        saveHistoryThumbs(draft)
+    }
+
+    /// 图的缩略图存一份到本机，存好了让历史页换成本机的
+    private func saveHistoryThumbs(_ draft: AskHistoryDraft) {
+        guard draft.recorded, !draft.images.isEmpty else { return }
+        AskHistoryStore.shared.saveImageThumbs(draft.images, turnID: draft.id) {
+            NotificationCenter.default.post(name: .askFreeHistoryDidChange, object: nil)
         }
     }
 
@@ -283,4 +311,12 @@ extension AppDelegate {
             }
         }
     }
+}
+
+/// 正在问的这一轮要记进历史的东西。回答、截图用没用、找到的图分别从不同回调到，先攒在这里
+private final class AskHistoryDraft {
+    let id = UUID().uuidString
+    var screenUsed = false
+    var images: [AskImage] = []
+    var recorded = false
 }

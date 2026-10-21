@@ -324,10 +324,18 @@ final class AnswerPanel {
         ) { [weak self] _ in self?.refreshHotkeyHint() }
     }
 
-    /// 底栏提示里写实际生效的问 AI 快捷键（优先看屏幕问那套，底栏一行放不下两个）；
-    /// 两套都没设或都被占了，就不提快捷键
+    /// 底栏的追问提示按实际生效的快捷键写：说话键（优先看屏幕问那套，一行放不下两个说话键）和双击打字键，
+    /// 没设或被撞掉的不提
     private func refreshHotkeyHint() {
-        let hint = [AskHotkey.screen, AskHotkey.plain].first(where: \.isActive)?.displayName ?? ""
+        let voice = [AskHotkey.screen, AskHotkey.plain].first(where: \.isActive)?.displayName
+        let typing = TypeAskHotkey.isActive() ? TypeAskHotkey.displayName() : nil
+        let hint: String
+        switch (voice, typing) {
+        case let (voice?, typing?): hint = "追问：按 \(voice) 或长按这里说话 · \(typing) 打字"
+        case let (voice?, nil): hint = "再按 \(voice) 或长按这里继续追问 · 点 ✕ 结束这个话题"
+        case let (nil, typing?): hint = "追问：长按这里说话 · \(typing) 打字"
+        case (nil, nil): hint = "长按这里继续追问 · 点 ✕ 结束这个话题"
+        }
         if model.hotkeyHint != hint { model.hotkeyHint = hint }
     }
 
@@ -722,7 +730,7 @@ final class AnswerModel: ObservableObject {
     @Published var copied = false
     enum FooterState { case idle, listening, processing, noSpeech, cancelled }
     @Published var footer: FooterState = .idle
-    /// 生效中的问 AI 快捷键名（如「右 Option」）；空 = 没有可用的快捷键，底栏只提长按
+    /// 底栏的追问提示，按生效中的快捷键写好（refreshHotkeyHint）
     @Published var hotkeyHint = ""
     let wave = PanelWaveClock()
     @Published var maxContentHeight: CGFloat = 400
@@ -867,10 +875,9 @@ struct AnswerView: View {
         HStack(spacing: 4) {
             switch model.footer {
             case .idle:
-                Text(model.hotkeyHint.isEmpty
-                     ? "长按这里继续追问 · 点 ✕ 结束这个话题"
-                     : "再按 \(model.hotkeyHint) 或长按这里继续追问 · 点 ✕ 结束这个话题")
+                Text(model.hotkeyHint)
                     .font(.system(size: 11))
+                    .lineLimit(1)
                     .foregroundStyle(.tertiary)
             case .listening:
                 Color.clear.frame(width: 1, height: 1)

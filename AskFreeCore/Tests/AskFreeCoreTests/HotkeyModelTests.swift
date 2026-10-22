@@ -53,9 +53,9 @@ final class HotkeyModelTests: XCTestCase {
         XCTAssertNil(AskHotkey.screen.current(in: config))
     }
 
-    func testUnknownAskModifierFallsBackToDefault() {
+    func testUnknownAskModifierMeansUnset() {
         config.save(value: "hyper", forKey: "ask_hotkey_modifier")
-        XCTAssertEqual(AskHotkey.screen.current(in: config), .modifier(.rightOption))
+        XCTAssertNil(AskHotkey.screen.current(in: config))
     }
 
     func testSavedCustomKeepsRawModifierBitsAndDefaultsDisplay() {
@@ -75,12 +75,13 @@ final class HotkeyModelTests: XCTestCase {
     // MARK: - 问 AI 快捷键读写
 
     func testAskHotkeyDefaults() {
-        XCTAssertEqual(AskHotkey.screen.current(in: config), .modifier(.rightOption))
+        // 默认都不设：各台电脑键盘不同，用户自己选
+        XCTAssertNil(AskHotkey.screen.current(in: config))
         XCTAssertNil(AskHotkey.plain.current(in: config))
-        XCTAssertTrue(AskHotkey.screen.isActive(in: config))
+        XCTAssertFalse(AskHotkey.screen.isActive(in: config))
         XCTAssertFalse(AskHotkey.plain.isActive(in: config))
         XCTAssertEqual(AskHotkey.plain.displayName(in: config), "未设置")
-        XCTAssertEqual(AskHotkey.screen.displayName(in: config), "⌥ 右 Option")
+        XCTAssertEqual(AskHotkey.screen.displayName(in: config), "未设置")
     }
 
     func testAskHotkeyUseModifierCustomAndClear() {
@@ -119,6 +120,7 @@ final class HotkeyModelTests: XCTestCase {
     // MARK: - 撞键
 
     func testPlainOverlapWithScreenModifier() {
+        AskHotkey.screen.useModifier(.rightOption, in: config)
         AskHotkey.plain.useCustom(optSpace, in: config)
         // 看屏幕问默认的右 Option 通用位也是 ⌥，和 ⌥Space 重叠
         XCTAssertEqual(AskHotkey.plain.conflict(in: config), "和「看屏幕问 AI」的快捷键重叠")
@@ -128,6 +130,7 @@ final class HotkeyModelTests: XCTestCase {
     }
 
     func testPlainConflictsWithScreenButNotViceVersa() {
+        AskHotkey.screen.useModifier(.rightOption, in: config)
         AskHotkey.plain.useModifier(.rightOption, in: config)   // 和看屏幕问的默认键相同
         XCTAssertEqual(AskHotkey.plain.conflict(in: config), "和「看屏幕问 AI」的快捷键相同")
         XCTAssertNil(AskHotkey.screen.conflict(in: config))   // 优先级更高的那一套照常
@@ -140,6 +143,7 @@ final class HotkeyModelTests: XCTestCase {
     }
 
     func testRightOptionDoesNotConflictWithOption() {
+        AskHotkey.screen.useModifier(.rightOption, in: config)
         // 纯提问 Option + 看屏幕问右 Option：不算撞，靠 leftOnly 分开
         AskHotkey.plain.useModifier(.option, in: config)
         XCTAssertNil(AskHotkey.plain.conflict(in: config))
@@ -191,6 +195,7 @@ final class HotkeyModelTests: XCTestCase {
     // MARK: - 显示名
 
     func testArbiterShowsLeftOptionWhenRightIsTaken() {
+        AskHotkey.screen.useModifier(.rightOption, in: config)
         // 看屏幕问占右 Option，纯提问用 Option → 纯提问显示「左 Option」
         AskHotkey.plain.useModifier(.option, in: config)
         XCTAssertTrue(HotkeyArbiter.leftOnly(for: "ask_plain_hotkey", shortcut: .modifier(.option), in: config))
@@ -215,6 +220,7 @@ final class HotkeyModelTests: XCTestCase {
     }
 
     func testArbiterIgnoresInactiveHotkeys() {
+        AskHotkey.screen.useModifier(.rightOption, in: config)
         // 撞了键、不生效的那一套不参与让位
         AskHotkey.plain.useModifier(.rightOption, in: config)
         XCTAssertNotNil(AskHotkey.plain.conflict(in: config))

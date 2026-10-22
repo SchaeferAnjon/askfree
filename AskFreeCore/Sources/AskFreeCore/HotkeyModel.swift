@@ -278,8 +278,8 @@ public enum RecordingHotkeyShortcut: Equatable {
     }
 }
 
-/// 问 AI 的快捷键。两套：看屏幕问（默认右 Option，按下那一刻鼠标指在哪，截图上的标记就在哪）、
-/// 纯提问（不截屏，默认不设，用户自己录）。都只旁听键盘、不拦任何事件，
+/// 问 AI 的快捷键。两套：看屏幕问（按下那一刻鼠标指在哪，截图上的标记就在哪）、
+/// 纯提问（不截屏）。都默认不设：各台电脑键盘不同，用户自己选键。都只旁听键盘、不拦任何事件，
 /// 不像「修饰键 + 点击」那样要站在全系统鼠标点击的必经之路上。
 public struct AskHotkey {
     public let prefix: String
@@ -292,7 +292,7 @@ public struct AskHotkey {
         self.title = title
     }
 
-    public static let screen = AskHotkey(prefix: "ask_hotkey", defaultModifier: .rightOption, title: "看屏幕问 AI")
+    public static let screen = AskHotkey(prefix: "ask_hotkey", defaultModifier: nil, title: "看屏幕问 AI")
     public static let plain = AskHotkey(prefix: "ask_plain_hotkey", defaultModifier: nil, title: "只提问，不看屏幕")
 
     private var modeKey: String { "\(prefix)_mode" }

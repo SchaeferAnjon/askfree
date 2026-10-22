@@ -1,20 +1,15 @@
 import Foundation
 
-/// 打字问 AI：双击一颗修饰键（默认 Control），截下此刻的屏幕，弹出输入框打字提问。
+/// 打字问 AI：双击一颗修饰键（默认不设，用户自己选），截下此刻的屏幕，弹出输入框打字提问。
 /// 配置键 ask_type_double_tap 存 RecordingHotkeyModifier.rawValue，"none" = 不设置。
 public enum TypeAskHotkey {
     public static let key = "ask_type_double_tap"
-    public static let defaultModifier = RecordingHotkeyModifier.control
     public static let title = "打字问 AI"
     /// 可选的键。Fn 双击常被系统占（听写），右 Option / 右 Command 和通用键分不开左右双击，都不给
     public static let choices: [RecordingHotkeyModifier] = [.control, .command, .shift, .option]
 
     public static func current(in config: AskFreeConfig = .shared) -> RecordingHotkeyModifier? {
-        switch config.string(forKey: key) {
-        case "none": return nil
-        case let raw?: return RecordingHotkeyModifier(rawValue: raw) ?? defaultModifier
-        case nil: return defaultModifier
-        }
+        config.string(forKey: key).flatMap { RecordingHotkeyModifier(rawValue: $0) }
     }
 
     public static func set(_ modifier: RecordingHotkeyModifier?, in config: AskFreeConfig = .shared) {

@@ -90,8 +90,11 @@ final class TypeAskTests: XCTestCase {
 
     // MARK: - 配置
 
-    func testDefaultIsControl() {
-        XCTAssertEqual(TypeAskHotkey.current(in: config), .control)
+    func testDefaultIsUnset() {
+        XCTAssertNil(TypeAskHotkey.current(in: config))
+        XCTAssertEqual(TypeAskHotkey.displayName(in: config), "未设置")
+        XCTAssertFalse(TypeAskHotkey.isActive(in: config))
+        TypeAskHotkey.set(.control, in: config)
         XCTAssertEqual(TypeAskHotkey.displayName(in: config), "双击 ⌃ Control")
         XCTAssertTrue(TypeAskHotkey.isActive(in: config))
     }
@@ -105,8 +108,9 @@ final class TypeAskTests: XCTestCase {
         XCTAssertEqual(TypeAskHotkey.displayName(in: config), "未设置")
     }
 
-    /// 默认「看屏幕问」是右 Option：双击 Option 会撞，双击 Control 不撞
+    /// 「看屏幕问」用右 Option：双击 Option 会撞，双击 Control 不撞
     func testConflictWithVoiceHotkeyOnSameKey() {
+        AskHotkey.screen.useModifier(.rightOption, in: config)
         TypeAskHotkey.set(.option, in: config)
         XCTAssertNotNil(TypeAskHotkey.conflict(in: config))
         XCTAssertFalse(TypeAskHotkey.isActive(in: config))

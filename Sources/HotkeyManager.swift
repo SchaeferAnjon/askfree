@@ -248,7 +248,7 @@ class HotkeyManager {
     }
 }
 
-/// 打字问 AI 的双击监听（默认双击 Control）。和 HotkeyManager 一样只旁听，不拦事件；双击规则在 Core 的 DoubleTapDetector。
+/// 打字问 AI 的双击监听。和 HotkeyManager 一样只旁听，不拦事件；双击规则在 Core 的 DoubleTapDetector。
 final class DoubleTapMonitor {
     private var monitors: [Any] = []
     private var detector = DoubleTapDetector(target: [])

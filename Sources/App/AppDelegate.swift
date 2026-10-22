@@ -74,7 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, SettingsWindowDelegate {
     /// 有一轮回答还在路上。这期间新提问一律另起话题，面板上按住续聊先不接（上一轮还没答完，接不上）
     var askInFlight = false
     let answerPanel = AnswerPanel()
-    /// 打字问 AI：双击修饰键（默认 Control）弹出的输入框和它的监听
+    /// 打字问 AI：双击修饰键弹出的输入框和它的监听
     let typeAskPanel = TypeAskPanel()
     var typeAskMonitor: DoubleTapMonitor?
 

@@ -60,6 +60,8 @@ extension AppDelegate {
             if !didPromptForAccessibility {
                 let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
                 _ = AXIsProcessTrustedWithOptions(options)
+                // 用户在系统授权框上点「打开系统设置」后，旁边浮出能拖的图标
+                MainActor.assumeIsolated { PermissionDragHelper.shared.show(for: .accessibility) }
                 didPromptForAccessibility = true
             }
             if !didReportMissingAccessibility {
@@ -94,6 +96,7 @@ extension AppDelegate {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
         }
+        MainActor.assumeIsolated { PermissionDragHelper.shared.show(for: .accessibility) }
     }
 
     func openMicrophoneSettings() {

@@ -41,6 +41,7 @@
 		7D0D7B081D546EBC5FA1B725 /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D2191AB123F8F085C5C3CD /* SettingsPage.swift */; };
 		7D9E5E930E7BCD941CF15C18 /* VPDropdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068FC8DCE2CDB7D862F23899 /* VPDropdown.swift */; };
 		8C7931070D50CE5A4199CFF2 /* ModelsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C9892DC8AC3F3FEA46F8D6 /* ModelsPage.swift */; };
+		94667F3DC00B0FC7760D241C /* PermissionDragHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315440BC111A78CD6CC11E51 /* PermissionDragHelper.swift */; };
 		9A5769A27A780CC3D923D05C /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */; };
 		9AA198274D98861BB31843E5 /* HomePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6951C06920BF05DFD4305B9 /* HomePage.swift */; };
 		9BF896E95B79D1DE29F7E522 /* VPButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A518FA7F65153DCDE424E500 /* VPButton.swift */; };
@@ -67,6 +68,7 @@
 		16175C4AF7F3D2EC6358E96A /* VPToggle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPToggle.swift; sourceTree = "<group>"; };
 		1C16CC9C6099BAD32F8C1FE7 /* AskFree.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AskFree.icns; sourceTree = "<group>"; };
 		1D43DE03E5A88F954E258150 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		315440BC111A78CD6CC11E51 /* PermissionDragHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionDragHelper.swift; sourceTree = "<group>"; };
 		32ED7A931B40AAB6742E528D /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		3380BDE8DB6A892B921F092A /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		35BC95FD9432395907798308 /* statusbar-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "statusbar-icon.png"; sourceTree = "<group>"; };
@@ -188,6 +190,7 @@
 				1D43DE03E5A88F954E258150 /* main.swift */,
 				C65FF5D404E1E1042700722E /* MicrophoneManager.swift */,
 				89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */,
+				315440BC111A78CD6CC11E51 /* PermissionDragHelper.swift */,
 				A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */,
 				32ED7A931B40AAB6742E528D /* SettingsStore.swift */,
 				35BC95FD9432395907798308 /* statusbar-icon.png */,
@@ -355,6 +358,7 @@
 				14D89ADC72C3EB720D271315 /* OverlayStyleTile.swift in Sources */,
 				4033E8982B6CC0CAD71D9C6E /* OverlayWindow.swift in Sources */,
 				618B2BB8EB6B4BF342BE2CFE /* PendingAskScreen.swift in Sources */,
+				94667F3DC00B0FC7760D241C /* PermissionDragHelper.swift in Sources */,
 				46B1DDD7385CE1C76BB689EA /* ScreenSnapshot.swift in Sources */,
 				09A5873513B1F7A881AC3718 /* SettingsHelpers.swift in Sources */,
 				7D0D7B081D546EBC5FA1B725 /* SettingsPage.swift in Sources */,

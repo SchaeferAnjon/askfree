@@ -262,9 +262,7 @@ extension AppDelegate {
                 didPromptForScreenCapture = true
                 debugLog("AC: screen recording permission missing → prompting once")
                 // 第一次调会弹系统授权框；之前拒过就直接返回 false，这时才帮用户打开系统设置
-                if !ScreenSnapshotCapturer.requestPermission() {
-                    ScreenSnapshotCapturer.openSettings()
-                }
+                MainActor.assumeIsolated { ScreenSnapshotCapturer.requestOrOpenSettings() }
             }
             return
         }

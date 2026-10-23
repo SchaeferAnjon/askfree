@@ -59,9 +59,12 @@ enum ScreenSnapshotCapturer {
     @discardableResult
     static func requestPermission() -> Bool { CGRequestScreenCaptureAccess() }
 
-    /// 用户主动点「屏幕录制」：第一次弹系统授权框（同时把 Ask Free 登记进系统设置的列表），之后系统不再弹，直接打开设置页
+    /// 用户主动点「屏幕录制」：第一次弹系统授权框（同时把 Ask Free 登记进系统设置的列表），之后系统不再弹，直接打开设置页；
+    /// 两种情况系统设置一开，旁边都浮出能拖的图标
+    @MainActor
     static func requestOrOpenSettings() {
         if !requestPermission() { openSettings() }
+        PermissionDragHelper.shared.show(for: .screenRecording)
     }
 
     static func openSettings() {

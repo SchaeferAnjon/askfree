@@ -117,6 +117,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, SettingsWindowDelegate {
             requestMicrophonePermissionIfUndetermined()
             if AskSettings.isScreenshotEnabled, !ScreenSnapshotCapturer.hasPermission {
                 ScreenSnapshotCapturer.requestPermission()
+                // 用户在系统授权框上点「打开系统设置」后，旁边浮出能拖的图标；辅助功能也缺时稍后换成它的
+                PermissionDragHelper.shared.show(for: .screenRecording)
             }
         }
 

@@ -1,0 +1,897 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=1440"><title>Ask Free 欢迎引导 方向 A 侧栏步骤</title>
+<style>:root{
+  /* Ask Free 主色：图标的墨黑（BrandMark ink #141416）。主按钮、选中、开关打开、链接都用它；深色时反过来 */
+  --bg:#FAFAFA;--surface:#F4F4F5;--elevated:#FFFFFF;--hover:rgba(0,0,0,.04);--selected:rgba(0,0,0,.07);
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);
+  --text:#141416;--text2:#5E6068;--text3:#97999F;
+  --ink:#141416;--on-ink:#FFFFFF;--ink-soft:rgba(20,20,22,.07);
+  --ok:#2E8762;--ok-soft:rgba(46,135,98,.12);--warn:#C27A1A;--warn-soft:rgba(194,122,26,.12);--danger:#C24545;--danger-soft:rgba(194,69,69,.10);
+  --mark:#E5484D;
+  --desk:linear-gradient(160deg,#E3E4E8 0%,#D3D5DB 55%,#C8CAD1 100%);
+  --menubar:rgba(246,246,247,.78);
+  --win-shadow:0 0 0 .5px rgba(0,0,0,.18),0 22px 60px -10px rgba(20,20,30,.32),0 6px 16px rgba(20,20,30,.10);
+  --pop-shadow:0 0 0 .5px rgba(0,0,0,.12),0 12px 32px -6px rgba(20,20,30,.26);
+  --stage:#EFEFF1;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Segoe UI","Microsoft YaHei UI",system-ui,sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#1E1E1F;--surface:#232325;--elevated:#2A2A2C;--hover:rgba(255,255,255,.05);--selected:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
+  --text:#F5F5F7;--text2:#A1A1A8;--text3:#6E6E75;
+  --ink:#F5F5F7;--on-ink:#1E1E1F;--ink-soft:rgba(255,255,255,.08);
+  --ok:#4CC38A;--ok-soft:rgba(76,195,138,.15);--warn:#F0A548;--warn-soft:rgba(240,165,72,.15);--danger:#F07575;--danger-soft:rgba(240,117,117,.14);
+  --mark:#FF6369;
+  --desk:linear-gradient(160deg,#25262B 0%,#1B1C20 55%,#141518 100%);
+  --menubar:rgba(32,32,35,.78);
+  --win-shadow:0 0 0 .5px rgba(255,255,255,.12),0 22px 60px -10px rgba(0,0,0,.7),0 6px 16px rgba(0,0,0,.35);
+  --pop-shadow:0 0 0 .5px rgba(255,255,255,.12),0 12px 32px -6px rgba(0,0,0,.6);
+  --stage:#262628;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font:13px/1.5 var(--sans);color:var(--text);-webkit-font-smoothing:antialiased;text-autospace:normal;font-kerning:normal;background:var(--desk);user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font:inherit;color:var(--text);user-select:text;-webkit-user-select:text}
+svg{display:block}
+.tab{font-variant-numeric:tabular-nums}
+#desk{position:relative;width:1440px;height:887px;overflow:hidden;background:var(--desk)}
+
+/* 菜单栏 */
+.menubar{position:absolute;left:0;right:0;top:0;height:26px;display:flex;align-items:center;gap:4px;padding:0 10px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:13px;z-index:70}
+.menubar .sp{flex:1}
+.menubar .mi{display:flex;align-items:center;height:22px;padding:0 8px;border-radius:5px;color:var(--text);white-space:nowrap}
+.menubar .mi b{font-weight:600}
+.menubar .sys{display:flex;align-items:center;gap:2px;color:var(--text)}
+.menubar .sys svg{width:16px;height:16px}
+.menubar .af{position:relative;cursor:pointer}
+.menubar .af.on,.menubar .af:hover{background:var(--selected)}
+.menubar .af svg{width:17px;height:17px}
+.menubar .af .bdot{position:absolute;right:3px;bottom:3px;width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 1.5px var(--menubar)}
+.menubar .af.pulse::after{content:"";position:absolute;inset:-2px;border-radius:7px;border:1.5px solid var(--ink);animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.35)}}
+
+/* 窗口 */
+.win{position:absolute;background:var(--bg);border-radius:12px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column}
+.tl{display:flex;gap:8px;align-items:center}
+.tl i{width:12px;height:12px;border-radius:50%;background:#FF5F57;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.15)}
+.tl i:nth-child(2){background:#FEBC2E}.tl i:nth-child(3){background:#28C840}
+.tl.off i{background:var(--border2)}
+
+/* 控件 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex:none;height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--border2);background:var(--elevated);font-weight:500;font-size:13px}
+.btn:hover{background:var(--surface)}
+.btn.solid{background:var(--ink);color:var(--on-ink);border-color:transparent}
+.btn.solid:hover{opacity:.88}
+.btn[disabled]{opacity:.4;cursor:default;pointer-events:none}
+.btn.ghost{border-color:transparent;background:none;color:var(--text2)}
+.btn.ghost:hover{color:var(--text);background:var(--hover)}
+.btn.sm{height:24px;padding:0 10px;font-size:12px}
+.btn.lg{height:32px;padding:0 16px}
+.link{color:var(--text);text-decoration:underline;text-decoration-color:var(--border2);text-underline-offset:3px;cursor:pointer}
+.link:hover{text-decoration-color:var(--text)}
+.field{height:30px;width:100%;padding:0 10px;border-radius:6px;border:1px solid var(--border2);background:var(--elevated);outline:none;font-size:13px}
+.field:focus{border-color:var(--ink);box-shadow:0 0 0 3px var(--ink-soft)}
+.field.mono{font-family:var(--mono);font-size:12px}
+.field.mono::placeholder{font-family:var(--sans);font-size:13px;color:var(--text3)}
+.muted{color:var(--text2)}.faint{color:var(--text3)}.small{font-size:12px}
+.okc{color:var(--ok)}.warnc{color:var(--warn)}.badc{color:var(--danger)}
+.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:5px;font-size:11px;font-weight:500;background:var(--selected);color:var(--text2);white-space:nowrap}
+.chip.ink{background:var(--ink);color:var(--on-ink)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--text3)}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--danger)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:20px;height:20px;padding:0 6px;border-radius:5px;border:1px solid var(--border2);border-bottom-width:2px;background:var(--elevated);font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;vertical-align:middle}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--border2);border-top-color:var(--text);animation:sp .8s linear infinite;flex:none;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ico{width:16px;height:16px;flex:none;display:inline-flex;align-items:center;justify-content:center}
+.ico svg{width:16px;height:16px}
+/* 方角开关（偏好：方角开关） */
+.sw{width:32px;height:19px;border-radius:5px;background:var(--border2);position:relative;flex:none;cursor:pointer;transition:background .18s}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:3px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .18s}
+.sw.on{background:var(--ink)}
+:root[data-theme="dark"] .sw.on::after{background:#1E1E1F}
+.sw.on::after{transform:translateX(13px)}
+.seg{display:inline-flex;padding:2px;border-radius:7px;background:var(--selected);gap:2px}
+.seg button{height:24px;padding:0 10px;border-radius:5px;font-size:12px;color:var(--text2)}
+.seg button.on{background:var(--elevated);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:500}
+.group{border:1px solid var(--border);border-radius:8px;background:var(--elevated);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 14px;border-top:1px solid var(--border)}
+.row:first-child{border-top:0}
+.row .lb{flex:1;min-width:0}
+.row .lb b{display:block;font-weight:500}
+.row .lb span{display:block;font-size:12px;color:var(--text2);line-height:1.45}
+.state{display:inline-flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap}
+.state svg{width:14px;height:14px}
+
+/* 系统设置（示意） */
+.ss{z-index:40}
+.ss .side{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:14px 10px;flex:none}
+.ss .side .it{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:6px;font-size:12.5px;color:var(--text)}
+.ss .side .it i{width:16px;height:16px;border-radius:4px;background:var(--border2);flex:none}
+.ss .side .it.on{background:var(--selected);font-weight:500}
+.ss .main{flex:1;padding:16px 22px;overflow:hidden}
+.ss h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ss .desc{font-size:12px;color:var(--text2);margin:6px 0 12px}
+.ss .list{border:1px solid var(--border);border-radius:8px;background:var(--elevated);transition:box-shadow .15s,border-color .15s;position:relative}
+.ss .list.over{border-color:var(--ink);box-shadow:0 0 0 3px var(--ink-soft)}
+.ss .list .hint{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--ink-soft);font-weight:500;border-radius:8px}
+.ss .list.over .hint{display:flex}
+.ss .lr{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-top:1px solid var(--border)}
+.ss .lr:first-child{border-top:0}
+.ss .lr .ap{width:22px;height:22px;border-radius:5px;flex:none}
+.ss .lr .nm{flex:1}
+.ss .lr.new{animation:rowin .35s ease-out}
+@keyframes rowin{from{background:var(--ink-soft)}to{background:transparent}}
+.ss .pm{display:flex;gap:0;margin-top:8px}
+.ss .pm span{width:24px;height:22px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;background:var(--elevated)}
+.ss .pm span+span{border-left:0}
+
+/* 拖图标小面板：和 PermissionDragHelper 一样贴在系统设置右边 */
+.helper{position:absolute;z-index:45;width:340px;height:92px;display:flex;align-items:center;gap:14px;padding:0 14px;border-radius:12px;background:var(--elevated);box-shadow:var(--pop-shadow)}
+.helper .gr{width:52px;height:52px;border-radius:10px;border:1.2px dashed var(--ink);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:grab;flex:none;touch-action:none;transition:transform .15s}
+.helper .gr:hover{transform:scale(1.05)}
+.helper .gr.lift{opacity:.35}
+.helper .tx{flex:1;min-width:0}
+.helper .tx b{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600}
+.helper .tx b .ar{display:inline-flex;animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(1px)}50%{transform:translateX(-3px)}}
+.helper .tx span{display:block;font-size:12px;color:var(--text2);line-height:1.45;margin-top:2px}
+.helper .x{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.helper .x:hover{background:var(--hover)}
+.helper.done .gr{border-style:solid;border-color:var(--ok)}
+.ghost-icon{position:absolute;z-index:90;width:48px;height:48px;pointer-events:none;filter:drop-shadow(0 6px 12px rgba(0,0,0,.25));transform:translate(-24px,-24px)}
+
+/* 系统弹框 */
+.alert{position:absolute;z-index:80;width:260px;padding:18px 16px 14px;border-radius:12px;background:var(--elevated);box-shadow:var(--pop-shadow);text-align:center}
+.alert .ic{width:56px;height:56px;margin:0 auto 10px}
+.alert b{display:block;font-size:13px;font-weight:600;line-height:1.4}
+.alert p{font-size:11.5px;color:var(--text2);margin:6px 0 14px;line-height:1.45}
+.alert .bt{display:flex;flex-direction:column;gap:6px}
+.alert .bt button{height:28px;border-radius:6px;background:var(--selected);font-size:13px}
+.alert .bt button.pri{background:#0A84FF;color:#fff}
+
+/* 背后的 Safari 窗口：试问时被指着的内容 */
+.safari{left:470px;top:110px;width:900px;height:640px;z-index:5}
+.safari .bar{height:46px;flex:none;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border)}
+.safari .url{flex:1;max-width:420px;margin:0 auto;height:28px;border-radius:7px;background:var(--selected);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text2)}
+.safari .pg{padding:30px 48px;overflow:hidden}
+.safari h2{font-size:22px;font-weight:600;line-height:1.35}
+.safari .meta{font-size:12px;color:var(--text3);margin:6px 0 18px}
+.chart{border:1px solid var(--border);border-radius:8px;padding:14px 18px 10px;background:var(--elevated)}
+.chart .ct{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px}
+.chart .bars{display:flex;align-items:flex-end;gap:28px;height:150px;padding:0 10px;border-bottom:1px solid var(--border2)}
+.chart .b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.chart .b i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--text3)}
+.chart .b.hi i{background:var(--ink)}
+.chart .b em{font-style:normal;font-size:11px;color:var(--text2)}
+.chart .xs{display:flex;gap:28px;padding:5px 10px 0}
+.chart .xs span{flex:1;text-align:center;font-size:11px;color:var(--text3)}
+.safari p.para{margin-top:18px;font-size:14px;line-height:1.75;color:var(--text);max-width:68ch}
+
+/* 录音胶囊 */
+.capsule{position:absolute;z-index:85;left:50%;bottom:64px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:40px;padding:0 16px 0 12px;border-radius:20px;background:rgba(20,20,22,.92);color:#fff;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);white-space:nowrap}
+.capsule .wave{display:flex;align-items:center;gap:2px;height:18px}
+.capsule .wave i{width:3px;border-radius:2px;background:#fff;animation:wv .9s ease-in-out infinite}
+.capsule .wave i:nth-child(2){animation-delay:.15s}.capsule .wave i:nth-child(3){animation-delay:.3s}.capsule .wave i:nth-child(4){animation-delay:.45s}.capsule .wave i:nth-child(5){animation-delay:.6s}
+@keyframes wv{0%,100%{height:4px}50%{height:16px}}
+.capsule .hint{color:rgba(255,255,255,.55);font-size:12px}
+
+/* 回答面板（样子以提问浮层方案为准，这里只画到能看懂流程） */
+.answer{position:absolute;z-index:84;right:16px;top:36px;width:380px;border-radius:12px;background:var(--elevated);box-shadow:var(--pop-shadow);padding:14px 16px 12px;animation:fin .2s ease-out}
+@keyframes fin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.answer .hd{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.answer .hd .x{margin-left:auto;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center}
+.answer .hd .x:hover{background:var(--hover)}
+.answer .q{margin-top:10px;font-weight:500}
+.answer .shot{margin-top:8px;width:132px;height:74px;border-radius:6px;background:var(--stage);position:relative;overflow:hidden;border:1px solid var(--border)}
+.answer .shot .mb{position:absolute;bottom:10px;width:14px;background:var(--text3);border-radius:2px 2px 0 0}
+.answer .shot .fr{position:absolute;border:1.5px solid var(--mark);border-radius:2px}
+.answer .a{margin-top:10px;font-size:13px;line-height:1.65;min-height:44px}
+.answer .ft{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+
+/* 菜单栏菜单（系统菜单的样子） */
+.menu{position:absolute;z-index:75;width:280px;padding:5px;border-radius:9px;background:var(--elevated);box-shadow:var(--pop-shadow);font-size:13px}
+.menu .it{display:flex;align-items:center;gap:8px;height:24px;padding:0 9px;border-radius:5px;cursor:default;white-space:nowrap;position:relative}
+.menu .it.act:hover,.menu .it.open{background:#0A84FF;color:#fff}
+.menu .it.act:hover .faint,.menu .it.act:hover .muted,.menu .it.open .faint{color:rgba(255,255,255,.8)}
+.menu .it.act:hover .dot{box-shadow:0 0 0 1.5px #fff}
+.menu .it .sp{flex:1}
+.menu .it .ck{width:12px;text-align:center;flex:none}
+.menu .it.dis{color:var(--text3)}
+.menu .it.st{height:auto;padding:5px 9px 6px;align-items:flex-start;flex-direction:column;gap:1px;white-space:normal}
+.menu .it.st b{font-weight:500;display:flex;align-items:center;gap:7px}
+.menu .it.st small{font-size:12px;color:var(--text2);padding-left:14px}
+.menu .sep{height:1px;background:var(--border);margin:5px 9px}
+.menu .key{color:var(--text3);font-size:12px}
+.menu .sub{position:absolute;right:100%;top:-5px;margin-right:4px;width:300px;color:var(--text)}
+
+/* 提示气泡 */
+.tip{position:absolute;z-index:76;width:280px;padding:12px 14px;border-radius:10px;background:var(--ink);color:var(--on-ink);font-size:12.5px;line-height:1.5;box-shadow:var(--pop-shadow)}
+.tip::before{content:"";position:absolute;top:-6px;right:var(--ar,20px);width:12px;height:12px;background:var(--ink);transform:rotate(45deg);border-radius:2px}
+.tip b{font-weight:600;display:block;margin-bottom:2px}
+.tip .bt{display:flex;justify-content:flex-end;margin-top:8px}
+.tip .bt button{height:24px;padding:0 10px;border-radius:5px;background:rgba(127,127,127,.25);font-size:12px;color:inherit}
+
+.toast{position:absolute;z-index:95;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(20,20,22,.92);color:#fff;font-size:12px;padding:7px 12px;border-radius:7px;white-space:nowrap;animation:fin .2s ease-out}
+/* 原型控制条：只在原型里 */
+.proto{position:absolute;left:12px;bottom:12px;z-index:96;display:flex;gap:4px;align-items:center;padding:4px;border-radius:8px;background:rgba(20,20,22,.82);color:#fff;font-size:11.5px}
+.proto span{padding:0 6px;color:rgba(255,255,255,.55)}
+.proto button{height:22px;padding:0 8px;border-radius:5px;color:#fff}
+.proto button:hover{background:rgba(255,255,255,.14)}
+.fade{animation:fin .18s ease-out}
+
+/* 方向 A：侧栏步骤（和 GetNewWord 欢迎页同一副骨架） */
+.oa{left:110px;top:88px;width:900px;height:640px;z-index:20;flex-direction:row}
+.oa .side{width:236px;flex:none;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 12px 14px}
+.oa .brand{display:flex;align-items:center;gap:10px;margin:22px 6px 22px}
+.oa .brand b{display:block;font-size:15px;font-weight:600;line-height:1.3}
+.oa .brand small{display:block;font-size:12px;color:var(--text2)}
+.oa .st{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;text-align:left;width:100%}
+.oa .st:hover{background:var(--hover)}
+.oa .st.on{background:var(--elevated);box-shadow:0 0 0 1px var(--border)}
+.oa .st .o{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text2);flex:none}
+.oa .st.on .o{border-color:var(--ink);color:var(--text);font-weight:600}
+.oa .st .o.ok{border:0;color:var(--ok)}
+.oa .st .o.ok svg{width:22px;height:22px}
+.oa .st b{display:block;font-weight:500;line-height:1.35}
+.oa .st small{display:block;font-size:12px;color:var(--text2);line-height:1.35}
+.oa .side .sp{flex:1}
+.oa .skip{font-size:12px;color:var(--text2);padding:0 10px;text-align:left}
+.oa .skip:hover{color:var(--text)}
+.oa .body{flex:1;display:flex;flex-direction:column;min-width:0}
+.oa .scroll{flex:1;overflow:auto;padding:40px 44px 20px}
+.oa h1{font-size:22px;font-weight:600;line-height:1.35}
+.oa .sub{color:var(--text2);margin-top:6px;max-width:56ch}
+.oa .foot{height:60px;flex:none;display:flex;align-items:center;gap:8px;padding:0 20px 0 44px;border-top:1px solid var(--border)}
+.oa .foot .msg{flex:1;font-size:12px;color:var(--text2)}
+.oa .lbl{font-size:12px;font-weight:500;color:var(--text2);margin:20px 0 8px}
+.pcards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{position:relative;text-align:left;padding:12px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--elevated)}
+.pcard:hover{background:var(--surface)}
+.pcard.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.pcard b{display:flex;align-items:center;gap:6px;font-weight:500}
+.pcard span{display:block;font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
+.pcard .rd{position:absolute;right:12px;top:13px;width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border2)}
+.pcard.on .rd{border:4px solid var(--ink)}
+.res{min-height:40px;margin-top:8px;line-height:1.5}
+.more{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);margin-top:14px}
+.more:hover{color:var(--text)}
+.more .ico{width:12px;height:12px;transition:transform .15s}.more .ico svg{width:12px;height:12px}
+.more.open .ico{transform:rotate(90deg)}
+.reuse{display:flex;align-items:center;gap:10px;padding:14px;border-radius:8px;background:var(--ok-soft);color:var(--text)}
+.reuse .okc svg{width:16px;height:16px}
+.hkbox{padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--elevated)}
+.hkbox .hh{display:flex;align-items:center;gap:8px;font-weight:500}
+.hkbox .hd{font-size:12px;color:var(--text2);margin:4px 0 14px;line-height:1.55}
+.hknote{min-height:30px;margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.opt .row{min-height:48px}
+.opt .seg button{height:24px}
+.try{display:grid;grid-template-columns:300px 1fr;gap:24px;margin-top:22px}
+.try .tstage{border-radius:10px;background:var(--stage);padding:18px;display:flex;align-items:center}
+.try .chart{width:100%}
+.try .chart .bars{height:120px;gap:14px}.try .chart .xs{gap:14px}
+.steps3{display:flex;flex-direction:column;gap:12px}
+.steps3 .n{display:flex;gap:10px;align-items:flex-start}
+.steps3 .n i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--selected);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.prog{display:flex;gap:16px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.prog span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)}
+.prog span .c{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border2)}
+.prog span.done{color:var(--ok)}.prog span.done svg{width:14px;height:14px}
+.next4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.next4 div{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;background:var(--surface);font-size:12px}
+.next4 div.done{color:var(--ok)}
+.next4 div svg{width:14px;height:14px}
+.welcome-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.welcome-list div{padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:var(--elevated)}
+.welcome-list b{display:flex;align-items:center;gap:8px;font-weight:500}
+.welcome-list span{display:block;font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5}
+.privacy{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:12px;color:var(--text2)}
+</style></head><body>
+<script>/* ---------- 跟随方案页的浅色深色 ---------- */
+addEventListener("message", e => { if (e.data && e.data.type === "dispatch-theme") document.documentElement.dataset.theme = e.data.theme; });
+(function () {
+  const m = location.hash.match(/theme=(light|dark)/);
+  if (m) document.documentElement.dataset.theme = m[1];
+  else if (matchMedia("(prefers-color-scheme: dark)").matches) document.documentElement.dataset.theme = "dark";
+})();
+const HASH = Object.fromEntries(location.hash.replace(/^#/, "").split("&").filter(Boolean).map(kv => kv.split("=")));
+
+/* ---------- 图形 ---------- */
+// Ask Free 标志：指针 + 问号气泡，坐标取自 Sources/BrandMark.swift 的 1024 网格
+const Q_PATH = "M618,300 A42,42 0 1 1 680,337 C666,345 660,355 660,371 L660,379";
+const GLYPH = (q) => `<polygon points="300,268 300,690 404,590 470,744 540,714 474,562 616,562" fill="currentColor" stroke="currentColor" stroke-width="28" stroke-linejoin="round"/>
+  <circle cx="660" cy="330" r="128" fill="currentColor"/><polygon points="584,428 560,482 628,452" fill="currentColor"/>
+  <path d="${Q_PATH}" fill="none" stroke="${q}" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="${q}"/>`;
+const SVG_DEFS = `<svg width="0" height="0" style="position:absolute"><defs><mask id="qcut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/><path d="${Q_PATH}" fill="none" stroke="#000" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#000"/></mask></defs></svg>`;
+// 菜单栏模板图：问号抠空
+const MB_ICON = `<svg viewBox="247 190 580 580"><g mask="url(#qcut)" style="color:var(--text)"><polygon points="300,268 300,690 404,590 470,744 540,714 474,562 616,562" fill="currentColor" stroke="currentColor" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="currentColor"/><polygon points="584,428 560,482 628,452" fill="currentColor"/></g></svg>`;
+// 应用图标：白底黑图（深色模式下应用图标不变）
+const APP_ICON = `<svg viewBox="100 100 824 824"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.12)" stroke-width="6"/><g style="color:#141416">${GLYPH("#fff")}</g></svg>`;
+const I = {
+  check: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>',
+  checkc: '<svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M5 8.2l2 2 4-4.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  x: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>',
+  left: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8H3.5M7 4.5L3.5 8 7 11.5"/></svg>',
+  ext: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h-3v9h9v-3M9.5 3.5h3v3M12.5 3.5L7.5 8.5"/></svg>',
+  mic: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="2" width="5" height="8" rx="2.5"/><path d="M3.5 8a4.5 4.5 0 009 0M8 12.5V14"/></svg>',
+  hand: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5a1 1 0 012 0V8M6 7.5V3.5a1 1 0 012 0v4M8 7.5V4.5a1 1 0 012 0v3.5M10 8V6.5a1 1 0 012 0V10a4 4 0 01-4 4H7.5A3.5 3.5 0 014 10.5z"/></svg>',
+  screen: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="8.5" rx="1.5"/><path d="M6 14h4"/></svg>',
+  key: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="10.5" r="3"/><path d="M7.7 8.3L13 3M11 5l1.5 1.5"/></svg>',
+  wave: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 6.5v3M5.5 4.5v7M8 3v10M10.5 5v6M13 6.5v3"/></svg>',
+  chat: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 3.5h10v7H7l-3 2.5v-2.5H3z"/></svg>',
+  kb: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="1.5" y="4" width="13" height="8" rx="1.5"/><path d="M4 6.5h.01M6.5 6.5h.01M9 6.5h.01M11.5 6.5h.01M5 9.5h6"/></svg>',
+  play: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.5v9l7.5-4.5z"/></svg>',
+  chev: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>',
+  down: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>',
+  wifi: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 6.5a9 9 0 0112 0M4 8.8a6 6 0 018 0M6 11a3 3 0 014 0"/><circle cx="8" cy="13" r=".8" fill="currentColor"/></svg>',
+  batt: '<svg viewBox="0 0 22 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="4.5" width="17" height="7" rx="2"/><rect x="3" y="6" width="11" height="4" rx="1" fill="currentColor" stroke="none"/><path d="M20 7v2"/></svg>',
+  apple: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.2 8.4c0-1.5 1.2-2.2 1.3-2.3-.7-1-1.8-1.2-2.2-1.2-.9-.1-1.8.6-2.3.6s-1.2-.5-2-.5c-1 0-2 .6-2.5 1.6-1.1 1.9-.3 4.6.8 6.1.5.7 1.1 1.6 1.9 1.5.8 0 1-.5 2-.5s1.2.5 2 .5 1.3-.8 1.8-1.5c.6-.8.8-1.6.8-1.7 0 0-1.6-.6-1.6-2.6zM9.7 3.9c.4-.5.7-1.2.6-1.9-.6 0-1.3.4-1.7.9-.4.4-.7 1.1-.6 1.8.6 0 1.3-.3 1.7-.8z"/></svg>',
+};
+const icon = (k, cls = "") => `<span class="ico ${cls}">${I[k]}</span>`;
+const appIcon = (s) => `<span style="display:inline-flex;width:${s}px;height:${s}px;flex:none">${APP_ICON}</span>`;
+
+/* ---------- 共享状态 ---------- */
+const S = {
+  perm: { mic: "no", acc: "no", scr: "no" },     // no / ok / denied(麦克风) / relaunch(屏幕录制已允许但要重开)
+  asr: { prov: "volc", key: "", st: "idle", more: false, ver: "极速版" },
+  llm: { prov: "deepseek", key: "", st: "idle", more: false, model: "自动 · 质量优先（推荐）" },
+  hk: { main: null, plain: null, type: null }, recording: null,
+  mic: "default", tried: false, setupDone: false, front: "Ask Free",
+  mx: 0, my: 0, menu: false, sub: false, ask: null, answer: null,
+};
+const $ = (q, r = document) => r.querySelector(q);
+const HK = [
+  { id: "ropt", name: "右 Option", cap: "右 ⌥", codes: ["AltRight"] },
+  { id: "rcmd", name: "右 Command", cap: "右 ⌘", codes: ["MetaRight"] },
+  { id: "fn", name: "fn", cap: "fn 🌐", codes: [], note: "fn" },
+  { id: "ctrl", name: "Control", cap: "⌃ Control", codes: ["ControlLeft", "ControlRight"], note: "mod" },
+];
+const DBL = [
+  { id: "d-ctrl", name: "双击 Control", cap: "⌃⌃", codes: ["ControlLeft", "ControlRight"] },
+  { id: "d-opt", name: "双击 Option", cap: "⌥⌥", codes: ["AltLeft", "AltRight"] },
+  { id: "d-shift", name: "双击 Shift", cap: "⇧⇧", codes: ["ShiftLeft", "ShiftRight"] },
+];
+const PROV = {
+  volc: { name: "火山引擎（豆包）", short: "火山引擎", url: "console.volcengine.com/speech/app", how: "在控制台新建一个应用，复制它的「API Key」" },
+  bl: { name: "阿里百炼", short: "百炼", url: "bailian.console.aliyun.com", how: "在百炼控制台「API Key」页新建一个，复制下来" },
+  deepseek: { name: "DeepSeek", short: "DeepSeek", url: "platform.deepseek.com/api_keys", how: "登录后点「创建 API Key」，复制下来" },
+};
+const sharedKey = () => S.asr.prov === "bl" && S.llm.prov === "bl";
+const llmOK = () => S.llm.st === "ok" || (sharedKey() && S.asr.st === "ok");
+const permOK = k => S.perm[k] === "ok" || S.perm[k] === "relaunch";
+const REQ = () => [
+  ["mic", "麦克风", S.perm.mic === "ok"], ["acc", "辅助功能", permOK("acc")], ["scr", "屏幕录制", permOK("scr")],
+  ["asr", "语音识别 Key", S.asr.st === "ok"], ["llm", "问答模型 Key", llmOK()], ["hk", "提问键", !!S.hk.main],
+];
+const missing = () => REQ().filter(r => !r[2]);
+const keyCap = (h) => h ? `<span class="kbd">${h.cap}</span>` : `<span class="faint">未设置</span>`;
+
+/* ---------- 桌面骨架 ---------- */
+function deskHTML(extra = "") {
+  return `${SVG_DEFS}<div id="desk"><div class="menubar" id="mb"></div>
+  <div class="win safari" id="safari"><div class="bar"><div class="tl off"><i></i><i></i><i></i></div><div class="url">investor.example.com/2025/q4</div></div>
+    <div class="pg"><h2>2025 年第四季度业绩简报</h2><div class="meta">发布于 2026 年 1 月 28 日 · 投资者关系</div>
+      <div class="chart" data-ask="chart"><div class="ct">各季度营收（亿元）</div>
+        <div class="bars"><div class="b"><em>3.2</em><i style="height:55%"></i></div><div class="b"><em>4.1</em><i style="height:70%"></i></div><div class="b hi"><em>5.6</em><i style="height:96%"></i></div><div class="b"><em>5.2</em><i style="height:89%"></i></div></div>
+        <div class="xs"><span>第一季度</span><span>第二季度</span><span>第三季度</span><span>第四季度</span></div></div>
+      <p class="para" data-ask="text">第四季度营收回落 7%，主要因为一部分老用户迁到了新的年付方案：收入按月确认，短期看起来少了，但续费率从 71% 升到 83%。管理层预计 2026 年上半年恢复增长。</p>
+    </div></div>
+  <div id="main"></div><div id="ov"></div>${extra}</div>`;
+}
+function renderMenubar() {
+  const dot = missing().length ? '<span class="bdot"></span>' : "";
+  $("#mb").innerHTML = `<span class="mi">${icon("apple")}</span><span class="mi"><b>${S.front}</b></span><span class="mi">文件</span><span class="mi">编辑</span><span class="mi">显示</span><span class="mi">窗口</span><span class="mi">帮助</span>
+    <span class="sp"></span><span class="mi sys">${I.batt}</span><span class="mi sys">${I.wifi}</span>
+    <span class="mi af ${S.menu ? "on" : ""} ${HOOK.pulse && HOOK.pulse() ? "pulse" : ""}" data-a="icon" data-part="菜单栏图标" title="Ask Free">${MB_ICON}${dot}</span>
+    <span class="mi tab">10月23日 周四 20:45</span>`;
+}
+
+/* ---------- 浮层容器 ---------- */
+function ov(id, html, cls = "") {
+  let el = document.getElementById(id);
+  if (!html) { if (el) el.remove(); return null; }
+  if (!el) { el = document.createElement("div"); el.id = id; $("#ov").appendChild(el); }
+  el.className = cls; el.innerHTML = html; return el;
+}
+let toastT;
+function toast(msg) { const el = ov("toast", msg, "toast"); clearTimeout(toastT); toastT = setTimeout(() => ov("toast", null), 2200); }
+
+/* ---------- 授权：麦克风系统弹框 ---------- */
+function micAlert() {
+  const el = ov("alert", `<div class="ic">${appIcon(56)}</div><b>“Ask Free”想访问麦克风。</b><p>Ask Free 要听你说出的问题，转成文字后再问 AI。</p>
+    <div class="bt"><button class="pri" data-a="mic:ok">允许</button><button data-a="mic:deny">不允许</button></div>`, "alert");
+  el.style.left = "590px"; el.style.top = "120px";
+}
+/* ---------- 授权：系统设置 + 拖图标 ---------- */
+const SS_X = 200, SS_Y = 130, SS_W = 720, SS_H = 470;
+function openSettings(kind) {
+  HOOK.onSettings && HOOK.onSettings(true);
+  const title = { acc: "辅助功能", scr: "屏幕与系统录音", mic: "麦克风" }[kind];
+  const desc = { acc: "允许下面的应用控制你的电脑。", scr: "允许下面的应用录制屏幕和系统声音。", mic: "允许下面的应用使用麦克风。" }[kind];
+  const rows = (kind === "mic" ? [["Ask Free", false, "af"], ["微信", true, "#2BAE66"], ["Zoom", true, "#2D8CFF"]] : kind === "acc" ? [["Raycast", true, "#FF6363"], ["Dispatch", true, "#8B7355"]] : [["Zoom", true, "#2D8CFF"], ["腾讯会议", true, "#3478F6"]]);
+  const rowHTML = ([n, on, c], isNew) => `<div class="lr ${isNew ? "new" : ""}">${c === "af" ? `<span class="ap">${APP_ICON}</span>` : `<span class="ap" style="background:${c}"></span>`}<span class="nm">${n}</span><span class="sw ${on ? "on" : ""}" ${n === "Ask Free" && kind === "mic" ? 'data-a="micToggle"' : ""}></span></div>`;
+  const el = ov("ss", `<div class="win ss" style="left:${SS_X}px;top:${SS_Y}px;width:${SS_W}px;height:${SS_H}px;flex-direction:row">
+    <div class="side"><div class="tl" style="margin:0 0 16px 4px"><i data-a="ssClose" style="cursor:pointer"></i><i></i><i></i></div>
+      ${["Wi‑Fi", "蓝牙", "网络", "通用", "外观", "辅助功能", "控制中心", "桌面与程序坞", "显示器", "隐私与安全性", "键盘"].map(n => `<div class="it ${n === "隐私与安全性" ? "on" : ""}"><i></i>${n}</div>`).join("")}</div>
+    <div class="main"><h3><span class="faint">${I.left.replace("<svg", '<svg width="16" height="16"')}</span>${title}</h3><div class="desc">${desc}</div>
+      <div class="list" id="ssList"><div class="hint">松开就加进列表</div>${rows.map(r => rowHTML(r)).join("")}</div><div class="pm"><span>+</span><span>−</span></div></div></div>`);
+  if (kind === "mic") {
+    helper(`<div class="gr" style="border:0;cursor:default">${I.mic.replace("<svg", '<svg width="24" height="24"')}</div><div class="tx"><b>麦克风不能拖，打开开关就行</b><span>在列表里找到 Ask Free，把它右边的开关打开。</span></div>`);
+    return;
+  }
+  helper(`<div class="gr" id="dragIcon" title="把图标拖进系统设置的列表">${appIcon(40)}</div><div class="tx"><b><span class="ar">${I.left.replace("<svg", '<svg width="13" height="13"')}</span>把图标拖进左边的列表</b><span>${kind === "scr" ? "拖进去开关就打开了，再按系统提示重开一次。" : "拖进去开关就打开了，提问键马上能用。"}</span></div><button class="x" data-a="ssClose">${I.x.replace("<svg", '<svg width="12" height="12"')}</button>`);
+  wireDrag(kind, rowHTML);
+}
+function helper(html) {
+  const el = ov("helper", html, "helper");
+  el.style.left = (SS_X + SS_W + 12) + "px"; el.style.top = (SS_Y + SS_H / 2 - 46) + "px";
+  el.dataset.part = "拖图标小面板";
+}
+function closeSettings() { ov("ss", null); ov("helper", null); ov("ghost", null); HOOK.onSettings && HOOK.onSettings(false); HOOK.render(); }
+function wireDrag(kind, rowHTML) {
+  const src = $("#dragIcon"); if (!src) return;
+  src.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    const desk = $("#desk").getBoundingClientRect();
+    const g = ov("ghost", APP_ICON, "ghost-icon");
+    const place = ev => { g.style.left = (ev.clientX - desk.left) + "px"; g.style.top = (ev.clientY - desk.top) + "px"; };
+    place(e); src.classList.add("lift");
+    const list = $("#ssList");
+    const over = ev => { const r = list.getBoundingClientRect(); return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom + 30; };
+    const move = ev => { place(ev); list.classList.toggle("over", over(ev)); };
+    const up = ev => {
+      document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up);
+      ov("ghost", null); src.classList.remove("lift"); list.classList.remove("over");
+      if (!over(ev)) { toast("没放进列表：把图标拖到左边系统设置的列表里再松开"); return; }
+      list.insertAdjacentHTML("beforeend", rowHTML(["Ask Free", true, "af"], true));
+      $("#helper").classList.add("done");
+      $("#helper .tx").innerHTML = `<b class="okc">${I.checkc.replace("<svg", '<svg width="14" height="14"')} 好了，Ask Free 已在列表里</b><span>${kind === "scr" ? "系统会请你重开一次 Ask Free。" : "这一项完成，马上回到设置。"}</span>`;
+      setTimeout(() => {
+        ov("ss", null); ov("helper", null); HOOK.onSettings && HOOK.onSettings(false);
+        if (kind === "scr") relaunchAlert(); else { S.perm.acc = "ok"; HOOK.onPerm && HOOK.onPerm("acc"); HOOK.render(); }
+      }, 1100);
+    };
+    document.addEventListener("pointermove", move); document.addEventListener("pointerup", up);
+  });
+}
+function relaunchAlert() {
+  S.perm.scr = "relaunch"; HOOK.render();
+  const el = ov("alert", `<div class="ic">${appIcon(56)}</div><b>“Ask Free”要重新打开后才能录制屏幕。</b><p>你也可以稍后再重开。</p>
+    <div class="bt"><button class="pri" data-a="relaunch">退出并重新打开</button><button data-a="relaunchLater">稍后</button></div>`, "alert");
+  el.style.left = "590px"; el.style.top = "120px";
+}
+function doRelaunch() {
+  ov("alert", null); const m = $("#main"); m.style.transition = "opacity .25s"; m.style.opacity = "0";
+  setTimeout(() => { S.perm.scr = "ok"; HOOK.onPerm && HOOK.onPerm("scr"); HOOK.render(); m.style.opacity = "1"; toast("Ask Free 重新打开了，接着刚才那一步"); }, 900);
+}
+
+/* ---------- 提问：胶囊 + 回答面板 ---------- */
+const TOPICS = {
+  chart: { q: "哪个季度涨得最多？", a: "第三季度涨得最多：营收从 4.1 亿涨到 5.6 亿，多了 1.5 亿，涨了大约 37%。第四季度反而回落到 5.2 亿。", fq: "那第四季度为什么降了？", fa: "图下面那段写了原因：一部分老用户换成了年付方案，收入按月确认，所以账面上少了；续费率从 71% 升到 83%，公司预计明年上半年恢复增长。", box: [52, 8, 30, 58] },
+  text: { q: "这段话是什么意思？", a: "意思是：第四季度收入少了 7%，不是因为用户跑了，而是不少人改成了年付。年付的钱按月记账，所以短期看着少；但留下来续费的人变多了（71% 到 83%）。", fq: "续费率是什么？", fa: "续费率是到期的用户里接着付费的比例。83% 就是 100 个到期的用户里有 83 个续了。", box: [10, 46, 112, 20] },
+  none: { q: "我现在看的是什么？", a: "你在看一份 2025 年第四季度的业绩简报：上面是各季度营收的柱状图，第三季度最高；下面一段解释第四季度为什么回落。", fq: "帮我总结成一句话。", fa: "全年增长、第三季度最好，第四季度因为改年付暂时回落，续费率反而更高。", box: [40, 20, 60, 36] },
+};
+let streamT;
+function topicAt(x, y) {
+  const d = $("#desk").getBoundingClientRect();
+  const el = document.elementFromPoint(x + d.left, y + d.top);
+  const t = el && el.closest("[data-ask]"); return t ? t.dataset.ask : "none";
+}
+function startAsk(src) {
+  if (S.ask) return;
+  if (missing().length) { HOOK.blocked && HOOK.blocked(); return; }
+  const follow = !!S.answer;
+  S.ask = { t0: Date.now(), topic: follow ? S.answer.topic : topicAt(S.mx, S.my), follow, src, tap: false, txt: "" };
+  HOOK.onAsk && HOOK.onAsk("listen");
+  const q = follow ? TOPICS[S.ask.topic].fq : TOPICS[S.ask.topic].q;
+  const cap = ov("capsule", `<span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="capTxt">${follow ? "追问：" : ""}正在听…</span><span class="hint" id="capHint">${src === "key" ? "松开就问" : "松开按钮就问"} · Esc 取消</span>`, "capsule");
+  cap.dataset.part = "录音胶囊";
+  let i = 0; clearInterval(S.ask.typer);
+  S.ask.typer = setTimeout(function tick() {
+    if (!S.ask) return; i++; S.ask.txt = q.slice(0, i); $("#capTxt").textContent = (follow ? "追问：" : "") + S.ask.txt;
+    if (i < q.length) S.ask.typer = setTimeout(tick, 70);
+  }, 450);
+}
+function releaseAsk() {
+  if (!S.ask) return;
+  if (S.ask.src === "key" && !S.ask.tap && Date.now() - S.ask.t0 < 320) { S.ask.tap = true; $("#capHint").textContent = "轻点模式：再点一下提问键结束 · Esc 取消"; return; }
+  finishAsk();
+}
+function finishAsk() {
+  const a = S.ask; if (!a) return; S.ask = null; clearTimeout(a.typer);
+  const T = TOPICS[a.topic], q = a.follow ? T.fq : T.q;
+  ov("capsule", `<span class="spin" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></span><span>识别中…</span>`, "capsule");
+  setTimeout(() => { ov("capsule", null); showAnswer(a.topic, q, a.follow ? T.fa : T.a, a.follow); }, 500);
+}
+function cancelAsk() { if (!S.ask) return; clearTimeout(S.ask.typer); S.ask = null; ov("capsule", null); toast("已取消，这次没有发出去"); HOOK.onAsk && HOOK.onAsk("cancel"); }
+function showAnswer(topic, q, a, follow) {
+  const T = TOPICS[topic]; const k = S.hk.main ? S.hk.main.cap : "提问键";
+  const prev = follow && S.answer ? S.answer.html : "";
+  const shot = `<div class="shot"><i class="mb" style="left:14px;height:26px"></i><i class="mb" style="left:36px;height:34px"></i><i class="mb" style="left:58px;height:48px;background:var(--ink)"></i><i class="mb" style="left:80px;height:44px"></i><span class="fr" style="left:${T.box[0]}px;top:${T.box[1]}px;width:${T.box[2]}px;height:${T.box[3]}px"></span></div>`;
+  const turn = `<div class="q">${q}</div>${follow ? "" : shot}<div class="a" id="ansTxt"></div>`;
+  const el = ov("answer", `<div class="hd"><span style="display:inline-flex;width:16px;height:16px;color:var(--text)"><svg viewBox="247 190 580 580"><g mask="url(#qcut)">${GLYPH("none")}</g></svg></span>Ask Free${follow ? " · 追问" : ""}<button class="x" data-a="closeAnswer">${I.x.replace("<svg", '<svg width="12" height="12"')}</button></div>
+    ${prev}${turn}<div class="ft">再按 <span class="kbd">${k}</span> 追问<span>开头说「新话题」另起</span><span>Esc 关闭</span></div>`, "answer");
+  el.dataset.part = "回答面板";
+  if (prev) el.querySelectorAll(".a").forEach((n, i, all) => { if (i < all.length - 1) n.removeAttribute("id"); });
+  S.answer = { topic, html: prev + turn.replace('id="ansTxt"', "") };
+  let i = 0; clearInterval(streamT);
+  streamT = setInterval(() => { i += 2; const t = document.getElementById("ansTxt"); if (!t) { clearInterval(streamT); return; } t.textContent = a.slice(0, i); if (i >= a.length) { clearInterval(streamT); S.answer.html = prev + `<div class="q">${q}</div>${follow ? "" : shot}<div class="a">${a}</div>`; HOOK.onAsk && HOOK.onAsk(follow ? "follow" : "answered"); } }, 28);
+}
+function closeAnswer() { clearInterval(streamT); S.answer = null; ov("answer", null); }
+
+/* ---------- 菜单栏菜单 ---------- */
+function micName() { return S.mic === "airpods" ? "AirPods Pro" : S.mic === "builtin" ? "MacBook Pro 麦克风" : "跟随系统（MacBook Pro 麦克风）"; }
+function menuHTML(top) {
+  const t = S.hk.type ? `<span class="key">${S.hk.type.cap}</span>` : "";
+  const sub = S.sub ? `<div class="menu sub">
+      <div class="it act" data-a="mic:default"><span class="ck">${S.mic === "default" ? "✓" : ""}</span>跟随系统默认（MacBook Pro 麦克风）</div><div class="sep"></div>
+      <div class="it act" data-a="mic:builtin"><span class="ck">${S.mic === "builtin" ? "✓" : ""}</span>MacBook Pro 麦克风（推荐）</div>
+      <div class="it act" data-a="mic:airpods"><span class="ck">${S.mic === "airpods" ? "✓" : ""}</span>AirPods Pro</div></div>` : "";
+  return `${top}<div class="sep"></div>
+    <div class="it act" data-a="m:type">打字问 AI…<span class="sp"></span>${t}</div>
+    <div class="it act" data-a="m:history">历史记录</div>
+    <div class="it act ${S.sub ? "open" : ""}" data-a="m:mic">麦克风<span class="sp"></span><span class="faint small">${S.mic === "airpods" ? "AirPods Pro" : S.mic === "builtin" ? "MacBook Pro" : "跟随系统"}</span><span style="display:inline-flex;width:12px">${I.chev}</span>${sub}</div>
+    <div class="sep"></div>
+    <div class="it act" data-a="m:open">打开 Ask Free</div>
+    <div class="it act" data-a="m:settings">设置…<span class="sp"></span><span class="key">⌘,</span></div>
+    <div class="sep"></div>
+    <div class="it act" data-a="m:quit">退出 Ask Free<span class="sp"></span><span class="key">⌘Q</span></div>`;
+}
+function statusRow() {
+  const m = missing();
+  if (!m.length) return `<div class="it st dis" data-part="菜单状态行"><b style="color:var(--text)"><span class="dot ok"></span>可以提问</b><small>按住 ${S.hk.main.cap} 看着屏幕问${S.hk.plain ? `，${S.hk.plain.cap} 只提问` : ""}</small></div>`;
+  return `<div class="it st dis" data-part="菜单状态行"><b style="color:var(--text)"><span class="dot warn"></span>还不能提问</b><small>还差 ${m.length} 项：${m.slice(0, 3).map(r => r[1]).join("、")}${m.length > 3 ? " 等" : ""}</small></div>`;
+}
+function showMenu(top) {
+  if (!S.menu) { ov("menu", null); return; }
+  const r = $(".menubar .af").getBoundingClientRect(), d = $("#desk").getBoundingClientRect(); const el = ov("menu", menuHTML(top), "menu"); el.style.left = Math.min(r.left - d.left - 5, 1440 - 286) + "px"; el.style.top = "28px"; el.dataset.part = "菜单栏菜单";
+}
+const MENU_ACT = {
+  type: () => toast("打开打字问的输入框（右上角，回车发送）"),
+  history: () => toast("打开主窗口的「历史」页"),
+  open: () => toast("打开主窗口（主窗口方案见 design/main-window）"),
+  settings: () => toast("打开主窗口的「设置」页"),
+  quit: () => toast("原型里不退出"),
+};
+
+/* ---------- 键盘：录提问键 / 用提问键提问 ---------- */
+const MODS = { AltRight: { id: "ropt", name: "右 Option", cap: "右 ⌥", codes: ["AltRight"] }, AltLeft: { id: "opt", name: "Option", cap: "⌥ Option", codes: ["AltLeft", "AltRight"], note: "mod" },
+  MetaRight: { id: "rcmd", name: "右 Command", cap: "右 ⌘", codes: ["MetaRight"] }, MetaLeft: { id: "cmd", name: "Command", cap: "⌘ Command", codes: ["MetaLeft", "MetaRight"], note: "mod" },
+  ControlLeft: HK[3], ControlRight: HK[3], ShiftLeft: { id: "shift", name: "Shift", cap: "⇧ Shift", codes: ["ShiftLeft", "ShiftRight"], note: "mod" }, ShiftRight: { id: "shift", name: "Shift", cap: "⇧ Shift", codes: ["ShiftLeft", "ShiftRight"], note: "mod" } };
+let recMod = null;
+function keyName(e) { return e.code.startsWith("Key") ? e.code.slice(3) : e.code.startsWith("Digit") ? e.code.slice(5) : e.code === "Space" ? "Space" : /^F\d+$/.test(e.code) ? e.code : e.key.length === 1 ? e.key.toUpperCase() : e.code; }
+addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (S.ask) cancelAsk(); else if (S.answer) closeAnswer(); else if (S.recording) { S.recording = null; HOOK.render(); } return; }
+  if (S.recording) {
+    e.preventDefault();
+    if (MODS[e.code]) { recMod = e.code; return; }
+    if (e.key === "Tab") return;
+    const mods = (e.ctrlKey ? "⌃" : "") + (e.altKey ? "⌥" : "") + (e.shiftKey ? "⇧" : "") + (e.metaKey ? "⌘" : "");
+    const nm = keyName(e);
+    if (!mods && !/^F\d+$/.test(nm)) { toast("单独一个字母会和打字冲突：加上 ⌃ ⌥ ⌘ 一起按，或者只按一颗修饰键"); return; }
+    setHK(S.recording, { id: "combo", name: mods + nm, cap: mods + " " + nm, codes: [e.code], combo: true }); recMod = null; return;
+  }
+  if (e.repeat || !S.hk.main || !HOOK.keyAsk || !HOOK.keyAsk()) return;
+  if (S.hk.main.codes.includes(e.code) && (!S.hk.main.combo || e.ctrlKey || e.altKey || e.metaKey || e.shiftKey)) {
+    e.preventDefault();
+    if (S.ask && S.ask.tap) { finishAsk(); return; }
+    startAsk("key");
+  }
+});
+addEventListener("keyup", e => {
+  if (S.recording && recMod === e.code) { setHK(S.recording, MODS[e.code]); recMod = null; return; }
+  if (S.ask && S.ask.src === "key" && S.hk.main && S.hk.main.codes.includes(e.code)) releaseAsk();
+});
+function setHK(slot, h) {
+  const other = ["main", "plain", "type"].find(s => s !== slot && S.hk[s] && S.hk[s].id === h.id);
+  if (other) { S.hk[other] = null; toast(`「${h.name}」原来给了别的问法，已改到这里`); }
+  S.hk[slot] = h; S.recording = null; HOOK.render();
+}
+document.addEventListener("pointermove", e => { const d = $("#desk"); if (!d) return; const r = d.getBoundingClientRect(); S.mx = e.clientX - r.left; S.my = e.clientY - r.top; });
+
+/* ---------- 按住按钮提问（键盘按不了时） ---------- */
+document.addEventListener("pointerdown", e => {
+  const h = e.target.closest("[data-hold]"); if (!h) return;
+  e.preventDefault(); h.classList.add("down");
+  // 指针位置按按钮旁边的示例算：data-hold 写着要问的内容
+  const r = $("#desk").getBoundingClientRect(); const tgt = document.querySelector(h.dataset.hold);
+  if (tgt && !S.answer) { const b = tgt.getBoundingClientRect(); S.mx = b.left - r.left + b.width * .62; S.my = b.top - r.top + b.height * .5; }
+  startAsk("button");
+  const up = () => { document.removeEventListener("pointerup", up); h.classList.remove("down"); if (S.ask) finishAsk(); };
+  document.addEventListener("pointerup", up);
+});
+
+/* ---------- 两个方向共用的片段 ---------- */
+function demoStage(h, compact) {
+  // 会动的示意：指针移到柱子上，按下提问键，胶囊出字，右上角出回答
+  return `<div class="demo ${compact ? "cmp" : ""}" style="height:${h}px" data-part="示意动画">
+    <div class="dm-scr"><div class="dm-bars"><i style="height:34%"></i><i style="height:48%"></i><i class="hi" style="height:78%"></i><i style="height:70%"></i></div>
+      <span class="dm-ptr"><svg viewBox="280 250 360 510"><polygon points="300,268 300,690 404,590 470,744 540,714 474,562 616,562" fill="var(--ink)" stroke="var(--bg)" stroke-width="30" stroke-linejoin="round" paint-order="stroke"/></svg></span>
+      <span class="dm-fr"></span>
+      <span class="dm-cap"><i></i><i></i><i></i>哪个季度涨得最多？</span>
+      <span class="dm-ans"><b>第三季度</b>，涨了约 37%。</span></div>
+    <div class="dm-key"><span class="kbd dm-k">提问键</span><span class="dm-lb">按住说，松开就问</span></div></div>`;
+}
+const DEMO_CSS = `
+.demo{position:relative;border-radius:10px;background:var(--stage);display:flex;align-items:center;justify-content:center;gap:28px;overflow:hidden}
+.dm-scr{position:relative;width:250px;height:72%;border-radius:8px;background:var(--elevated);box-shadow:0 0 0 1px var(--border)}
+
+.dm-bars{position:absolute;left:16px;right:100px;bottom:12px;top:16px;display:flex;align-items:flex-end;gap:7px}
+.dm-bars i{flex:1;border-radius:3px 3px 0 0;background:var(--text3);opacity:.6}
+.dm-bars i.hi{background:var(--ink);opacity:1}
+.dm-ptr{position:absolute;width:13px;height:18px;left:200px;top:70%;animation:dmp 6s ease-in-out infinite}
+.dm-ptr svg{width:100%;height:100%}
+@keyframes dmp{0%{left:200px;top:80%}22%,100%{left:104px;top:42%}}
+.dm-fr{position:absolute;left:83px;top:14%;width:34px;height:78%;border:1.5px solid var(--mark);border-radius:3px;opacity:0;animation:dmf 6s infinite}
+@keyframes dmf{0%,40%{opacity:0}44%,92%{opacity:1}100%{opacity:0}}
+.dm-cap{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);display:flex;align-items:center;gap:2px;height:22px;padding:0 9px;border-radius:11px;background:rgba(20,20,22,.92);color:#fff;font-size:11px;white-space:nowrap;opacity:0;animation:dmc 6s infinite}
+.dm-cap i{width:2px;height:8px;border-radius:1px;background:#fff;margin-right:1px}
+.dm-cap i:nth-child(3){margin-right:6px}
+@keyframes dmc{0%,26%{opacity:0}30%,56%{opacity:1}60%,100%{opacity:0}}
+.dm-ans{position:absolute;right:8px;top:8px;width:92px;padding:6px 8px;border-radius:7px;background:var(--bg);box-shadow:var(--pop-shadow);font-size:11px;line-height:1.4;opacity:0;animation:dma 6s infinite}
+.dm-ans b{font-weight:600}
+@keyframes dma{0%,60%{opacity:0;transform:translateY(-4px)}64%,94%{opacity:1;transform:none}100%{opacity:0}}
+.dm-key{display:flex;flex-direction:column;align-items:center;gap:8px}
+.dm-k{height:30px;min-width:64px;font-size:12px;animation:dmk 6s infinite}
+@keyframes dmk{0%,26%{transform:none;border-bottom-width:2px}28%,56%{transform:translateY(1px);border-bottom-width:1px;background:var(--selected)}58%,100%{transform:none}}
+.dm-lb{font-size:11.5px;color:var(--text2)}
+.demo.cmp .dm-key{display:none}
+`;
+// 拖图标示意（授权说明用）
+function dragArt() {
+  return `<div class="dragart" data-part="拖图标示意"><div class="da-ss"><div class="da-side"><i></i><i></i><i class="on"></i><i></i></div><div class="da-list"><div class="da-r"><span></span><em></em><u class="on"></u></div><div class="da-r"><span></span><em></em><u class="on"></u></div><div class="da-r da-new"><span>${APP_ICON}</span><em style="width:44px"></em><u class="on"></u></div></div></div>
+    <div class="da-ico">${appIcon(30)}</div><div class="da-cap">系统设置右边会浮出 Ask Free 图标，把它往左拖进列表就好。</div></div>`;
+}
+const DRAG_CSS = `
+.dragart{position:relative;height:118px;border-radius:10px;background:var(--stage);overflow:hidden}
+.da-ss{position:absolute;left:28px;top:16px;width:220px;height:86px;border-radius:7px;background:var(--elevated);box-shadow:0 0 0 1px var(--border);display:flex}
+.da-side{width:56px;background:var(--surface);border-right:1px solid var(--border);padding:8px 6px;display:flex;flex-direction:column;gap:5px;border-radius:7px 0 0 7px}
+.da-side i{height:7px;border-radius:2px;background:var(--border2)}
+.da-side i.on{background:var(--text3)}
+.da-list{flex:1;padding:8px;display:flex;flex-direction:column;gap:5px}
+.da-r{display:flex;align-items:center;gap:6px;height:18px}
+.da-r span{width:14px;height:14px;border-radius:3px;background:var(--border2);display:block}
+.da-r span svg{width:14px;height:14px}
+.da-r em{width:60px;height:5px;border-radius:2px;background:var(--border2)}
+.da-r u{margin-left:auto;width:16px;height:10px;border-radius:3px;background:var(--ink)}
+.da-new{animation:danew 4s infinite}
+@keyframes danew{0%,55%{opacity:0}62%,100%{opacity:1}}
+.da-ico{position:absolute;left:300px;top:36px;width:44px;height:44px;border-radius:9px;border:1.2px dashed var(--ink);display:flex;align-items:center;justify-content:center;background:var(--elevated);animation:daico 4s ease-in-out infinite}
+@keyframes daico{0%,12%{transform:none;opacity:1}50%{transform:translate(-150px,20px) scale(.6);opacity:1}56%,100%{transform:translate(-150px,20px) scale(.6);opacity:0}}
+.da-cap{position:absolute;left:372px;right:20px;top:40px;font-size:12px;color:var(--text2);line-height:1.6}
+`;
+function permRows(compact) {
+  const first = ["mic", "acc", "scr"].find(k => !permOK(k));
+  const btn = (k, label, act) => `<button class="btn sm ${first === k ? "solid" : ""}" data-a="${act}">${label}</button>`;
+  const ok = (t = "已允许") => `<span class="state okc">${I.checkc} ${t}</span>`;
+  const mic = S.perm.mic === "ok" ? ok() : S.perm.mic === "denied" ? `<span class="state badc">被拒绝了</span>${btn("mic", "去系统设置打开", "perm:micset")}` : btn("mic", "允许", "perm:mic");
+  const acc = permOK("acc") ? ok() : btn("acc", "打开系统设置", "perm:acc");
+  const scr = S.perm.scr === "ok" ? ok() : S.perm.scr === "relaunch" ? `<span class="state okc">${I.checkc} 已允许</span><button class="btn sm" data-a="relaunch">重开后生效</button>` : btn("scr", "打开系统设置", "perm:scr");
+  const row = (ic, t, d, s) => `<div class="row">${icon(ic, "muted")}<div class="lb"><b>${t}</b><span>${d}</span></div><div style="display:flex;gap:8px;align-items:center">${s}</div></div>`;
+  return `<div class="group" data-part="授权清单">
+    ${row("mic", "麦克风", compact ? "听你说出的问题" : "听你说出的问题。系统会弹一个框问你一次。", mic)}
+    ${row("hand", "辅助功能", compact ? "让提问键在任何应用里都能用" : "让提问键在任何应用里都能用。", acc)}
+    ${row("screen", "屏幕录制", compact ? "提问那一刻截一张，不录视频" : "让 AI 看到你指着的地方。只在提问那一刻截一张，不录视频。", scr)}</div>`;
+}
+function testKey(which) {
+  const o = S[which]; if (o.st === "testing") return;
+  o.st = "testing"; HOOK.render();
+  setTimeout(() => { o.st = o.key.trim().length >= 10 ? "ok" : "bad"; HOOK.render(); HOOK.onKey && HOOK.onKey(which); }, 1100);
+}
+function keyResult(which) {
+  const o = S[which];
+  if (o.st === "testing") return `<span class="state muted"><span class="spin"></span> 正在连 ${PROV[o.prov].short}…</span>`;
+  if (o.st === "ok") return `<span class="state okc">${I.checkc} 连接成功${which === "asr" && o.prov === "volc" ? `，${o.ver}能用` : ""}</span>`;
+  if (o.st === "bad") return `<span class="state badc">Key 不对：${PROV[o.prov].short} 回复「401 未授权」。看看是不是少复制了一段，或者多了空格。</span>`;
+  return `<span class="small muted">还没有 Key？打开 <span class="link" data-a="getkey:${o.prov}">${PROV[o.prov].url}</span> ${I.ext.replace("<svg", '<svg width="11" height="11" style="display:inline;vertical-align:-1px"')}，${PROV[o.prov].how}。</span>`;
+}
+function keyField(which) {
+  const o = S[which];
+  return `<div style="display:flex;gap:8px"><input class="field mono" type="password" placeholder="粘贴 ${PROV[o.prov].short} 的 API Key" data-k="${which}" value="${o.key.replace(/"/g, "&quot;")}" autocomplete="off" spellcheck="false"><button class="btn ${o.key.trim() && o.st !== "ok" ? "solid" : ""}" data-a="test:${which}" ${o.st === "testing" ? "disabled" : ""}>测试连接</button></div>`;
+}
+document.addEventListener("input", e => {
+  const k = e.target.dataset.k; if (!k) return;
+  S[k].key = e.target.value; if (S[k].st !== "testing") S[k].st = "idle";
+  const b = e.target.parentNode.querySelector("button"); if (b) b.classList.toggle("solid", !!e.target.value.trim());
+  const res = document.getElementById("res-" + k); if (res) res.innerHTML = keyResult(k);
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.dataset && e.target.dataset.k) testKey(e.target.dataset.k); });
+function hkNote(h) {
+  if (!h) return `<span class="small faint">还没选。选好后这里会说它好不好按、会不会和别的冲突。</span>`;
+  if (h.note === "fn") return `<span class="small warnc">系统的 🌐 键现在会切换输入法。到「系统设置 › 键盘」把「按下 🌐 键时」改成「无操作」。</span> <button class="btn sm" data-a="toast:已打开系统设置 › 键盘（示意）">打开键盘设置</button>`;
+  if (h.note === "mod") return `<span class="small muted">单独按一下 ${h.name} 才算提问；和别的键一起按（比如复制粘贴）照常不受影响。</span>`;
+  if (h.combo) return `<span class="small muted">组合键：同时按住 ${h.cap} 说话，松开就问。</span>`;
+  return `<span class="small okc">${I.check.replace("<svg", '<svg width="12" height="12" style="display:inline;vertical-align:-1px"')} 这颗键平时很少单独按，不容易误触。</span>`;
+}
+function hkChoices(slot, list) {
+  const cur = S.hk[slot];
+  return `<div class="hkc-row">${list.map(h => `<button class="hkc ${cur && cur.id === h.id ? "on" : ""}" data-a="hk:${slot}:${h.id}"><span class="kbd">${h.cap}</span><span>${h.name}</span></button>`).join("")}
+    <button class="hkc rec ${S.recording === slot ? "on recing" : ""}" data-a="rec:${slot}">${S.recording === slot ? "现在按下你想用的键…" : cur && !list.find(h => h.id === cur.id) ? `<span class="kbd">${cur.cap}</span><span>换一个</span>` : `${icon("kb")}<span>按一下录一个键</span>`}</button></div>`;
+}
+const HK_CSS = `
+.hkc-row{display:flex;flex-wrap:wrap;gap:8px}
+.hkc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:88px;height:70px;padding:0 12px;border-radius:8px;border:1px solid var(--border2);background:var(--elevated);font-size:12px;color:var(--text2)}
+.hkc .kbd{height:26px;min-width:44px;font-size:12px}
+.hkc:hover{background:var(--surface)}
+.hkc.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);color:var(--text)}
+.hkc.rec{min-width:128px}
+.hkc.recing{animation:recp 1.2s ease-in-out infinite;color:var(--text)}
+@keyframes recp{50%{box-shadow:0 0 0 4px var(--ink-soft)}}
+.hold{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--border2);background:var(--elevated);font-weight:500;touch-action:none}
+.hold:hover{background:var(--surface)}
+.hold.down{background:var(--ink);color:var(--on-ink);border-color:transparent}
+`;
+function sharedAct(a, arg, arg2) {
+  switch (a) {
+    case "perm": if (arg === "mic") micAlert(); else if (arg === "micset") openSettings("mic"); else openSettings(arg); return true;
+    case "mic": if (arg === "ok" || arg === "deny") { ov("alert", null); S.perm.mic = arg === "ok" ? "ok" : "denied"; if (arg === "ok") HOOK.onPerm && HOOK.onPerm("mic"); HOOK.render(); return true; }
+      S.mic = arg; S.menu = false; S.sub = false; HOOK.render(); toast("麦克风换成：" + micName()); return true;
+    case "micToggle": { const sw = document.querySelector('[data-a="micToggle"]'); sw.classList.add("on"); setTimeout(() => { ov("ss", null); ov("helper", null); HOOK.onSettings && HOOK.onSettings(false); S.perm.mic = "ok"; HOOK.onPerm && HOOK.onPerm("mic"); HOOK.render(); }, 700); return true; }
+    case "ssClose": closeSettings(); return true;
+    case "relaunch": doRelaunch(); return true;
+    case "relaunchLater": ov("alert", null); HOOK.render(); return true;
+    case "test": testKey(arg); return true;
+    case "getkey": toast("在浏览器里打开 " + PROV[arg].url + "（原型里不打开）"); return true;
+    case "hk": { const h = [...HK, ...DBL].find(x => x.id === arg2); setHK(arg, h); return true; }
+    case "hknone": S.hk[arg] = null; HOOK.render(); return true;
+    case "rec": S.recording = S.recording === arg ? null : arg; HOOK.render(); return true;
+    case "closeAnswer": closeAnswer(); return true;
+    case "toast": toast(arg); return true;
+    case "m": if (arg === "mic") { S.sub = !S.sub; HOOK.render(); return true; } S.menu = false; S.sub = false; HOOK.render(); MENU_ACT[arg] && MENU_ACT[arg](); return true;
+  }
+  return false;
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-a]");
+  if (!t) { if (S.menu && !e.target.closest(".menu")) { S.menu = false; S.sub = false; HOOK.render(); } return; }
+  const [a, arg, arg2] = t.dataset.a.split(":");
+  if (a !== "icon" && a !== "m" && a !== "mic" && S.menu) { S.menu = false; S.sub = false; }
+  if (!sharedAct(a, arg, arg2)) HOOK.act(a, arg, arg2);
+});
+document.head.insertAdjacentHTML("beforeend", `<style>${DEMO_CSS}${DRAG_CSS}${HK_CSS}</style>`);
+
+/* ---------- 方向 A：侧栏步骤 ---------- */
+const STEPS = [["欢迎", "看一眼怎么用"], ["授权", "麦克风、辅助功能、屏幕录制"], ["语音识别", "填一个 Key"], ["问答模型", "填一个 Key"], ["提问键", "自己选一个"], ["试问一次", "确认都通了"]];
+Object.assign(S, { step: 0, ob: true, tip: null, tp: {} });
+function stepDone(i) {
+  return i === 0 ? S.step > 0 || S.visited0 : i === 1 ? ["mic", "acc", "scr"].every(permOK) : i === 2 ? S.asr.st === "ok" : i === 3 ? llmOK() : i === 4 ? !!S.hk.main : S.tried;
+}
+function bodyA() {
+  const s = S.step;
+  if (s === 0) return `${demoStage(170)}
+    <h1 style="margin-top:26px">按一个键说出问题，AI 看着屏幕回答</h1>
+    <div class="sub">按下那一刻鼠标指在哪，AI 就重点看哪。接下来 5 步，大约 3 分钟。</div>
+    <div class="welcome-list" data-part="接下来要做的">
+      <div><b>${icon("hand", "muted")}授权三项</b><span>麦克风点「允许」；另外两项把图标拖进系统设置。</span></div>
+      <div><b>${icon("key", "muted")}填两个 Key</b><span>语音识别和问答模型，都有免费额度。</span></div>
+      <div><b>${icon("kb", "muted")}选键，试一次</b><span>提问键由你选，然后真的问一句。</span></div></div>
+    <div class="privacy">${icon("lock2")}语音和截图直接发给你选的服务商，不经过任何中间服务器。</div>`;
+  if (s === 1) return `<h1>给 Ask Free 三项授权</h1><div class="sub">都在系统设置里完成，Ask Free 拿不到你的密码。按顺序点下面的按钮就行。</div>
+    <div style="margin-top:20px">${dragArt()}</div><div style="height:14px"></div>${permRows(false)}`;
+  if (s === 2 || s === 3) {
+    const w = s === 2 ? "asr" : "llm", o = S[w];
+    const cards = s === 2
+      ? [["volc", "火山引擎（豆包）", true, "识别最快最稳。每个识别版本送 20 小时免费额度，半年有效。"], ["bl", "阿里百炼", false, "和千问问答共用一个 Key。送 10 小时，用完自动扣费。"]]
+      : [["deepseek", "DeepSeek", true, "出字最快；要新消息时它自己联网查。"], ["bl", "阿里百炼（千问）", false, "自带联网搜索；每个模型送 100 万 Token。"]];
+    const keyBlock = (s === 3 && sharedKey())
+      ? `<div class="reuse"><span class="okc">${I.checkc}</span><div><b style="font-weight:500">用上一步的百炼 Key，不用再填</b><div class="small muted">${S.asr.st === "ok" ? "上一步已经测过，能连上。" : "上一步的 Key 还没测通，回去测一下就好。"}</div></div></div>`
+      : `<div class="lbl">${PROV[o.prov].short} API Key</div>${keyField(w)}<div class="res" id="res-${w}">${keyResult(w)}</div>`;
+    const more = s === 2
+      ? (o.prov === "volc" ? `<div class="lbl" style="margin-top:10px">识别版本</div><div class="seg">${["极速版", "标准版", "2.0"].map(v => `<button class="${o.ver === v ? "on" : ""}" data-a="ver:${v}">${v}</button>`).join("")}</div><div class="small muted" style="margin-top:6px">三种速度差不多。一个版本的免费额度用完，换下一个接着用。</div>` : `<div class="small muted" style="margin-top:10px">用 qwen3-asr-flash：5 分钟以内的语音，同步出结果。</div>`)
+      : (o.prov === "bl" ? `<div class="lbl" style="margin-top:10px">模型</div><div class="seg">${["质量优先（推荐）", "速度优先"].map(v => `<button class="${o.model.includes(v.slice(0, 4)) ? "on" : ""}" data-a="model:${v}">${v}</button>`).join("")}</div><div class="small muted" style="margin-top:6px">一个模型的免费额度用完，自动换下一个。</div>` : `<div class="small muted" style="margin-top:10px">看屏幕问时自动换成 DeepSeek 能读图的模型，不用你选。</div>`);
+    return `<h1>${s === 2 ? "语音识别：把你说的话变成文字" : "问答模型：看着屏幕回答你"}</h1>
+      <div class="sub">${s === 2 ? "用你自己的 Key，声音直接发给服务商。" : "回答你的问题。看屏幕问时，截图也直接发给它。"}</div>
+      <div class="pcards" style="margin-top:20px" data-part="${s === 2 ? "选识别服务商" : "选问答服务商"}">${cards.map(([k, n, rec, d]) => `<button class="pcard ${o.prov === k ? "on" : ""}" data-a="prov:${w}:${k}"><span class="rd"></span><b>${n}${rec ? '<span class="chip ink">推荐</span>' : ""}</b><span>${d}</span></button>`).join("")}</div>
+      <div data-part="填 Key">${keyBlock}</div>
+      ${(s === 3 && sharedKey()) ? "" : `<button class="more ${o.more ? "open" : ""}" data-a="more:${w}">${icon("chev")}更多选项</button>${o.more ? `<div class="fade">${more}</div>` : ""}`}`;
+  }
+  if (s === 4) {
+    const others = HK.filter(h => !S.hk.main || h.id !== S.hk.main.id);
+    const segP = `<div class="seg"><button class="${!S.hk.plain ? "on" : ""}" data-a="hknone:plain">不设置</button>${others.slice(0, 3).map(h => `<button class="${S.hk.plain && S.hk.plain.id === h.id ? "on" : ""}" data-a="hk:plain:${h.id}">${h.cap}</button>`).join("")}</div>`;
+    const segT = `<div class="seg"><button class="${!S.hk.type ? "on" : ""}" data-a="hknone:type">不设置</button>${DBL.map(h => `<button class="${S.hk.type && S.hk.type.id === h.id ? "on" : ""}" data-a="hk:type:${h.id}">${h.cap}</button>`).join("")}</div>`;
+    return `<h1>选一个提问键</h1><div class="sub">Ask Free 不替你定键：每台键盘不一样。挑一个顺手、平时很少单独按的键。</div>
+      <div class="hkbox" style="margin-top:20px" data-part="看屏幕问的键"><div class="hh">${icon("screen", "muted")}看着屏幕问 AI <span class="chip">必选</span></div>
+        <div class="hd">长按：按住说，松开就问。轻点：点一下开始说，再点一下结束。</div>
+        ${hkChoices("main", HK)}<div class="hknote">${hkNote(S.hk.main)}</div></div>
+      <button class="more ${S.optOpen ? "open" : ""}" data-a="opt">${icon("chev")}再加两种问法（可选，之后在设置里也能加）</button>
+      ${S.optOpen ? `<div class="group opt fade" style="margin-top:10px" data-part="可选问法">
+        <div class="row">${icon("wave", "muted")}<div class="lb"><b>只提问，不看屏幕</b><span>不截屏，更快一点。</span></div>${segP}</div>
+        <div class="row">${icon("kb", "muted")}<div class="lb"><b>打字问 AI</b><span>不方便说话时，双击一颗键弹出输入框。</span></div>${segT}</div></div>` : ""}`;
+  }
+  // 试问一次
+  const m = missing().filter(r => r[0] !== "try");
+  if (m.length) return `<h1>试问一次</h1><div class="sub">还差几项，问不了。点一项直接过去补上。</div>
+    <div class="group" style="margin-top:20px">${m.map(r => `<div class="row"><span class="dot warn"></span><div class="lb"><b>${r[1]}</b></div><button class="btn sm" data-a="goto:${{ mic: 1, acc: 1, scr: 1, asr: 2, llm: 3, hk: 4 }[r[0]]}">去这一步</button></div>`).join("")}</div>`;
+  const k = S.hk.main, tp = S.tp, ck = (d, t) => `<span class="${d ? "done" : ""}">${d ? I.checkc : '<i class="c"></i>'}${t}</span>`;
+  const keyOK = k.codes.length > 0;
+  return `<h1>试问一次</h1><div class="sub">真的问一句，确认麦克风、截屏和 AI 都通了。回答会出现在屏幕右上角。</div>
+    <div class="try" data-part="试问"><div class="tstage"><div class="chart" id="tryChart" data-ask="chart"><div class="ct">各季度营收（亿元）</div><div class="bars"><div class="b"><em>3.2</em><i style="height:55%"></i></div><div class="b"><em>4.1</em><i style="height:70%"></i></div><div class="b hi"><em>5.6</em><i style="height:96%"></i></div><div class="b"><em>5.2</em><i style="height:89%"></i></div></div><div class="xs"><span>一</span><span>二</span><span>三</span><span>四</span></div></div></div>
+      <div><div class="steps3"><div class="n"><i>1</i><div>把鼠标指到左边这张图上。</div></div><div class="n"><i>2</i><div>按住 <span class="kbd">${k.cap}</span> 说：「哪个季度涨得最多？」</div></div><div class="n"><i>3</i><div>说完松开。</div></div></div>
+        <div style="margin-top:16px;display:flex;align-items:center;gap:10px"><button class="hold" data-hold="#tryChart">${icon("mic")}按住这里也能问</button><span class="small faint">${keyOK ? "键盘按不了时用它" : "网页里收不到 " + k.name + "，用这个按钮代替"}</span></div></div></div>
+    <div class="prog" data-part="试问进度">${ck(tp.heard, "听到你说话")}${ck(tp.shot, "截到你指的地方")}${ck(tp.answered, "AI 回答了")}</div>
+    ${tp.answered ? `<div class="fade"><div class="lbl" style="margin-top:16px">通了。回答还在的时候，还可以：</div><div class="next4"><div class="${tp.followed ? "done" : ""}">${tp.followed ? I.checkc : icon("chat", "muted")}再按一次 <span class="kbd">${k.cap}</span> 追问</div><div>${icon("chat", "muted")}开头说「新话题」另起</div><div>${icon("chat", "muted")}开头说「搜一下」直接联网查</div><div>${icon("x", "muted")}说话时按 Esc 取消</div></div></div>` : ""}`;
+}
+function footA() {
+  const s = S.step, done = stepDone(s);
+  const msg = s === 0 ? "" : s === 1 ? (done ? "三项都好了" : `还差 ${["mic", "acc", "scr"].filter(k => !permOK(k)).length} 项`) : s === 2 || s === 3 ? (done ? "" : "测试连接通过后就能继续") : s === 4 ? (done ? "" : "选好提问键就能继续") : (S.tried ? "" : "试不试都行，之后随时能问");
+  const next = s === 0 ? "开始设置" : s === 5 ? "完成" : "继续";
+  const canNext = s === 0 || s === 5 || done;
+  return `<div class="msg">${msg}</div>${s > 0 ? `<button class="btn ghost" data-a="back">上一步</button>` : ""}${!canNext ? `<button class="btn ghost" data-a="next">先跳过</button>` : ""}<button class="btn solid lg" data-a="next" ${canNext ? "" : "disabled"}>${next}</button>`;
+}
+function renderA() {
+  renderMenubar();
+  const m = $("#main");
+  if (S.ob) {
+    const sc = m.querySelector(".scroll"); const keep = sc && sc.dataset.step == S.step ? sc.scrollTop : 0;
+    m.innerHTML = `<div class="win oa" data-part="欢迎引导窗口"><div class="side" data-part="步骤栏"><div class="tl"><i data-a="close" style="cursor:pointer" title="关闭"></i><i></i><i></i></div>
+      <div class="brand">${appIcon(40)}<div><b>Ask Free</b><small>第一次设置</small></div></div>
+      ${STEPS.map(([t, d], i) => `<button class="st ${S.step === i ? "on" : ""}" data-a="goto:${i}"><span class="o ${stepDone(i) && S.step !== i ? "ok" : ""}">${stepDone(i) && S.step !== i ? I.checkc : i + 1}</span><span><b>${t}</b><small>${d}</small></span></button>`).join("")}
+      <span class="sp"></span><button class="skip" data-a="close">跳过，之后点菜单栏图标继续</button></div>
+      <div class="body"><div class="scroll" data-step="${S.step}">${bodyA()}</div><div class="foot">${footA()}</div></div></div>`;
+    const sc2 = m.querySelector(".scroll"); if (sc2) sc2.scrollTop = keep;
+  } else m.innerHTML = "";
+  const top = statusRow() + (!S.ob && missing().length ? `<div class="it act" data-a="resume"><span class="dot warn"></span>继续设置…</div>` : "");
+  showMenu(top);
+  if (S.tip && !S.menu) {
+    const r = $(".menubar .af").getBoundingClientRect(), d = $("#desk").getBoundingClientRect();
+    const el = ov("tip", S.tip, "tip"); el.dataset.part = "菜单栏提示";
+    const cx = r.left - d.left + r.width / 2; el.style.left = (cx - 280 + 26) + "px"; el.style.top = "36px"; el.style.setProperty("--ar", "20px");
+  } else ov("tip", null);
+}
+const HOOK = {
+  render: renderA,
+  pulse: () => !!S.tip,
+  keyAsk: () => (S.ob && S.step === 5) || !S.ob,
+  blocked: () => toast("还差：" + missing().map(r => r[1]).join("、")),
+  onPerm: () => {},
+  onAsk(st) {
+    if (st === "listen") S.tp.heard = true;
+    if (st === "answered") { S.tp.shot = true; S.tp.answered = true; S.tried = true; }
+    if (st === "follow") S.tp.followed = true;
+    if (S.ob && S.step === 5) renderA();
+  },
+  act(a, arg, arg2) {
+    switch (a) {
+      case "goto": S.step = +arg; S.recording = null; break;
+      case "next": if (S.step === 0) S.visited0 = true; if (S.step === 5) return finishA(); S.step++; S.recording = null; break;
+      case "back": S.step = Math.max(0, S.step - 1); S.recording = null; break;
+      case "close": S.ob = false; S.recording = null; S.tip = tipHTML(); break;
+      case "resume": S.ob = true; S.menu = false; S.tip = null; S.step = firstOpen(); break;
+      case "prov": S[arg].prov = arg2; if (!(arg === "llm" && sharedKey())) { S[arg].st = "idle"; } if (arg === "asr" && sharedKey()) {} break;
+      case "more": S[arg].more = !S[arg].more; break;
+      case "ver": S.asr.ver = arg; break;
+      case "model": S.llm.model = arg; break;
+      case "opt": S.optOpen = !S.optOpen; break;
+      case "icon": S.menu = !S.menu; S.sub = false; S.tip = null; break;
+      case "tipok": S.tip = null; break;
+      case "proto": return proto(arg);
+    }
+    renderA();
+  },
+  onKey(w) { if (w === "asr" && S.asr.st === "ok" && sharedKey()) renderA(); },
+};
+function firstOpen() { for (let i = 1; i < 5; i++) if (!stepDone(i)) return i; return 5; }
+function tipHTML() {
+  const m = missing();
+  return m.length ? `<b>还差 ${m.length} 项才能提问</b>点菜单栏上的 Ask Free 图标，选「继续设置…」就回到刚才那一步。<div class="bt"><button data-a="tipok">知道了</button></div>`
+    : `<b>Ask Free 住在菜单栏这里</b>按住 ${S.hk.main.cap} 随时提问。点这个图标看历史、换麦克风、打开设置。<div class="bt"><button data-a="tipok">知道了</button></div>`;
+}
+function finishA() { S.ob = false; S.setupDone = !missing().length; closeAnswer(); S.tip = tipHTML(); renderA(); }
+function proto(k) {
+  ov("alert", null); ov("ss", null); ov("helper", null); closeAnswer(); S.menu = false; S.tip = null; S.recording = null;
+  const fill = () => { S.perm = { mic: "ok", acc: "ok", scr: "ok" }; S.asr.key = "volc-sk-8f2a9c4d1e"; S.asr.st = "ok"; S.llm.key = "sk-3b7e1f0a9d2c"; S.llm.st = "ok"; S.visited0 = true; };
+  if (k === "reset") { location.hash = location.hash.replace(/scene=\w+/, ""); location.reload(); return; }
+  if (k === "perm") { S.ob = true; S.step = 1; S.visited0 = true; }
+  if (k === "key") { S.ob = true; S.step = 2; S.visited0 = true; S.perm = { mic: "ok", acc: "ok", scr: "ok" }; }
+  if (k === "hk") { S.ob = true; fill(); S.step = 4; }
+  if (k === "try") { S.ob = true; fill(); S.hk.main = HK[0]; S.step = 5; }
+  if (k === "done") { fill(); S.hk.main = HK[0]; S.hk.type = DBL[0]; S.tried = true; S.ob = false; S.setupDone = true; S.menu = true; }
+  renderA();
+}
+I.lock2 = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>';
+document.body.innerHTML = deskHTML(`<div class="proto" data-part="原型控制条"><span>原型</span><button data-a="proto:reset">从头开始</button><button data-a="proto:perm">授权</button><button data-a="proto:key">填 Key</button><button data-a="proto:hk">提问键</button><button data-a="proto:try">试问</button><button data-a="proto:done">设置好之后的菜单</button></div>`);
+S.front = "Ask Free";
+const sc = HASH.scene; if (sc) proto(sc); else renderA();
+</script></body></html>

@@ -1,0 +1,46 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ask Free 版面拍板</title>
+<style>
+:root{--bg:#fff;--card:#f4f4f5;--text:#111113;--text2:#3f3f43;--line:rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#1e1e1e;--card:#282828;--text:#f5f5f7;--text2:#d1d1d6;--line:rgba(255,255,255,.1)}}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,"PingFang SC",sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:32px 0 10px}
+p.sub{color:var(--text2);margin:0 0 20px}
+.card{background:var(--card);border-radius:12px;padding:16px 18px;margin:10px 0}
+.card h3{margin:0 0 6px;font-size:16px}.card a{color:inherit;font-weight:600}
+.rec{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;margin-left:6px}
+ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+</style></head><body><main>
+<h1>Ask Free 版面：要你拍板的事</h1>
+<p class="sub">四块方案都出来了，每块挑 A 或 B（在各自方案页里点 Choose，或在 Waiting for you 里选）。下面另有 4 处跨块的小决定。</p>
+
+<h2>一、四块各挑一个方向</h2>
+<div class="card"><h3><a href="main-window/redesign/index.html">① 主窗口</a><span class="rec">推荐 A</span></h3>
+<ul><li><b>A 单窗侧栏</b>：一个窗口一列侧栏，「开始」三步配好后变「首页」，历史和七页设置都在同一列。</li>
+<li><b>B 问答书房</b>：照 GetNewWord 分两窗：主窗口是历史三栏，设置按 ⌘, 另开。</li></ul></div>
+<div class="card"><h3><a href="panels/redesign/index.html">② 提问浮层（录音胶囊、回答面板、打字框）</a><span class="rec">推荐 A</span></h3>
+<ul><li><b>A 右上对话卡</b>：回答固定在右上角一张卡，追问编号串起来，新话题把旧的折成一行；指的东西在右上角时卡片挪到左上。</li>
+<li><b>B 指针旁气泡</b>：取景框框住指的地方，录音、回答、打字都在旁边气泡里；会挡住旁边几行。</li></ul></div>
+<div class="card"><h3><a href="onboarding/redesign/index.html">③ 欢迎引导和菜单栏菜单</a><span class="rec">推荐 A</span></h3>
+<ul><li><b>A 侧栏步骤</b>：一个窗口六步（欢迎、三项权限、两个 Key、提问键、试问一次），和 GetNewWord 欢迎页同骨架。</li>
+<li><b>B 菜单栏小窗</b>：从菜单栏图标下拉一张清单，顺序随意；地方挤。</li></ul></div>
+<div class="card"><h3><a href="website/redesign/index.html">④ 官网 askfree.us-cloud.uk</a><span class="rec">推荐 A</span></h3>
+<ul><li><b>A 张口就问</b>：和 GetNewWord 官网同版式，首屏大标题动画加三场景演示，下面长页。</li>
+<li><b>B 先试再装</b>：首屏是能真用的假 Mac 桌面，下面五步安装能真做。</li>
+<li>设计师建议：选 A，把 B 的「试一下」做成 A 演示下的按钮，B 的五步当配置教程页。</li></ul></div>
+
+<h2>二、跨块的 4 个小决定</h2>
+<div class="card"><ul>
+<li><b>配置顺序</b>：主窗口方案是「Key → 权限 → 快捷键」，欢迎引导方案按你的偏好「启动就要权限」把权限放最前。建议两边都权限在前。</li>
+<li><b>回答正文字号</b>：浮层方案用 14，主窗口规范草稿写 13。建议回答面板 14（要长时间读）。</li>
+<li><b>录音胶囊</b>：浮层方案用全圆角胶囊，规范草稿里胶囊只给小圆点。</li>
+<li><b>官网和 App 的 5 处不同</b>：蓝色只在「在听、在答」那一刻出现；画出来的系统设置用系统蓝；官网字号更大、标题用宋体；按钮胶囊形；一屏两个黑色「下载」。都照 GetNewWord 官网。</li>
+</ul></div>
+
+<h2>三、上线官网前要补的（不用现在定）</h2>
+<div class="card"><ul>
+<li>下载链接 releases/latest/download/AskFree.zip 现在 404，发版时要多传一份不带版本号的。</li>
+<li>App 还没公证，官网照实写了「仍要打开」那一步。</li>
+<li>askfree.us-cloud.uk 还没解析；部署前会先问你。</li>
+</ul></div>
+</main></body></html>

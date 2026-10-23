@@ -1,0 +1,795 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=1280"><title>Ask Free 提问浮层 方向 B 指针旁气泡</title>
+<style>:root{
+  /* 和 GetNewWord Theme.swift 同一套骨架；主色是 Ask Free 图标里指针的墨黑（和主窗口方案 DESIGN.draft.md 对齐），不用蓝 */
+  --bg:#FAFAFB;--surface:#F4F4F6;--elevated:#FFFFFF;--hover:rgba(0,0,0,.045);--selected:rgba(0,0,0,.07);
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);
+  --text:#18191C;--text2:#5F636C;--text3:#969AA2;
+  --accent:#18191C;--accent-soft:rgba(0,0,0,.07);--accent-line:rgba(0,0,0,.35);
+  --ok:#28965A;--ok-soft:rgba(40,150,90,.12);--warn:#CD7D14;--warn-soft:rgba(205,125,20,.12);--danger:#C83C3C;--danger-soft:rgba(200,60,60,.10);
+  --solid:#18191C;--on-solid:#FFFFFF;
+  --panel:rgba(250,250,251,.94);
+  --panel-shadow:0 0 0 .5px rgba(0,0,0,.18),0 18px 48px -8px rgba(15,18,30,.38),0 4px 12px rgba(15,18,30,.10);
+  --hud:#121214;--hud-edge:rgba(255,255,255,.14);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",system-ui,sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#16171A;--surface:#1C1D20;--elevated:#232428;--hover:rgba(255,255,255,.06);--selected:rgba(255,255,255,.09);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
+  --text:#EDEDEF;--text2:#9A9FA8;--text3:#6E7480;
+  --accent:#EDEDEF;--accent-soft:rgba(255,255,255,.10);--accent-line:rgba(255,255,255,.4);
+  --ok:#5CC285;--ok-soft:rgba(92,194,133,.15);--warn:#F29E40;--warn-soft:rgba(242,158,64,.15);--danger:#E65C5C;--danger-soft:rgba(230,92,92,.14);
+  --solid:#EDEDEF;--on-solid:#16171A;
+  --panel:rgba(30,31,35,.95);
+  --panel-shadow:0 0 0 .5px rgba(255,255,255,.14),0 18px 48px -8px rgba(0,0,0,.75),0 4px 12px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:800px;overflow:hidden;background:#0d0e10}
+body{font:13px/1.5 var(--sans);color:var(--text);-webkit-font-smoothing:antialiased;text-autospace:normal;font-kerning:normal}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font:inherit;color:inherit}
+svg{display:block}
+#stage{position:relative;width:1280px;height:744px;overflow:hidden;user-select:none;background:#1b1c1f}
+#bg{position:absolute;left:0;right:0;top:24px;bottom:0}
+#layer{position:absolute;inset:0;pointer-events:none}
+#layer>*{pointer-events:auto}
+#layer .pass{pointer-events:none}
+
+/* 菜单栏（示意） */
+#menubar{position:absolute;left:0;right:0;top:0;height:24px;background:rgba(236,236,238,.92);backdrop-filter:blur(20px);display:flex;align-items:center;gap:18px;padding:0 14px;font-size:13px;color:#1d1d1f;z-index:3}
+#menubar b{font-weight:600}
+#menubar .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+#menubar .me{display:flex;align-items:center;justify-content:center;width:22px;height:18px;border-radius:4px}
+#menubar .me.on{background:rgba(0,0,0,.12)}
+
+/* 共用控件 */
+.ibtn{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--text2);flex:none;transition:background .15s,color .15s}
+.ibtn:hover{background:var(--hover);color:var(--text)}
+.ibtn.on{color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex:none;height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--border2);background:var(--elevated);font-weight:500;font-size:13px;color:var(--text)}
+.btn:hover{background:var(--surface)}
+.btn.solid{background:var(--solid);color:var(--on-solid);border-color:transparent}
+.btn.solid:hover{opacity:.86}
+.btn.ghost{border-color:transparent;background:none;color:var(--text2)}
+.btn.ghost:hover{background:var(--hover);color:var(--text)}
+.kc{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:5px;border:1px solid var(--border2);border-bottom-width:1.5px;background:var(--elevated);font-size:11px;font-weight:500;color:var(--text);vertical-align:-3px;margin:0 2px;line-height:1}
+.muted{color:var(--text2)}.faint{color:var(--text3)}
+.spin{width:12px;height:12px;border-radius:50%;border:1.6px solid var(--border2);border-top-color:var(--text2);animation:spin .8s linear infinite;flex:none;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.caret{display:inline-block;width:2px;height:1.05em;vertical-align:-2px;margin-left:1px;background:var(--accent);animation:blink .9s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.fadein{animation:fi .24s ease-out both}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.dots{display:inline-flex;gap:3px;vertical-align:middle}
+.dots i{width:4px;height:4px;border-radius:50%;background:var(--text3);animation:dot 1.1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{40%{background:var(--text);transform:translateY(-2px)}}
+
+/* 回答正文（两个方向共用） */
+.md{font-size:14px;line-height:1.65;color:var(--text)}
+.md p{margin:0 0 8px}
+.md p:last-child,.md ul:last-child{margin-bottom:0}
+.md ul{margin:0 0 8px;padding:0;list-style:none}
+.md li{position:relative;padding-left:14px;margin:2px 0}
+.md li::before{content:"";position:absolute;left:3px;top:.72em;width:4px;height:4px;border-radius:50%;background:var(--text3)}
+.md b{font-weight:600}
+
+/* 报错块（两个方向共用） */
+.err{display:flex;gap:12px;align-items:flex-start}
+.err .eico{position:relative;width:36px;height:36px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);flex:none}
+.err .eico i{position:absolute;right:-4px;bottom:-4px;width:16px;height:16px;border-radius:50%;background:var(--warn);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--elevated)}
+.err .eico i.red{background:var(--danger)}
+.err h4{font-size:14px;font-weight:600;line-height:1.4;margin-top:1px}
+.err p{font-size:13px;color:var(--text2);margin-top:3px;line-height:1.55}
+.err .acts{display:flex;gap:8px;margin-top:12px}
+.warnbar{display:flex;align-items:center;gap:8px;padding:7px 8px 7px 10px;border-radius:8px;background:var(--warn-soft);font-size:12px;color:var(--text);line-height:1.45}
+.warnbar svg{color:var(--warn);flex:none}
+.warnbar span{flex:1}
+.warnbar .btn{height:24px;padding:0 9px;font-size:12px}
+.okbar{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:var(--ok-soft);font-size:12px;line-height:1.45}
+.okbar svg{color:var(--ok);flex:none}
+.okbar span{flex:1}
+.okbar .btn{height:24px;padding:0 9px;font-size:12px}
+
+/* 找到的图 */
+.imgs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.imgs .im{height:84px;border-radius:6px;overflow:hidden;position:relative;border:1px solid var(--border)}
+.imgs .im span{position:absolute;left:6px;bottom:5px;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.src{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin-bottom:6px}
+.src svg{color:var(--text3)}
+
+/* 设置窗示意（去填 Key） */
+.sheet-mask{position:absolute;inset:0;background:rgba(0,0,0,.18)}
+.keywin{position:absolute;left:330px;top:150px;width:520px;border-radius:12px;background:var(--bg);box-shadow:var(--panel-shadow);overflow:hidden;color:var(--text)}
+.keywin .tb{height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);font-size:13px;font-weight:500;background:var(--surface)}
+.keywin .tb .tl{display:flex;gap:7px;margin-right:8px}.keywin .tb .tl i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.keywin .tb .tl i:nth-child(2){background:#febc2e}.keywin .tb .tl i:nth-child(3){background:#28c840}
+.keywin .bd{padding:18px 20px 20px}
+.keywin .row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--elevated);margin-bottom:8px}
+.keywin .row.sel{border-color:var(--accent-line)}
+.keywin .row .nm{font-weight:500;width:84px}
+.keywin .row .ds{color:var(--text2);font-size:12px;flex:1}
+.keywin .field{display:flex;gap:8px;margin:4px 0 0}
+.keywin .inp{flex:1;height:30px;border-radius:6px;border:1px solid var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--elevated);display:flex;align-items:center;padding:0 10px;font-family:var(--mono);font-size:12px;color:var(--text)}
+.keywin .foot{display:flex;align-items:center;gap:8px;margin-top:14px}
+.keywin .foot .sp{flex:1}
+
+/* 拖图标授权示意 */
+.sysset{position:absolute;left:250px;top:110px;width:560px;height:430px;border-radius:12px;background:#f5f5f7;box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 22px 60px rgba(0,0,0,.35);overflow:hidden;color:#1d1d1f;font-size:13px}
+.sysset .side{position:absolute;left:0;top:0;bottom:0;width:170px;background:#e8e8ea;padding:44px 10px 0}
+.sysset .side div{height:28px;border-radius:6px;display:flex;align-items:center;padding:0 8px;color:#333}
+.sysset .side div.on{background:#0a64d6;color:#fff}
+.sysset .main{position:absolute;left:170px;right:0;top:0;bottom:0;padding:16px 22px}
+.sysset h3{font-size:15px;font-weight:600;margin:4px 0 4px}
+.sysset .desc{color:#6e6e73;font-size:12px;margin-bottom:12px}
+.sysset .list{border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,.08);min-height:120px;transition:box-shadow .15s}
+.sysset .list.hot{box-shadow:0 0 0 2px #0a64d6}
+.sysset .li{height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid rgba(0,0,0,.06)}
+.sysset .li:last-child{border-bottom:0}
+.sysset .li .ap{width:22px;height:22px;border-radius:5px;background:#ddd}
+.sysset .li .sw{margin-left:auto;width:32px;height:18px;border-radius:5px;background:#d6d6d9;position:relative;transition:background .2s}
+.sysset .li .sw::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:3px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .2s}
+.sysset .li .sw.on{background:#28a745}.sysset .li .sw.on::after{left:16px}
+.dragpad{position:absolute;left:826px;top:200px;width:180px;padding:14px;border-radius:12px;background:var(--elevated);box-shadow:var(--panel-shadow);text-align:center;color:var(--text)}
+.dragpad .ic{width:64px;height:64px;margin:4px auto 8px;border-radius:14px;background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.15),0 2px 6px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;cursor:grab}
+.dragpad p{font-size:12px;color:var(--text2);line-height:1.5}
+.dragpad .arrow{color:var(--text);font-size:12px;margin-top:6px;font-weight:500}
+.ghosticon{position:absolute;width:64px;height:64px;border-radius:14px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50}
+
+/* 控制条（原型用，不是界面的一部分） */
+#bar{position:absolute;left:0;right:0;bottom:0;height:56px;background:#0d0e10;display:flex;align-items:center;gap:6px;padding:0 12px;color:#c9cbd1;font-size:12px;border-top:1px solid #222}
+#bar .lab{color:#6d717a;margin:0 4px 0 8px;white-space:nowrap}
+#bar .cb{height:30px;padding:0 10px;border-radius:6px;background:#1d1f24;color:#e6e7ea;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+#bar .cb:hover{background:#2a2d33}
+#bar .cb.on{background:#e6e7ea;color:#111}
+#bar .cb.main{background:#e6e7ea;color:#111;font-weight:600}
+#bar .cb.main:hover{background:#fff}
+#bar .cb.main.rec{background:#c83c3c}
+#bar .sep{width:1px;height:24px;background:#2a2d33;margin:0 4px}
+#errmenu{position:absolute;bottom:60px;background:#1d1f24;border:1px solid #2f3238;border-radius:10px;padding:6px;display:none;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#errmenu.show{display:block}
+#errmenu button{display:block;width:100%;text-align:left;height:30px;padding:0 10px;border-radius:6px;color:#e6e7ea;font-size:12px;white-space:nowrap}
+#errmenu button:hover{background:#2a2d33}
+
+/* ===== 背景：网页 ===== */
+.bg-web{position:absolute;inset:0;background:#fff;color:#202122}
+.bg-web .chrome{height:44px;background:#ececee;border-bottom:1px solid #d6d6da;display:flex;align-items:center;padding:0 14px;gap:12px}
+.bg-web .tl{display:flex;gap:8px}.bg-web .tl i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.bg-web .tl i:nth-child(2){background:#febc2e}.bg-web .tl i:nth-child(3){background:#28c840}
+.bg-web .url{width:520px;margin:0 auto;height:28px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;color:#555}
+.bg-web .wrap{display:flex;gap:36px;width:1060px;margin:26px auto 0}
+.bg-web .art{flex:1;font-family:Georgia,"Songti SC",serif}
+.bg-web .crumb{font:12px var(--sans);color:#72777d;margin-bottom:4px}
+.bg-web h1{font:400 30px/1.25 Georgia,"Songti SC",serif;border-bottom:1px solid #a2a9b1;padding-bottom:6px;margin-bottom:14px}
+.bg-web p{font-size:16px;line-height:1.75;margin-bottom:14px;color:#202122}
+.bg-web .lk{color:#3366cc}
+.bg-web .info{width:300px;flex:none;border:1px solid #a2a9b1;background:#f8f9fa;padding:8px;font:12px/1.5 var(--sans)}
+.bg-web .info .pic{height:300px;background:linear-gradient(#bcd3ee,#e8eef6 70%,#c9cfb8 70%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.bg-web .info table{width:100%;margin-top:8px;border-collapse:collapse}
+.bg-web .info td{padding:3px 4px;border-top:1px solid #e3e5e8;vertical-align:top}
+.bg-web .info td:first-child{font-weight:600;width:80px}
+/* ===== 背景：视频 ===== */
+.bg-video{position:absolute;inset:0;background:#000}
+.bg-video .slide{position:absolute;left:0;right:0;top:0;bottom:64px;background:#f6f4ef;color:#222}
+.bg-video .slide h2{position:absolute;left:70px;top:44px;font:600 30px var(--sans)}
+.bg-video .slide .formula{position:absolute;left:70px;top:104px;font:italic 26px "Times New Roman",serif;color:#333}
+.bg-video .slide .lbl{position:absolute;font:500 15px var(--sans);color:#666}
+.bg-video .teacher{position:absolute;right:30px;bottom:84px;width:200px;height:150px;border-radius:8px;background:linear-gradient(160deg,#4a5161,#262a33);overflow:hidden;border:2px solid #fff}
+.bg-video .teacher i{position:absolute;left:66px;top:28px;width:68px;height:68px;border-radius:50%;background:#c9a98c}
+.bg-video .teacher b{position:absolute;left:40px;top:96px;width:120px;height:80px;border-radius:50% 50% 0 0;background:#30343e}
+.bg-video .sub{position:absolute;left:0;right:0;bottom:92px;text-align:center;font:500 22px var(--sans);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.bg-video .sub span{background:rgba(0,0,0,.62);padding:3px 10px;border-radius:4px}
+.bg-video .ctl{position:absolute;left:0;right:0;bottom:0;height:64px;background:#111;display:flex;align-items:center;gap:14px;padding:0 20px;color:#fff;font-size:13px}
+.bg-video .prog{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.22);position:relative}
+.bg-video .prog i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#e33;width:37%}
+.bg-video .pp{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:72px;height:72px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;color:#fff;opacity:0;transition:opacity .2s}
+.bg-video .pp.show{opacity:1}
+.bg-video .spacehint{position:absolute;left:20px;top:16px;font:12px var(--sans);color:#fff;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:6px;opacity:0;transition:opacity .2s}
+.bg-video .spacehint.show{opacity:1}
+/* ===== 背景：PDF ===== */
+.bg-pdf{position:absolute;inset:0;background:#8e9096}
+.bg-pdf .tb{height:44px;background:#e9e9eb;border-bottom:1px solid #cfcfd3;display:flex;align-items:center;padding:0 14px;gap:12px;font:13px var(--sans);color:#333}
+.bg-pdf .tl{display:flex;gap:8px}.bg-pdf .tl i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.bg-pdf .tl i:nth-child(2){background:#febc2e}.bg-pdf .tl i:nth-child(3){background:#28c840}
+.bg-pdf .page{position:absolute;left:250px;top:62px;width:780px;bottom:-40px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.3);padding:46px 64px;font-family:"Times New Roman",Georgia,serif;color:#111}
+.bg-pdf h1{font-size:24px;text-align:center;margin-bottom:6px}
+.bg-pdf .au{text-align:center;font-size:13px;color:#444;margin-bottom:18px}
+.bg-pdf .abs{font-size:14px;line-height:1.6;text-align:justify;margin-bottom:16px}
+.bg-pdf .abs b{font-weight:700}
+.bg-pdf .fig{border-top:1px solid #ddd;padding-top:12px}
+.bg-pdf .cap{font-size:13px;line-height:1.5;margin-top:6px}
+.fakecur{position:absolute;width:20px;height:24px;pointer-events:none;z-index:30;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4));transition:left .35s ease,top .35s ease}
+/* ===== 方向 B：指针旁气泡 ===== */
+/* 取景框和鼠标指针一样：黑芯白边，深浅背景上都看得见 */
+.vf{position:absolute;pointer-events:none;transition:opacity .3s,left .3s,top .3s,width .3s,height .3s;--c:#18191C;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)}
+.vf::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(var(--c),var(--c)) left top/14px 2px no-repeat,linear-gradient(var(--c),var(--c)) left top/2px 14px no-repeat,
+  linear-gradient(var(--c),var(--c)) right top/14px 2px no-repeat,linear-gradient(var(--c),var(--c)) right top/2px 14px no-repeat,
+  linear-gradient(var(--c),var(--c)) left bottom/14px 2px no-repeat,linear-gradient(var(--c),var(--c)) left bottom/2px 14px no-repeat,
+  linear-gradient(var(--c),var(--c)) right bottom/14px 2px no-repeat,linear-gradient(var(--c),var(--c)) right bottom/2px 14px no-repeat}
+.vf.pulse::before{animation:vfp 1.2s ease-in-out infinite}
+@keyframes vfp{50%{opacity:.45}}
+.vf.blind{--c:#CD7D14}
+.vf.blind::after{content:"这次看不到";position:absolute;left:0;top:-22px;font-size:11px;font-weight:500;color:#fff;background:var(--warn);padding:1px 6px;border-radius:5px}
+.vf.dim{opacity:.45}
+.vf .n{position:absolute;right:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.bub{position:absolute;width:360px;border-radius:12px;background:var(--panel);backdrop-filter:blur(30px) saturate(1.4);-webkit-backdrop-filter:blur(30px) saturate(1.4);box-shadow:var(--panel-shadow);color:var(--text);display:flex;flex-direction:column;transition:left .3s ease,top .3s ease,opacity .3s,transform .3s,box-shadow .15s}
+.bub.enter{animation:bin .2s ease-out both}
+@keyframes bin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.bub.listen{box-shadow:0 0 0 1.5px var(--accent),var(--panel-shadow)}
+.bub .tail{position:absolute;width:12px;height:12px;background:var(--panel);transform:rotate(45deg);top:22px;box-shadow:var(--panel-shadow);clip-path:polygon(0 0,0 100%,100% 100%)}
+.bub .tail.l{left:-6px}
+.bub .tail.r{right:-6px;transform:rotate(225deg)}
+.bub .tail.t{display:none}
+.bub.pinned .tail{display:none}
+.bub .tabs{display:flex;gap:4px;padding:8px 8px 0;flex-wrap:nowrap;overflow:hidden}
+.bub .tabs button{height:26px;max-width:150px;display:inline-flex;align-items:center;gap:6px;padding:0 8px;border-radius:6px;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden}
+.bub .tabs button span.t{overflow:hidden;text-overflow:ellipsis}
+.bub .tabs button i{font-style:normal;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.bub .tabs button:hover{background:var(--hover)}
+.bub .tabs button.on{background:var(--selected);color:var(--text)}
+.bub .tabs button.on i{border-color:var(--solid);background:var(--solid);color:var(--on-solid)}
+.bub .body{padding:12px 16px 4px;overflow-y:auto;max-height:440px;scrollbar-width:thin}
+.bub .bq{display:flex;align-items:flex-start;gap:6px;font-size:13px;color:var(--text2);font-weight:500;margin-bottom:6px;line-height:1.45}
+.bub .bq svg{flex:none;margin-top:1px;color:var(--text3)}
+.bub .lead .md{font-size:15px;line-height:1.6}
+.bub .more{margin-top:8px}
+.bub .more.hide{display:none}
+.bub .exp{display:inline-flex;align-items:center;gap:4px;margin:6px 0 2px -6px;height:26px;padding:0 6px;border-radius:6px;font-size:12px;color:var(--text);font-weight:500}
+.bub .exp:hover{background:var(--hover)}
+.bub .bf{height:42px;flex:none;display:flex;align-items:center;gap:2px;padding:0 6px 0 16px;border-top:1px solid var(--border);margin-top:8px}
+.bub .bf .st{flex:1;min-width:0;font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.bub .bf .st b{font-weight:500;color:var(--text2)}
+.bub .bf .wv{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;height:28px}
+.bub .bf .wv i{width:3px;border-radius:2px;background:var(--accent);height:4px}
+.bub .ibtn.hold{background:var(--selected);color:var(--text)}
+.bub.strip .tabs,.bub.strip .body,.bub.strip .bf .ibtn:not([data-h=close]):not([data-h=pin]){display:none}
+.bub.strip .bf{border-top:0;margin-top:0}
+.bub.strip{width:300px}
+.bub.fade{opacity:0}
+.bub.flyaway{opacity:0;transform:scale(.4);transform-origin:top right}
+.recb{position:absolute;height:40px;border-radius:12px;background:var(--panel);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);box-shadow:var(--panel-shadow);display:flex;align-items:center;gap:4px;padding:0 6px;color:var(--text);font-size:12px;white-space:nowrap}
+.recb.enter{animation:bin .18s ease-out both}
+.recb .wv{display:flex;align-items:center;gap:2.5px;height:26px;padding:0 4px}
+.recb .wv i{width:3px;border-radius:2px;background:var(--accent);height:4px}
+.recb .lb{color:var(--text2);padding-right:4px}
+.recb .ok{background:var(--solid);color:var(--on-solid)}
+.recb .ok:hover{background:var(--solid);color:var(--on-solid);opacity:.86}
+.prevchip{position:absolute;right:12px;top:34px;height:30px;display:flex;align-items:center;gap:6px;padding:0 10px;border-radius:8px;background:var(--panel);box-shadow:var(--panel-shadow);font-size:12px;color:var(--text2);max-width:300px;white-space:nowrap;overflow:hidden;transition:opacity .4s}
+.prevchip span{overflow:hidden;text-overflow:ellipsis}
+.bin{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px}
+.bin input{flex:1;border:0;outline:0;background:none;font-size:14px;height:32px}
+.bin input::placeholder{color:var(--text3)}
+.bin .snd{width:28px;height:28px;border-radius:6px;background:var(--solid);color:var(--on-solid);display:flex;align-items:center;justify-content:center;flex:none}
+.bin .snd[disabled]{opacity:.25}
+.bin-hint{font-size:11px;color:var(--text3);padding:0 14px 8px}
+</style></head><body>
+<div id="stage">
+  <div id="menubar"><svg width="14" height="16" viewBox="0 0 14 16"><path fill="#1d1d1f" d="M11.2 8.5c0-1.9 1.6-2.8 1.6-2.9-.9-1.3-2.2-1.4-2.7-1.5-1.1-.1-2.2.7-2.8.7-.6 0-1.5-.7-2.4-.6-1.3 0-2.4.7-3.1 1.8-1.3 2.3-.3 5.6.9 7.5.6.9 1.3 1.9 2.3 1.8.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1 0 1.6-.9 2.2-1.8.7-1 1-2 1-2.1-.1 0-1.8-.7-1.8-2.9zM9.4 2.9c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.3 1.1-.5.6-.9 1.5-.8 2.3.9.1 1.8-.4 2.3-1z"/></svg><b id="mbApp">Safari</b><span>文件</span><span>编辑</span><span>显示</span><span>窗口</span>
+    <div class="r"><span class="me" id="mbIcon" title="Ask Free 菜单栏图标"></span><svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 1 4.3a10 10 0 0 1 14 0z" fill="#1d1d1f"/></svg><span>10月23日 周四 20:48</span></div></div>
+  <div id="bg"></div>
+  <div id="layer"></div>
+</div>
+<div id="bar">
+  <button class="cb main" id="bAsk"></button>
+  <button class="cb" id="bNew">说「新话题…」</button>
+  <button class="cb" id="bType"></button>
+  <button class="cb" id="bErr">报错 ▾</button>
+  <button class="cb" id="bClose">清空</button>
+  <span class="sep"></span><span class="lab">背景</span>
+  <button class="cb" data-bg="web">网页</button><button class="cb" data-bg="video">视频</button><button class="cb" data-bg="pdf">PDF</button>
+  <span class="sep"></span><span class="lab">快捷键</span>
+  <button class="cb" data-hk="1">已设</button><button class="cb" data-hk="0">没设</button>
+  <span class="lab" id="barHint" style="margin-left:auto"></span>
+</div>
+<div id="errmenu">
+  <button data-err="nokey">没填问答模型的 Key</button>
+  <button data-err="screen">没给屏幕录制权限</button>
+  <button data-err="asr">没填语音识别的 Key</button>
+  <button data-err="invalid">Key 无效</button>
+  <button data-err="timeout">网络超时</button>
+  <button data-err="mic">麦克风没开</button>
+  <button data-err="nospeech">没听到问题</button>
+</div>
+
+<script>// ===== 跟随方案页的浅色深色 =====
+addEventListener("message", e => { if (e.data && e.data.type === "dispatch-theme") document.documentElement.dataset.theme = e.data.theme; });
+(() => { const m = location.hash.match(/theme=(light|dark)/); if (m) document.documentElement.dataset.theme = m[1]; })();
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+// ===== 图标：16px、1.5 线宽、圆头 =====
+const I = (d, s = 16, extra = "") => `<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ${extra}>${d}</svg>`;
+const ICON = {
+  pin: s => I('<path d="M6 2.5h4M7 2.5v4L4.5 9h7L9 6.5v-4M8 9v4.5"/>', s),
+  pinOn: s => I('<path d="M6 2.5h4M7 2.5v4L4.5 9h7L9 6.5v-4" fill="currentColor"/><path d="M8 9v4.5"/>', s),
+  copy: s => I('<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5V3A1.5 1.5 0 0 0 9 1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5"/>', s),
+  close: s => I('<path d="M4 4l8 8M12 4l-8 8"/>', s),
+  mic: s => I('<rect x="5.75" y="1.75" width="4.5" height="8" rx="2.25"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.25"/>', s),
+  kbd: s => I('<rect x="1.75" y="3.75" width="12.5" height="8.5" rx="1.5"/><path d="M4.5 6.5h.01M7 6.5h.01M9.5 6.5h.01M12 6.5h-.5M5 9.5h6"/>', s),
+  globe: s => I('<circle cx="8" cy="8" r="6.25"/><path d="M1.75 8h12.5M8 1.75c1.8 2 2.6 4 2.6 6.25S9.8 12.25 8 14.25C6.2 12.25 5.4 10.25 5.4 8S6.2 3.75 8 1.75z"/>', s),
+  key: s => I('<circle cx="5.5" cy="10.5" r="3"/><path d="M7.6 8.4l5.9-5.9M11.5 4.5l1.5 1.5M10 6l1 1"/>', s),
+  screen: s => I('<rect x="1.75" y="2.75" width="12.5" height="8.5" rx="1.5"/><path d="M5.5 13.75h5M8 11.25v2.5"/>', s),
+  wifi: s => I('<path d="M2 6.2a9 9 0 0 1 12 0M4.2 8.6a5.8 5.8 0 0 1 7.6 0M6.4 11a2.6 2.6 0 0 1 3.2 0"/>', s),
+  clock: s => I('<circle cx="8" cy="8" r="6.25"/><path d="M8 4.5V8l2.5 1.5"/>', s),
+  check: s => I('<path d="M3.5 8.5l3 3 6-7"/>', s),
+  warn: s => I('<path d="M8 5.5v3.25M8 11h.01"/><path d="M7.1 2.2 1.6 12a1 1 0 0 0 .9 1.5h11a1 1 0 0 0 .9-1.5L8.9 2.2a1 1 0 0 0-1.8 0z"/>', s),
+  chev: s => I('<path d="M4.5 6.5 8 10l3.5-3.5"/>', s),
+  up: s => I('<path d="M4.5 9.5 8 6l3.5 3.5"/>', s),
+  back: s => I('<path d="M6 4 2.5 7.5 6 11M2.75 7.5h7a3.75 3.75 0 0 1 0 7.5"/>', s),
+  history: s => I('<path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.25 2.5v2.25h2.25M8 5v3l2 1.25"/>', s),
+  send: s => I('<path d="M8 13V3.5M4 7.5l4-4 4 4"/>', s),
+  play: s => `<svg width="${s}" height="${s}" viewBox="0 0 16 16"><path d="M5 3.2v9.6L12.6 8z" fill="currentColor"/></svg>`,
+  pause: s => `<svg width="${s}" height="${s}" viewBox="0 0 16 16"><path d="M4.5 3h2.5v10H4.5zM9 3h2.5v10H9z" fill="currentColor"/></svg>`,
+  ex: s => `<svg width="${s}" height="${s}" viewBox="0 0 16 16"><path d="M8 4v5M8 11.6v.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+};
+// Ask Free 的标志：鼠标指针 + 问号气泡（和应用图标同一个造型）
+const LOGO = (s = 16, c = "currentColor") => `<svg width="${s}" height="${s}" viewBox="0 0 16 16"><path d="M2.6 1.8v11.1l2.9-2.6 1.9 4 1.7-.8-1.9-3.9 3.9-.2z" fill="${c}"/><circle cx="12.3" cy="4" r="3.1" fill="${c}"/><path d="M10.9 7.4l-.6 1.6 1.9-.9z" fill="${c}"/><path d="M11.4 3.3a.95.95 0 1 1 1.3.9c-.3.1-.4.3-.4.6M12.3 5.6v.05" stroke="var(--logo-in,#fff)" stroke-width=".9" stroke-linecap="round" fill="none"/></svg>`;
+
+// ===== 背景和真实感的数据 =====
+const EIFFEL = `<svg width="200" height="280" viewBox="0 0 200 280"><g fill="none" stroke="#5b4a3a" stroke-width="2"><path d="M100 6v20M92 26h16l6 70h-28zM86 96h28l14 80H72zM72 176h56l40 100h-24c-6-30-24-48-44-48s-38 18-44 48H32z"/><path d="M95 40l10 14M105 40l-10 14M90 110l20 22M110 110l-20 22M80 186l40 30M120 186l-40 30" stroke-width="1.2"/></g></svg>`;
+const WAVE = `<svg width="470" height="230" viewBox="0 0 470 230"><path d="M10 115 ${Array.from({length:91},(_,i)=>{const x=10+i*5;const t=i/90*Math.PI*6;const y=115-38*Math.sin(t)-22*Math.sin(3*t)-12*Math.sin(7*t);return `L${x} ${y.toFixed(1)}`}).join(" ")}" fill="none" stroke="#2b6cb0" stroke-width="2.5"/><path d="M10 205h455M10 20v185" stroke="#999"/><text x="430" y="224" font-size="13" fill="#666">t</text></svg>`;
+const SPEC = `<svg width="420" height="230" viewBox="0 0 420 230"><path d="M20 205h390M20 20v185" stroke="#999"/>${[[60,150],[130,90],[200,0],[270,0],[340,52]].map(([x,h],i)=>`<rect x="${x}" y="${205-(h||8)}" width="34" height="${h||8}" fill="${["#d1495b","#edae49","#ccc","#ccc","#00798c"][i]}"/>`).join("")}<text x="66" y="224" font-size="13" fill="#666">1</text><text x="136" y="224" font-size="13" fill="#666">3</text><text x="346" y="224" font-size="13" fill="#666">7</text><text x="390" y="224" font-size="13" fill="#666">ω</text></svg>`;
+const BARS = `<svg width="420" height="220" viewBox="0 0 420 220" font-family="Times New Roman"><path d="M50 185h350M50 15v170" stroke="#333"/>${[["熬夜",52,"#bbb"],["午睡",64,"#888"],["整晚睡眠",78,"#333"]].map(([n,v,c],i)=>`<rect x="${90+i*110}" y="${185-v*2}" width="60" height="${v*2}" fill="${c}"/><path d="M${120+i*110} ${185-v*2-10}v20M${114+i*110} ${185-v*2-10}h12M${114+i*110} ${185-v*2+10}h12" stroke="#000"/><text x="${120+i*110}" y="204" text-anchor="middle" font-size="13">${["Deprived","Nap","Sleep"][i]}</text>`).join("")}${[0,20,40,60,80].map(v=>`<text x="42" y="${189-v*2}" text-anchor="end" font-size="11">${v}</text>`).join("")}<text x="18" y="100" font-size="12" transform="rotate(-90 18 100)" text-anchor="middle">Recall score</text></svg>`;
+
+const BGS = {
+  web: {
+    app: "Safari",
+    html: `<div class="bg-web"><div class="chrome"><div class="tl"><i></i><i></i><i></i></div><div class="url">zh.wikipedia.org/wiki/1889年巴黎世界博览会</div></div>
+      <div class="wrap"><div class="art"><div class="crumb">维基百科，自由的百科全书</div><h1>1889年巴黎世界博览会</h1>
+      <p>1889年巴黎世界博览会于 5 月 6 日至 10 月 31 日在法国巴黎举行，用来纪念<span class="lk">法国大革命</span>爆发一百周年。博览会吸引了超过三千二百万人次参观，是当时规模最大的一届。</p>
+      <p>博览会的入口是专门为此建造的<span class="lk">埃菲尔铁塔</span>，它在开幕前几周才完工，当时引来不少艺术家联名反对。另一座主角是<span class="lk" data-spot="q3">机械馆</span>，展出了蒸汽机、发电机和各国最新的工业机器。</p>
+      <p>场内还设有殖民地村落、各国展馆和一条贯穿会场的小火车。爱迪生带来了留声机，每天都有人排队试听。</p></div>
+      <div class="info"><div class="pic" data-spot="q1">${EIFFEL}</div><table><tr><td>地点</td><td>法国巴黎 战神广场</td></tr><tr><td>时间</td><td>1889年5月6日至10月31日</td></tr><tr><td>参观人次</td><td>32,250,297</td></tr></table></div></div></div>`,
+    q: [
+      { q: "这座塔是什么时候建的", saw: true, a: "这是**埃菲尔铁塔**，1887 年 1 月动工，**1889 年 3 月 31 日**建成，正好赶上页面里说的 1889 年巴黎世界博览会开幕。\n\n- 设计和承建：古斯塔夫·埃菲尔的公司\n- 用了约 18,000 个铁构件、250 万颗铆钉\n- 原本只打算留 20 年，后来因为能当无线电塔才保留下来" },
+      { q: "那它有多高", a: "总高 **324 米**（含顶部天线），塔身本体约 300 米。\n\n- 建成时是世界最高的建筑，保持了 41 年\n- 2022 年加装新天线后，最新资料写 330 米\n- 夏天铁受热膨胀，塔顶会高出十几厘米" },
+      { q: "机械馆是什么", saw: true, search: "维基百科、法国国家图书馆", imgs: [["机械馆内景 1889", "linear-gradient(160deg,#6b5b4b,#c8b89a)"], ["博览会全景", "linear-gradient(170deg,#8aa6c1,#d9c9a3)"], ["钢拱结构", "linear-gradient(150deg,#3f4a55,#9aa7b0)"]], a: "页面里的**机械馆**（Galerie des machines）是同一届博览会的主展馆，用来展出蒸汽机、发电机这些工业机器。\n\n- 长 420 米、跨度 115 米，是当时世界上最大的无柱室内空间\n- 1910 年拆除\n- 和铁塔一起，代表了 19 世纪末的钢铁建筑" },
+      { q: "再说简单点", a: "一句话：**1889 年为博览会建的铁塔，324 米高，本来要拆，后来留下来当了巴黎的标志。**" },
+    ],
+  },
+  video: {
+    app: "IINA",
+    html: `<div class="bg-video"><div class="slide"><h2>傅里叶变换：从时域到频域</h2><div class="formula" data-spot="q3">F(ω) = ∫ f(t) e<sup>−iωt</sup> dt</div>
+      <div style="position:absolute;left:60px;top:200px">${WAVE}</div><div class="lbl" style="left:70px;top:440px">时域：一段声音的波形</div>
+      <div style="position:absolute;left:600px;top:200px" data-spot="q1">${SPEC}</div><div class="lbl" style="left:620px;top:440px">频域：它由哪些频率组成</div></div>
+      <div class="teacher"><i></i><b></b></div>
+      <div class="sub"><span>我们把信号拆成不同频率的正弦波，这就是频域</span></div>
+      <div class="pp" id="vpp">${ICON.pause(30)}</div><div class="spacehint" id="vhint"></div>
+      <div class="ctl"><span id="vbtn">${ICON.pause(18)}</span><span>18:42 / 50:10</span><div class="prog"><i></i></div><span>信号与系统 · 第 3 讲</span></div></div>`,
+    q: [
+      { q: "他说的频域是什么意思", saw: true, a: "**频域**就是换个角度看信号：不看它随时间怎么变，而看它由哪些频率的正弦波组成、每个频率有多强。\n\n- 屏幕左边的波形是**时域**：横轴是时间\n- 右边的柱子是**频域**：横轴是频率，柱子越高，这个频率的成分越多\n- 傅里叶变换就是从左边算出右边的方法" },
+      { q: "举个生活里的例子", a: "听音乐时的**均衡器**就是频域：\n\n- 一首歌在时间上是一条起伏的波\n- 均衡器把它拆成低音、中音、高音几段，每段一根柱子\n- 把低音那根推高，就是在频域里放大低频成分\n\n手机录音 App 里跳动的柱状图也是同一回事。" },
+      { q: "这个公式里 e 的负 iωt 是什么", saw: true, a: "它是一个**转圈的单位向量**：随着 t 增加，它在复平面上以角速度 ω 转圈。\n\n- 把信号 f(t) 乘上它再积分，就是在问：信号里有多少「以 ω 转圈」的成分\n- 和这个频率合拍的部分会累加起来，不合拍的互相抵消\n- 所以积分结果 F(ω) 的大小，就是右边柱子的高度" },
+      { q: "再说简单点", a: "一句话：**频域就是把一段声音拆成「几种音高各有多响」的清单。**" },
+    ],
+  },
+  pdf: {
+    app: "预览",
+    html: `<div class="bg-pdf"><div class="tb"><div class="tl"><i></i><i></i><i></i></div><b style="margin-left:8px">sleep-memory-2025.pdf</b><span style="color:#777">第 3 页，共 14 页</span></div>
+      <div class="page"><h1>Sleep Actively Consolidates New Memories</h1><div class="au">L. Moreau, K. Tanaka, R. Osei · Journal of Sleep Research, 2025</div>
+      <div class="abs" data-spot="q3"><b>Abstract.</b> Sleep is thought to consolidate newly formed memories. Here, 96 undergraduates learned 40 word pairs and were then assigned to overnight sleep, a nap, or sleep deprivation. On the next-day test, the sleep group recalled 26 points more than the deprivation group. The results support an active role of sleep in memory consolidation.</div>
+      <div class="fig"><div style="display:flex;justify-content:center"><div data-spot="q1">${BARS}</div></div><div class="cap"><b>Figure 2.</b> Next-day recall by condition. Error bars show 95% confidence intervals.</div></div></div></div>`,
+    q: [
+      { q: "这张图在说什么", saw: true, a: "图 2 比较了三组人第二天的**记忆测验成绩**：\n\n- 熬夜组 52 分，最低\n- 午睡组 64 分\n- 整晚睡眠组 **78 分**，最高\n\n作者想说明：学完之后睡一觉，记住的东西明显更多，而且睡得越完整越好。" },
+      { q: "第三组为什么最高", a: "论文给的解释是**深睡时大脑在「回放」白天学的内容**：\n\n- 整晚睡眠有 4 到 5 个睡眠周期，深睡和快速眼动都更充分\n- 午睡大多只到浅睡，回放次数少\n- 熬夜组完全没有这个过程\n\n图里三组的误差线不重叠，说明差别不是偶然。" },
+      { q: "把这段翻译成中文", saw: true, a: "**摘要**：睡眠被认为能巩固新形成的记忆。本研究让 96 名大学生学习 40 组词对，随后分为整晚睡眠、午睡和熬夜三组。第二天的测验中，整晚睡眠组的回忆成绩比熬夜组高 26 分。结果支持睡眠在记忆巩固中起主动作用。" },
+      { q: "再说简单点", a: "一句话：**学完就去睡一整晚，第二天记得最牢。**" },
+    ],
+  },
+};
+
+// 报错：标题一句话说清是什么问题，下面一句怎么办，再给能直接解决的按钮
+const ERRS = {
+  nokey: { icon: "key", title: "还没填问答模型的 Key", text: "回答要用你自己的 AI Key。在「语音与模型」页填好 DeepSeek 或千问的 Key，就能接着问这一句。", acts: [["去填 Key", "fillkey", 1], ["怎么拿 Key", "howkey"]] },
+  invalid: { icon: "key", red: 1, title: "DeepSeek 不认这个 Key", text: "可能复制少了几位，或者在官网删掉了。到「语音与模型」页重新粘贴，点「验证」试一下。", acts: [["去换 Key", "fillkey", 1], ["重试", "retry"]] },
+  timeout: { icon: "clock", title: "DeepSeek 30 秒没回应", text: "已经自动重试了 2 次。可能是网络不稳，也可能是它正忙。", acts: [["再试一次", "retry", 1], ["换千问问", "retry"]] },
+  asr: { icon: "mic", title: "还没填语音识别的 Key", text: "说的话要先转成文字，这一步用火山引擎的 Key。在「语音与模型」页填好就能说话提问；现在可以先打字问。", acts: [["去填 Key", "fillkey", 1], ["改成打字问", "totype"]] },
+  mic: { icon: "mic", red: 1, title: "麦克风没开", text: "上次系统问的时候点了「不允许」。到「系统设置 › 隐私与安全性 › 麦克风」打开 Ask Free；这个只能在系统里开。", acts: [["打开系统设置", "micset", 1], ["改成打字问", "totype"]] },
+};
+
+// ===== 轻量 Markdown：空行分段、「- 」条目、**加粗** =====
+function md(s) {
+  const out = []; let list = null;
+  for (const raw of s.split("\n")) {
+    const line = raw.trimEnd();
+    const inl = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*\*([^*]*)$/, "<b>$1</b>");
+    if (line.startsWith("- ")) { if (!list) { list = []; } list.push(`<li>${inl(line.slice(2))}</li>`); continue; }
+    if (list) { out.push(`<ul>${list.join("")}</ul>`); list = null; }
+    if (line) out.push(`<p>${inl(line)}</p>`);
+  }
+  if (list) out.push(`<ul>${list.join("")}</ul>`);
+  return out.join("");
+}
+// 逐字流出：每 60ms 吐 6 到 10 个字
+async function stream(el, text, token, onTick) {
+  let n = 0;
+  while (n < text.length) {
+    if (token.dead) return false;
+    n = Math.min(text.length, n + 6 + Math.floor(Math.random() * 5));
+    el.innerHTML = md(text.slice(0, n));
+    const last = el.lastElementChild && (el.lastElementChild.tagName === "UL" ? el.lastElementChild.lastElementChild : el.lastElementChild);
+    if (last && n < text.length) last.insertAdjacentHTML("beforeend", '<span class="caret"></span>');
+    onTick && onTick();
+    await sleep(60);
+  }
+  return true;
+}
+// 找到的图（示意色块）
+const imgsHTML = imgs => `<div class="imgs">${imgs.map(([n, g]) => `<div class="im" style="background:${g}"><span>${n}</span></div>`).join("")}</div>`;
+const srcHTML = s => `<div class="src">${ICON.globe(14)}<span>已联网查 · ${s}</span></div>`;
+function errHTML(code) {
+  const e = ERRS[code];
+  return `<div class="err fadein" data-part="报错"><div class="eico">${ICON[e.icon](18)}<i class="${e.red ? "red" : ""}">${ICON.ex(10)}</i></div><div style="flex:1"><h4>${e.title}</h4><p>${e.text}</p><div class="acts">${e.acts.map(([t, a, p]) => `<button class="btn ${p ? "solid" : ""}" data-act="${a}">${t}</button>`).join("")}</div></div></div>`;
+}
+
+// ===== 全局状态 =====
+const S = { bg: "web", hk: true, typing: false, videoPlaying: true };
+const P = new URLSearchParams(location.hash.slice(1));
+if (P.get("bg") && BGS[P.get("bg")]) S.bg = P.get("bg");
+const stage = $("#stage"), layer = $("#layer");
+function spotRect(name) {
+  const el = $(`[data-spot="${name}"]`, $("#bg")); if (!el) return { x: 600, y: 300, w: 200, h: 120 };
+  const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
+  const k = s.width / 1280;
+  return { x: (r.left - s.left) / k, y: (r.top - s.top) / k, w: r.width / k, h: r.height / k };
+}
+function setBg(k) {
+  S.bg = k; $("#bg").innerHTML = BGS[k].html; $("#mbApp").textContent = BGS[k].app;
+  $$("#bar [data-bg]").forEach(b => b.classList.toggle("on", b.dataset.bg === k));
+  S.videoPlaying = true;
+}
+function hkLabel(kind) { return S.hk ? (kind === "talk" ? '<span class="kc">右⌥</span>' : '双击<span class="kc">⌃</span>') : ""; }
+function refreshBar() {
+  $$("#bar [data-hk]").forEach(b => b.classList.toggle("on", (b.dataset.hk === "1") === S.hk));
+  $("#barHint").textContent = S.hk ? "也可以：按住 Option 说话 · 连按两下 Control 打字 · 视频上按空格" : "快捷键没设：只能点控制条或面板上的按钮";
+}
+// 视频：空格照常暂停播放（面板不抢键盘）
+function toggleVideo(why) {
+  if (S.bg !== "video") return;
+  S.videoPlaying = !S.videoPlaying;
+  const pp = $("#vpp"), h = $("#vhint"), b = $("#vbtn");
+  pp.innerHTML = S.videoPlaying ? ICON.play(30) : ICON.pause(30); pp.classList.add("show");
+  b.innerHTML = S.videoPlaying ? ICON.pause(18) : ICON.play(18);
+  h.textContent = why; h.classList.add("show");
+  clearTimeout(toggleVideo.t); toggleVideo.t = setTimeout(() => { pp.classList.remove("show"); h.classList.remove("show"); }, 1100);
+}
+
+// ===== 去填 Key：设置窗示意 =====
+function openKeySheet(question, onDone) {
+  const wrap = document.createElement("div"); wrap.className = "sheet-wrap"; wrap.style.cssText = "position:absolute;inset:0;z-index:40";
+  wrap.innerHTML = `<div class="sheet-mask"></div><div class="keywin fadein" data-part="去填 Key"><div class="tb"><div class="tl"><i></i><i></i><i></i></div>Ask Free · 语音与模型</div><div class="bd">
+    <div class="row sel"><span class="nm">DeepSeek</span><span class="ds">最快，需要时自己联网</span></div>
+    <div class="field"><div class="inp" id="kInp"><span class="caret" style="background:var(--text)"></span></div><button class="btn" id="kPaste">粘贴并验证</button></div>
+    <div class="row" style="margin-top:10px"><span class="nm">千问</span><span class="ds">自带联网搜索 · 没填</span></div>
+    <div class="foot" id="kFoot"><span class="faint" style="font-size:12px">Key 只存在这台 Mac 的钥匙串里</span><span class="sp"></span><button class="btn ghost" id="kCancel">取消</button></div></div></div>`;
+  layer.appendChild(wrap);
+  $("#kCancel", wrap).onclick = () => wrap.remove();
+  $(".sheet-mask", wrap).onclick = () => wrap.remove();
+  $("#kPaste", wrap).onclick = async () => {
+    $("#kInp", wrap).textContent = "sk-••••••••••••••••••••4b1"; $("#kPaste", wrap).innerHTML = '<span class="spin"></span>验证中';
+    await sleep(700);
+    $("#kPaste", wrap).outerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;color:var(--ok);font-weight:500">${ICON.check(14)}能用</span>`;
+    $("#kFoot", wrap).innerHTML = `<span class="okbar" style="flex:1">${ICON.check(14)}<span>Key 能用了</span></span><button class="btn solid" id="kBack">回去问「${question}」</button>`;
+    $("#kBack", wrap).onclick = () => { wrap.remove(); onDone && onDone(); };
+  };
+}
+// ===== 拖图标授权：系统设置旁边浮出能拖的 Ask Free 图标 =====
+function openDragGrant(onDone) {
+  const wrap = document.createElement("div"); wrap.style.cssText = "position:absolute;inset:0;z-index:40";
+  const icon = `<div style="width:44px;height:44px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;--logo-in:#fff">${LOGO(30, "#18191c")}</div>`;
+  wrap.innerHTML = `<div class="sysset fadein"><div class="side"><div>通用</div><div>外观</div><div class="on">隐私与安全性</div><div>控制中心</div></div>
+    <div class="main"><h3>屏幕与系统录音</h3><div class="desc">允许下面的应用录制屏幕内容。</div>
+    <div class="list" id="gList"><div class="li"><span class="ap" style="background:#ff6b3d"></span>Zoom<span class="sw on"></span></div><div class="li"><span class="ap" style="background:#7b5cff"></span>OBS<span class="sw"></span></div></div></div></div>
+    <div class="dragpad fadein" data-part="拖图标授权"><div class="ic" id="gIcon">${icon}</div><p>把 Ask Free 拖进左边的列表</p><div class="arrow">← 往左拖</div></div>`;
+  layer.appendChild(wrap);
+  const ic = $("#gIcon", wrap), list = $("#gList", wrap);
+  ic.addEventListener("pointerdown", ev => {
+    ev.preventDefault();
+    const g = document.createElement("div"); g.className = "ghosticon"; g.innerHTML = icon; wrap.appendChild(g);
+    const s = stage.getBoundingClientRect(), k = s.width / 1280;
+    const mv = e => { g.style.left = ((e.clientX - s.left) / k - 32) + "px"; g.style.top = ((e.clientY - s.top) / k - 32) + "px";
+      const r = list.getBoundingClientRect(); list.classList.toggle("hot", e.clientX > r.left && e.clientX < r.right && e.clientY > r.top - 20 && e.clientY < r.bottom + 20); };
+    mv(ev);
+    const up = async e => {
+      removeEventListener("pointermove", mv); removeEventListener("pointerup", up); g.remove();
+      if (!list.classList.contains("hot")) return;
+      list.classList.remove("hot");
+      list.insertAdjacentHTML("beforeend", `<div class="li fadein"><span class="ap" style="background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center">${LOGO(15, "#18191c")}</span>Ask Free<span class="sw" id="gSw"></span></div>`);
+      await sleep(250); $("#gSw", wrap).classList.add("on");
+      $(".dragpad", wrap).innerHTML = `<div style="color:var(--ok);display:flex;justify-content:center;margin:6px 0">${ICON.check(28)}</div><p style="color:var(--text);font-weight:500">授权好了</p><p>屏幕录制要重开 Ask Free 才生效</p><button class="btn solid" id="gRe" style="margin-top:10px">重开 Ask Free</button>`;
+      $("#gRe", wrap).onclick = () => { wrap.remove(); onDone && onDone(); };
+    };
+    addEventListener("pointermove", mv); addEventListener("pointerup", up);
+  });
+  // 点系统设置和小面板以外的地方关掉（拖动松手时的 click 不算）
+  wrap.addEventListener("pointerdown", e => { if (e.target === wrap) wrap.remove(); });
+}
+// 麦克风：只能系统设置里开（示意一下打开了哪一页）
+function openMicSettings() {
+  const wrap = document.createElement("div"); wrap.style.cssText = "position:absolute;inset:0;z-index:40";
+  wrap.innerHTML = `<div class="sysset fadein"><div class="side"><div>通用</div><div>外观</div><div class="on">隐私与安全性</div></div><div class="main"><h3>麦克风</h3><div class="desc">允许下面的应用使用麦克风。</div>
+    <div class="list"><div class="li"><span class="ap" style="background:#fff;box-shadow:0 0 0 .5px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center">${LOGO(15, "#18191c")}</span>Ask Free<span class="sw" id="mSw" style="cursor:pointer"></span></div></div><div class="desc" style="margin-top:10px">（原型：点开关打开）</div></div></div>`;
+  layer.appendChild(wrap);
+  $("#mSw", wrap).onclick = async () => { $("#mSw", wrap).classList.add("on"); await sleep(600); wrap.remove(); };
+}
+
+// ===== 控制条和键盘 =====
+function wireBar(V) {
+  $("#bAsk").addEventListener("pointerdown", e => { e.preventDefault(); V.talkDown("button"); });
+  $("#bAsk").addEventListener("pointerup", () => V.talkUp("button"));
+  $("#bAsk").addEventListener("pointerleave", () => V.talkUp("button"));
+  $("#bNew").onclick = () => V.ask({ newTopic: true });
+  $("#bType").onclick = () => V.type();
+  $("#bClose").onclick = () => V.close();
+  $("#bErr").onclick = e => { const m = $("#errmenu"); m.style.left = e.currentTarget.offsetLeft + "px"; m.classList.toggle("show"); };
+  $$("#errmenu button").forEach(b => b.onclick = () => { $("#errmenu").classList.remove("show"); V.error(b.dataset.err); });
+  $$("#bar [data-bg]").forEach(b => b.onclick = () => { V.close(true); setBg(b.dataset.bg); });
+  $$("#bar [data-hk]").forEach(b => b.onclick = () => { S.hk = b.dataset.hk === "1"; refreshBar(); V.refresh(); });
+  let lastCtrl = 0;
+  addEventListener("keydown", e => {
+    if (e.key === "Alt" && S.hk && !e.repeat) { e.preventDefault(); V.talkDown("key"); }
+    else if (e.key === "Control" && S.hk && !e.repeat) { const t = Date.now(); if (t - lastCtrl < 380) { V.type(); lastCtrl = 0; } else lastCtrl = t; }
+    else if (e.key === " " && !S.typing) { e.preventDefault(); toggleVideo(S.bg === "video" ? "空格落到视频上了：面板没抢键盘" : ""); }
+    else if (e.key === "Escape") V.escape();
+  });
+  addEventListener("keyup", e => { if (e.key === "Alt") V.talkUp("key"); });
+  $("#bg").addEventListener("pointerdown", () => V.outside());
+  $("#mbIcon").innerHTML = `<span style="--logo-in:rgba(236,236,238,1)">${LOGO(15, "#1d1d1f")}</span>`;
+}
+// 场景入口：#scene=ask|follow|newtopic|type|err-xxx
+async function runScene(V) {
+  const sc = P.get("scene"); if (!sc) return;
+  await sleep(300);
+  if (sc === "ask") V.ask({ auto: true });
+  else if (sc === "follow") { await V.ask({ auto: true, fast: true }); V.ask({ auto: true }); }
+  else if (sc === "newtopic") { await V.ask({ auto: true, fast: true }); await V.ask({ auto: true, fast: true }); V.ask({ newTopic: true }); }
+  else if (sc === "type") V.type();
+  else if (sc.startsWith("err-")) V.error(sc.slice(4));
+}
+// 示意的鼠标指针：提问时指着的地方
+function showCursor(spot) {
+  let c = $("#fakecur"); if (!c) { c = document.createElement("div"); c.id = "fakecur"; c.className = "fakecur pass"; c.innerHTML = `<svg width="20" height="24" viewBox="0 0 20 24"><path d="M2 1.5v17.5l4.6-4.3 3 6.6 2.8-1.3-3-6.4h6.3z" fill="#000" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/></svg>`; layer.appendChild(c); }
+  const r = spotRect(spot); c.style.left = (r.x + r.w * .55) + "px"; c.style.top = (r.y + r.h * .45) + "px";
+}
+function hideCursor() { const c = $("#fakecur"); if (c) c.remove(); }
+
+// ===== 方向 B：指针旁气泡 =====
+const Bv = { bub: null, vf: null, recb: null, turns: [], cur: 0, pinned: false, run: { dead: false }, rec: null, spot: "q1" };
+function bars(n) { return Array.from({ length: n }, () => "<i></i>").join(""); }
+function animateWave(box) {
+  let t = 0; const bs = $$("i", box);
+  const id = setInterval(() => { t += .25; bs.forEach((b, i) => { const env = Math.sin(Math.PI * (i + .5) / bs.length); b.style.height = (4 + env * (5 + 15 * Math.abs(Math.sin(t + i * .7) * Math.sin(t * .6 + i)))).toFixed(1) + "px"; }); }, 70);
+  return () => clearInterval(id);
+}
+function vfRect(spot) { const r = spotRect(spot), p = 8; return { x: r.x - p, y: r.y - p, w: r.w + p * 2, h: r.h + p * 2 }; }
+function showVF(spot, cls = "") {
+  if (!Bv.vf) { Bv.vf = document.createElement("div"); Bv.vf.dataset.part = "取景框"; layer.appendChild(Bv.vf); }
+  const r = vfRect(spot); Bv.vf.className = "vf pass " + cls;
+  Object.assign(Bv.vf.style, { left: r.x + "px", top: r.y + "px", width: r.w + "px", height: r.h + "px" });
+  showCursor(spot);
+}
+function hideVF() { if (Bv.vf) { Bv.vf.remove(); Bv.vf = null; } hideCursor(); }
+// 气泡放在取景框旁边：右边放得下放右边，否则左边，再不行放下面；尖角指着取景框
+function place(el, spot, w) {
+  const r = vfRect(spot); const h = el.offsetHeight || 200; let x, y, side;
+  if (r.x + r.w + 12 + w <= 1268) { x = r.x + r.w + 12; side = "l"; }
+  else if (r.x - 12 - w >= 12) { x = r.x - 12 - w; side = "r"; }
+  else { x = Math.min(Math.max(12, r.x), 1268 - w); side = "t"; }
+  y = side === "t" ? r.y + r.h + 12 : r.y;
+  y = Math.max(34, Math.min(y, 734 - h));
+  el.style.left = x + "px"; el.style.top = y + "px";
+  const tail = $(".tail", el); if (tail) { tail.className = "tail " + side; tail.style.top = Math.max(14, Math.min(r.y + 18 - y, h - 30)) + "px"; }
+}
+function showRecB(spot, text) {
+  Bv.recStop && Bv.recStop(); Bv.recStop = null;
+  if (!Bv.recb) { Bv.recb = document.createElement("div"); Bv.recb.className = "recb enter"; Bv.recb.dataset.part = "录音气泡"; layer.appendChild(Bv.recb); }
+  if (text === "rec") {
+    Bv.recb.innerHTML = `<button class="ibtn" data-c="x" title="取消（Esc）">${ICON.close(14)}</button><span class="wv">${bars(9)}</span><span class="lb">正在听，看着这里</span><button class="ibtn ok" data-c="ok" title="说完了">${ICON.check(14)}</button>`;
+    Bv.recStop = animateWave($(".wv", Bv.recb));
+    $("[data-c=x]", Bv.recb).onclick = () => Bv.cancelRec();
+    $("[data-c=ok]", Bv.recb).onclick = () => Bv.rec && Bv.rec.finish();
+  } else Bv.recb.innerHTML = `<span class="lb" style="padding:0 8px;display:flex;align-items:center;gap:8px">${text === "proc" ? '<span class="spin"></span>识别中' : text}</span>`;
+  const r = vfRect(spot); Bv.recb.style.left = (r.x + r.w - Bv.recb.offsetWidth + 8) + "px"; Bv.recb.style.top = Math.min(r.y + r.h + 10, 690) + "px";
+}
+function hideRecB() { Bv.recStop && Bv.recStop(); Bv.recStop = null; if (Bv.recb) { Bv.recb.remove(); Bv.recb = null; } }
+
+function ensureBub(spot) {
+  if (Bv.bub) { Bv.bub.classList.remove("strip", "fade"); return Bv.bub; }
+  const b = document.createElement("div"); b.className = "bub enter"; b.dataset.part = "回答气泡";
+  b.innerHTML = `<div class="tail l"></div><div class="tabs" data-part="追问页签"></div><div class="body"></div><div class="bf" data-part="气泡底栏"></div>`;
+  layer.appendChild(b); Bv.bub = b; Bv.spot = spot;
+  b.addEventListener("pointerenter", () => { if (b.classList.contains("strip")) { clearTimeout(Bv.ct); setTimeout(() => { if (b.matches(":hover")) { b.classList.remove("strip", "fade"); paintAll(); } }, 150); } });
+  return b;
+}
+function foot(status) {
+  const b = Bv.bub; if (!b) return; const f = $(".bf", b);
+  Bv.footStop && Bv.footStop(); Bv.footStop = null;
+  if (status === "listen") { f.innerHTML = `<span class="wv">${bars(15)}</span><span class="st" style="flex:none">正在听 · 追问</span>`; Bv.footStop = animateWave($(".wv", f)); return; }
+  const strip = b.classList.contains("strip"); const t = Bv.turns[Bv.cur];
+  f.innerHTML = `<span class="st">${strip && t ? `<b style="color:var(--text)">${esc(t.q)}</b>` : status || Bv.status || ""}</span>
+    <button class="ibtn" data-h="talk" title="按住追问${S.hk ? "（或按住 右⌥）" : ""}">${ICON.mic(15)}</button><button class="ibtn" data-h="copy" title="复制">${ICON.copy(15)}</button><button class="ibtn ${Bv.pinned ? "on" : ""}" data-h="pin" title="${Bv.pinned ? "取消钉住" : "钉到右上角，点外面也不收起"}">${Bv.pinned ? ICON.pinOn(15) : ICON.pin(15)}</button><button class="ibtn" data-h="close" title="关掉（Esc）">${ICON.close(15)}</button>`;
+  const tk = $("[data-h=talk]", f);
+  if (tk) tk.addEventListener("pointerdown", e => { e.preventDefault(); tk.classList.add("hold"); Bv.talkDown("panel"); addEventListener("pointerup", () => Bv.talkUp(), { once: true }); });
+  $("[data-h=copy]", f).onclick = e => { const x = e.currentTarget; x.innerHTML = ICON.check(15); x.classList.add("on"); setTimeout(() => { x.innerHTML = ICON.copy(15); x.classList.remove("on"); }, 1200); };
+  $("[data-h=pin]", f).onclick = () => Bv.togglePin();
+  $("[data-h=close]", f).onclick = () => Bv.close();
+}
+function setSt(s) { Bv.status = s; foot(); }
+function paintTabs() {
+  const b = Bv.bub, tabs = $(".tabs", b);
+  if (Bv.turns.length < 2) { tabs.innerHTML = ""; tabs.style.display = "none"; return; }
+  tabs.style.display = "";
+  tabs.innerHTML = Bv.turns.map((t, i) => `<button class="${i === Bv.cur ? "on" : ""}" data-i="${i}" title="${esc(t.q)}"><i>${i + 1}</i><span class="t">${esc(t.q)}</span></button>`).join("");
+  $$("button", tabs).forEach(x => x.onclick = () => { Bv.cur = +x.dataset.i; paintAll(); });
+}
+function splitLead(a) { const i = a.indexOf("\n\n"); return i < 0 ? [a, ""] : [a.slice(0, i), a.slice(i + 2)]; }
+function paintBody() {
+  const b = Bv.bub, t = Bv.turns[Bv.cur], body = $(".body", b); if (!t) return;
+  const q = t.q ? `<div class="bq">${t.typed ? ICON.kbd(14) : ICON.mic(14)}<span>${esc(t.q)}</span></div>` : "";
+  if (t.state === "think") body.innerHTML = `${q}<div class="think" style="display:flex;align-items:center;gap:8px;color:var(--text2);height:26px"><span class="dots"><i></i><i></i><i></i></span>${t.saw ? "看着这里，在想" : "在想"}</div>`;
+  else if (t.state === "search") body.innerHTML = `${q}<div style="display:flex;align-items:center;gap:8px;color:var(--text2);height:26px">${ICON.globe(14)}正在联网查<span class="dots"><i></i><i></i><i></i></span></div>`;
+  else if (t.state === "err") body.innerHTML = `${q}${errHTML(t.err)}`;
+  else {
+    const [lead, rest] = splitLead(t.a || "");
+    body.innerHTML = `${q}${t.warn || ""}${t.search ? srcHTML(t.search) : ""}<div class="lead"><div class="md"></div></div><div class="more ${t.open ? "" : "hide"}"><div class="md"></div>${t.imgs ? imgsHTML(t.imgs) : ""}</div><div class="expw"></div>`;
+    if (t.state === "done") {
+      $(".lead .md", body).innerHTML = md(lead); $(".more .md", body).innerHTML = md(rest);
+      if (rest || t.imgs) { $(".expw", body).innerHTML = `<button class="exp">${t.open ? "收起" : "展开全部"}${t.open ? ICON.up(13) : ICON.chev(13)}</button>`; $(".exp", body).onclick = () => { t.open = !t.open; paintBody(); place(Bv.bub, Bv.spot, 360); }; }
+    }
+  }
+  $$("[data-act]", body).forEach(x => x.onclick = () => Bv.act(x.dataset.act, t));
+}
+function paintAll() { if (!Bv.bub) return; paintTabs(); paintBody(); foot(); if (!Bv.pinned) place(Bv.bub, Bv.spot, Bv.bub.classList.contains("strip") ? 300 : 360); }
+
+// ===== 说话 =====
+Bv.canFollow = () => !!(Bv.bub && Bv.turns.length && Bv.turns[Bv.turns.length - 1].state === "done" && !Bv.bub.classList.contains("fade"));
+Bv.talkDown = function () {
+  if (Bv.rec) { if (Bv.rec.latched) Bv.rec.finish(); return; }
+  const follow = Bv.canFollow() && !Bv.nextNew;
+  let done; const p = new Promise(r => done = r);
+  Bv.rec = { follow, start: Date.now(), latched: false, finish: () => { if (Bv.rec) { const r = Bv.rec; Bv.rec = null; clearTimeout(r.auto); done(); } } };
+  const spot = Bv.nextNew ? "q3" : "q1";
+  if (follow) { Bv.bub.classList.add("listen"); Bv.bub.classList.remove("strip", "fade"); foot("listen"); }
+  else { if (Bv.bub && Bv.nextNew) Bv.flyAway(); else if (Bv.bub) Bv.close(true); showVF(spot, "pulse"); showRecB(spot, "rec"); }
+  p.then(() => Bv.afterRec(follow, spot));
+};
+Bv.talkUp = function () {
+  if (Bv.bub) $$("[data-h=talk]", Bv.bub).forEach(x => x.classList.remove("hold"));
+  const r = Bv.rec; if (!r || r.latched) return;
+  if (Date.now() - r.start < 320) { r.latched = true; r.auto = setTimeout(() => r.finish(), 1800); } else r.finish();
+};
+Bv.cancelRec = function () {
+  const r = Bv.rec; if (!r) return; Bv.rec = null; clearTimeout(r.auto);
+  if (r.follow) { Bv.bub.classList.remove("listen"); setSt("已取消"); setTimeout(() => Bv.doneSt(), 1300); }
+  else { showRecB(Bv.spot, "已取消"); setTimeout(() => { hideRecB(); hideVF(); }, 1000); }
+};
+Bv.afterRec = async function (follow, spot) {
+  const tok = Bv.run;
+  if (follow) { Bv.bub.classList.remove("listen"); setSt('<span class="spin"></span>识别中'); } else showRecB(spot, "proc");
+  await sleep(Bv.nextFast ? 150 : 650); if (tok.dead) return;
+  const perr = Bv.pendingErr; Bv.pendingErr = null;
+  if (perr === "nospeech") { if (follow) { setSt("<b>没听到问题</b> · 再按一次说"); setTimeout(() => Bv.doneSt(), 1800); } else { showRecB(spot, "没听到问题"); setTimeout(() => { hideRecB(); hideVF(); }, 1600); } return; }
+  hideRecB();
+  Bv.ask({ follow, recorded: true, newTopic: Bv.nextNew, fast: Bv.nextFast, err: perr, spot });
+  Bv.nextNew = false; Bv.nextFast = false;
+};
+Bv.doneSt = function () {
+  const t = Bv.turns[Bv.turns.length - 1]; if (!t) return;
+  if (t.state === "err") return setSt("<b>没答成</b>");
+  setSt(`<b>${t.search ? "千问 · 联网" : "DeepSeek"}</b> · ${t.saw ? "看了这里" : t.warnCode ? "没看屏幕" : "接着上一问"}`);
+};
+Bv.flyAway = function () {
+  const old = Bv.bub, q = Bv.turns[0] && Bv.turns[0].q, n = Bv.turns.length;
+  Bv.bub = null; hideVF(); old.classList.add("flyaway"); setTimeout(() => old.remove(), 320);
+  Bv.footStop && Bv.footStop();
+  const c = document.createElement("div"); c.className = "prevchip"; c.dataset.part = "上个话题";
+  c.innerHTML = `${ICON.history(14)}<span>上个话题 ${n} 问，已存进「历史」</span>`; layer.appendChild(c);
+  setTimeout(() => { c.style.opacity = 0; setTimeout(() => c.remove(), 450); }, 3200);
+  Bv.turns = []; Bv.pinned = false;
+};
+
+// ===== 问一句 =====
+Bv.ask = async function (o = {}) {
+  if (o.auto || (!o.recorded && !o.typed)) {
+    if (o.newTopic) Bv.nextNew = true;
+    Bv.nextFast = !!o.fast;
+    const g = Bv.gen; Bv.talkDown(); await sleep(o.fast ? 300 : 1500); if (g !== Bv.gen) return; Bv.rec && Bv.rec.finish();
+    return new Promise(r => { Bv.onDone = r; });
+  }
+  const bg = BGS[S.bg];
+  const follow = !o.newTopic && !o.fresh && (o.follow || (o.typed && Bv.canFollow()));
+  let src = follow ? bg.q[Bv.turns.length >= 2 ? 3 : 1] : o.newTopic ? bg.q[2] : bg.q[0];
+  const spot = follow ? Bv.spot : (o.spot || (o.newTopic ? "q3" : "q1"));
+  const t = { ...src, state: "think", typed: !!o.typedFlag };
+  if (o.typed) t.q = o.typed;
+  t.saw = !follow && o.err !== "screen";
+  if (o.err === "screen") t.warnCode = "screen";
+  if (!follow) { if (Bv.bub) { Bv.bub.remove(); Bv.bub = null; } Bv.turns = []; Bv.pinned = false; showVF(spot, o.err === "screen" ? "blind" : ""); }
+  Bv.run.dead = true; const tok = Bv.run = { dead: false };
+  const b = ensureBub(spot); Bv.spot = spot;
+  Bv.turns.push(t); Bv.cur = Bv.turns.length - 1;
+  paintAll(); setSt(t.saw ? "看着这里" : "在想");
+  await sleep(o.fast ? 250 : 900); if (tok.dead) return;
+  if (o.err && o.err !== "screen") { t.state = "err"; t.err = o.err; paintAll(); Bv.doneSt(); Bv.onDone && Bv.onDone(); return; }
+  if (t.warnCode) t.warn = `<div class="warnbar" style="margin-bottom:10px" data-part="没看屏幕">${ICON.screen(15)}<span>这次没看屏幕：还没给屏幕录制权限</span><button class="btn" data-act="grant">去授权</button></div>`;
+  if (t.search) { t.state = "search"; paintAll(); setSt("正在联网查"); await sleep(o.fast ? 250 : 1100); if (tok.dead) return; }
+  if (t.warnCode) t.a = "我没看到你的屏幕，只能按字面猜你问的是什么。\n\n给了屏幕录制权限后再问一次，我会看着你指的地方回答。";
+  const [lead] = splitLead(t.a);
+  t.state = "stream"; paintAll(); setSt("正在回答");
+  const el = $(".lead .md", b);
+  let ok = true;
+  if (o.fast) el.innerHTML = md(lead); else ok = await stream(el, lead, tok, () => place(b, Bv.spot, 360));
+  if (!ok) return;
+  t.state = "done"; paintAll(); Bv.doneSt();
+  if (Bv.wantCollapse) { Bv.wantCollapse = false; Bv.collapse(); }
+  const cb = Bv.onDone; Bv.onDone = null; cb && cb();
+};
+Bv.act = function (act, t) {
+  if (act === "fillkey") openKeySheet(t.q, () => { Bv.turns.pop(); Bv.ask({ recorded: true, typed: t.q, spot: Bv.spot }); });
+  else if (act === "retry") { Bv.turns.pop(); Bv.ask({ recorded: true, fresh: !Bv.turns.length, follow: !!Bv.turns.length, typed: t.q, spot: Bv.spot }); }
+  else if (act === "howkey") { const p = $(".err p", Bv.bub); p.innerHTML = "打开 platform.deepseek.com，登录后在「API Keys」里点「创建」，复制那串 sk- 开头的字。<br>（原型：真机上会用浏览器打开这个网址）"; }
+  else if (act === "totype") Bv.type();
+  else if (act === "micset") openMicSettings();
+  else if (act === "grant") openDragGrant(() => { t.warn = `<div class="okbar" style="margin-bottom:10px">${ICON.check(15)}<span>能看屏幕了</span><button class="btn" data-act="reask">看着这里再问一次</button></div>`; paintBody(); });
+  else if (act === "reask") { Bv.ask({ recorded: true, fresh: true, spot: Bv.spot }); }
+};
+Bv.togglePin = function () {
+  Bv.pinned = !Bv.pinned; const b = Bv.bub; b.classList.toggle("pinned", Bv.pinned); b.classList.remove("strip", "fade"); clearTimeout(Bv.ct);
+  if (Bv.pinned) { b.style.left = (1268 - 360) + "px"; b.style.top = "34px"; if (Bv.vf) Bv.vf.classList.add("dim"); }
+  else { if (Bv.vf) Bv.vf.classList.remove("dim"); }
+  paintAll();
+};
+
+// ===== 打字问：在指针旁边出一个输入气泡 =====
+Bv.type = function () {
+  if (Bv.rec) return;
+  const follow = Bv.canFollow();
+  if (!follow) { if (Bv.bub) { Bv.bub.remove(); Bv.bub = null; } Bv.turns = []; showVF("q1"); }
+  const host = follow ? Bv.bub : ensureBub("q1");
+  const box = document.createElement("div"); box.dataset.part = "打字框"; box.className = "binw";
+  box.innerHTML = `<div class="bin">${ICON.kbd(16)}<input id="tIn" placeholder="${follow ? "接着问…" : "问这里的东西…"}" autocomplete="off"><button class="snd" id="tGo" disabled>${ICON.send(15)}</button></div><div class="bin-hint">↩ 发送 · esc 取消 · 发出去后键盘还给原来的窗口</div>`;
+  if (follow) $(".bf", host).replaceWith(box); else { $(".tabs", host).style.display = "none"; $(".body", host).innerHTML = ""; $(".bf", host).replaceWith(box); }
+  place(host, Bv.spot, 360);
+  const inp = $("#tIn"), go = $("#tGo"); S.typing = true; inp.focus();
+  inp.oninput = () => go.disabled = !inp.value.trim();
+  const send = () => { const v = inp.value.trim(); if (!v) return; S.typing = false; box.replaceWith(Object.assign(document.createElement("div"), { className: "bf" })); Bv.ask({ typed: v, typedFlag: true, recorded: true, follow, spot: Bv.spot }); };
+  go.onclick = send;
+  inp.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) send(); if (e.key === "Escape") { e.stopPropagation(); Bv.endType(box); } };
+  inp.onblur = () => { if (!inp.value.trim()) setTimeout(() => { if (S.typing && document.activeElement !== inp) Bv.endType(box); }, 120); };
+};
+Bv.endType = function (box) { S.typing = false; if (!Bv.turns.length) return Bv.close(); box.replaceWith(Object.assign(document.createElement("div"), { className: "bf" })); paintAll(); };
+
+// ===== 报错场景 =====
+Bv.error = async function (code) {
+  Bv.close(true);
+  if (code === "mic" || code === "asr") {
+    showVF("q1");
+    if (code === "asr") { const g = Bv.gen; showRecB("q1", "rec"); await sleep(1100); if (g !== Bv.gen) return; showRecB("q1", "proc"); await sleep(650); if (g !== Bv.gen) return; hideRecB(); }
+    const b = ensureBub("q1"); Bv.turns = [{ q: "", state: "err", err: code }]; Bv.cur = 0; paintAll(); setSt(code === "mic" ? "<b>没开始录音</b>" : "<b>没听懂</b> · 语音没转成文字"); return;
+  }
+  const g = Bv.gen; Bv.pendingErr = code; Bv.talkDown(); await sleep(1100); if (g !== Bv.gen) return; Bv.rec && Bv.rec.finish();
+};
+Bv.close = function () {
+  Bv.gen = (Bv.gen || 0) + 1;
+  Bv.run.dead = true; Bv.run = { dead: false }; if (Bv.rec) { clearTimeout(Bv.rec.auto); Bv.rec = null; }
+  hideRecB(); hideVF(); Bv.footStop && Bv.footStop(); Bv.footStop = null;
+  if (Bv.bub) { Bv.bub.remove(); Bv.bub = null; }
+  Bv.turns = []; Bv.pinned = false; S.typing = false; Bv.onDone = null;
+};
+Bv.escape = function () { if (Bv.rec) return Bv.cancelRec(); if (!S.typing) Bv.close(); };
+Bv.outside = function () {
+  if (!Bv.bub || Bv.pinned || S.typing || Bv.rec) return;
+  const t = Bv.turns[Bv.turns.length - 1];
+  if (t && t.state !== "done" && t.state !== "err") { Bv.wantCollapse = true; return; }
+  Bv.collapse();
+};
+Bv.collapse = function () {
+  const b = Bv.bub; if (!b) return; b.classList.add("strip"); if (Bv.vf) Bv.vf.classList.add("dim"); paintAll();
+  clearTimeout(Bv.ct); Bv.ct = setTimeout(() => { if (Bv.bub === b && b.classList.contains("strip") && !b.matches(":hover")) { b.classList.add("fade"); setTimeout(() => { if (Bv.bub === b && b.classList.contains("fade")) Bv.close(); }, 400); } }, 4000);
+};
+Bv.refresh = function () { foot(); };
+setInterval(() => { $("#bAsk").textContent = Bv.canFollow() ? "按住追问" : "按住提问"; $("#bType").textContent = "打字问"; }, 300);
+
+setBg(S.bg); refreshBar(); wireBar(Bv); runScene(Bv);
+</script></body></html>

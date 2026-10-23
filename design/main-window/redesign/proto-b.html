@@ -1,0 +1,1015 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>Ask Free 主窗口 · 方向 B</title><style>
+:root{
+  --bg:#FAFAFB;--surface:#F4F4F6;--elevated:#FFFFFF;--hover:rgba(0,0,0,.04);--selected:rgba(0,0,0,.07);
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);
+  --text:#18191C;--text2:#5F636C;--text3:#969AA2;
+  --ink:#18191C;--on-ink:#FFFFFF;
+  --ok:#28965A;--ok-soft:rgba(40,150,90,.12);--warn:#CD7D14;--warn-soft:rgba(205,125,20,.12);--danger:#C83C3C;
+  --mark:#E5484D;
+  --desk:linear-gradient(160deg,#dfe3ec 0%,#cfd5e2 55%,#c4cad8 100%);
+  --menubar:rgba(246,246,248,.78);
+  --win-shadow:0 0 0 .5px rgba(0,0,0,.18),0 22px 60px -10px rgba(20,22,40,.35),0 6px 16px rgba(20,22,40,.12);
+  --pop-shadow:0 0 0 .5px rgba(0,0,0,.12),0 12px 32px -6px rgba(20,22,40,.28);
+  --stage:#EEEFF2;--paper:#FFFFFF;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#16171A;--surface:#1C1D20;--elevated:#232428;--hover:rgba(255,255,255,.05);--selected:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
+  --text:#EDEDEF;--text2:#9A9FA8;--text3:#6E7480;
+  --ink:#EDEDEF;--on-ink:#16171A;
+  --ok:#5CC285;--ok-soft:rgba(92,194,133,.15);--warn:#F29E40;--warn-soft:rgba(242,158,64,.15);--danger:#E65C5C;
+  --mark:#F2555A;
+  --desk:linear-gradient(160deg,#20232c 0%,#191b22 55%,#131419 100%);
+  --menubar:rgba(30,31,36,.78);
+  --win-shadow:0 0 0 .5px rgba(255,255,255,.12),0 22px 60px -10px rgba(0,0,0,.7),0 6px 16px rgba(0,0,0,.35);
+  --pop-shadow:0 0 0 .5px rgba(255,255,255,.12),0 12px 32px -6px rgba(0,0,0,.6);
+  --stage:#1E1F23;--paper:#2A2B30;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:1440px;height:900px;overflow:hidden}
+body{font:13px/1.5 var(--sans);color:var(--text);-webkit-font-smoothing:antialiased;text-autospace:normal;font-kerning:normal;letter-spacing:0;user-select:none}
+button{font:inherit;color:inherit}
+.desk{position:absolute;inset:0;background:var(--desk)}
+.mbar{position:absolute;left:0;right:0;top:0;height:26px;background:var(--menubar);backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 14px;gap:20px;font-size:13px;z-index:40}
+.mbar b{font-weight:600}
+.mbar .sp{flex:1}
+.mbar .mic{display:flex;align-items:center;justify-content:center;width:28px;height:22px;border-radius:5px;cursor:default}
+.mbar .mic.on,.mbar .mic:hover{background:var(--selected)}
+.mbar .clock{font-variant-numeric:tabular-nums}
+/* windows */
+.win{position:absolute;background:var(--bg);border-radius:10px;box-shadow:var(--win-shadow);overflow:hidden;display:flex}
+.tl{position:absolute;left:14px;top:16px;display:flex;gap:8px;z-index:5}
+.tl i{width:12px;height:12px;border-radius:999px;background:#FF5F57;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.15)}
+.tl i:nth-child(2){background:#FEBC2E}.tl i:nth-child(3){background:#28C840}
+.win.inactive .tl i{background:var(--border2)}
+.side{width:216px;flex:none;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:48px 10px 10px}
+.nav{display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:6px;color:var(--text);cursor:default;position:relative}
+.nav svg{color:var(--text2);flex:none}
+.nav.on{background:var(--selected)}
+.nav.on svg{color:var(--text)}
+.nav .n{margin-left:auto;font-size:12px;color:var(--text3);font-variant-numeric:tabular-nums}
+.nav .dot{margin-left:auto}
+.gt{font-size:12px;font-weight:500;color:var(--text2);margin:18px 10px 6px}
+.side .gt{margin-top:16px}
+.dot{width:7px;height:7px;border-radius:999px;display:inline-block;flex:none}
+.dot.warn{background:var(--warn)}.dot.ok{background:var(--ok)}.dot.danger{background:var(--danger)}.dot.off{background:var(--text3)}
+.statuscard{margin-top:auto;background:var(--elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:default}
+.statuscard .t{display:flex;align-items:center;gap:8px;font-weight:500}
+.statuscard .s{font-size:12px;color:var(--text2);margin-top:2px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.hdr{height:52px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1px solid var(--border)}
+.hdr h1{font-size:17px;font-weight:600;margin:0}
+.hdr .sp{flex:1}
+.body{flex:1;overflow:auto;padding:24px 32px 40px}
+.body::-webkit-scrollbar{width:8px}.body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.wrap{max-width:720px;margin:0 auto}
+/* basics */
+.btn{height:28px;padding:0 12px;border-radius:6px;border:1px solid var(--border2);background:var(--elevated);font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:default;white-space:nowrap;flex:none}
+.btn.solid{background:var(--ink);color:var(--on-ink);border-color:transparent}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--text2)}
+.btn.sm{height:24px;padding:0 9px;font-size:12px}
+.btn[disabled]{opacity:.45}
+.ibtn{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--text2);cursor:default;flex:none}
+.ibtn:hover{background:var(--hover);color:var(--text)}
+.link{color:var(--text);text-decoration:underline;text-decoration-color:var(--border2);text-underline-offset:3px;cursor:default}
+.muted{color:var(--text2)}.faint{color:var(--text3)}.small{font-size:12px}
+.group{background:var(--elevated);border:1px solid var(--border);border-radius:8px}
+.row{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 16px;border-top:1px solid var(--border)}
+.row:first-child{border-top:0}
+.row .tx{flex:1;min-width:0}
+.row .tx .a{font-weight:500}
+.row .tx .b{font-size:12px;color:var(--text2);margin-top:1px}
+.tg{width:32px;height:18px;border-radius:5px;background:var(--border2);position:relative;flex:none;cursor:default;transition:background .15s}
+.tg i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:3px;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tg.on{background:var(--ink)}.tg.on i{left:16px;background:var(--on-ink)}
+.tg.dis{opacity:.4}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px;gap:2px;flex:none}
+.seg b{height:22px;padding:0 10px;border-radius:4px;font-size:12px;font-weight:500;display:flex;align-items:center;color:var(--text2);cursor:default}
+.seg b.on{background:var(--elevated);color:var(--text);box-shadow:0 0 0 .5px var(--border2),0 1px 2px rgba(0,0,0,.06)}
+.seg.dis{opacity:.45}
+.kc{min-width:28px;height:28px;padding:0 9px;border-radius:5px;border:1px solid var(--border2);border-bottom-width:2px;background:var(--elevated);font-size:13px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;cursor:default;flex:none}
+.kc.unset{border-style:dashed;border-bottom-width:1px;color:var(--text2);font-weight:400}
+.kc .car{color:var(--text3);font-size:10px}
+.kc.big{height:38px;min-width:38px;font-size:15px;padding:0 12px}
+.q{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:5px;background:var(--surface);border:1px solid var(--border);font-size:12px;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:5px;font-size:12px;background:var(--surface);color:var(--text2);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.field{height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--bg);padding:0 9px;font:13px var(--sans);color:var(--text);outline:none;min-width:0}
+.field:focus{border-color:var(--ink);box-shadow:0 0 0 3px var(--selected)}
+.field.mono{font-family:var(--mono);font-size:12px}
+.field::placeholder{color:var(--text3)}
+.menu{position:absolute;background:var(--elevated);border-radius:8px;box-shadow:var(--pop-shadow);padding:4px;min-width:200px;z-index:80;font-size:13px}
+.menu .mi{height:26px;padding:0 10px;border-radius:5px;display:flex;align-items:center;gap:10px;cursor:default;white-space:nowrap}
+.menu .mi:hover{background:var(--selected)}
+.menu .mi .r{margin-left:auto;color:var(--text3);font-size:12px}
+.menu .mi.dim{color:var(--text3)}
+.menu .mi.danger{color:var(--danger)}
+.menu .sep{height:1px;background:var(--border);margin:4px 6px}
+.menu .mh{font-size:12px;color:var(--text3);padding:4px 10px 2px}
+.toast{position:absolute;left:50%;bottom:62px;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:8px 14px;border-radius:8px;font-size:13px;z-index:90;box-shadow:var(--pop-shadow);display:flex;gap:10px;align-items:center;white-space:nowrap;animation:tin .2s ease-out}
+@keyframes tin{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
+/* stage + demo */
+.stage{position:relative;height:208px;background:var(--stage);border-radius:10px;overflow:hidden;flex:none}
+.stage .page{position:absolute;left:24px;top:18px;width:300px;height:150px;background:var(--paper);border-radius:8px;box-shadow:0 0 0 .5px var(--border2),0 4px 14px rgba(0,0,0,.06);padding:12px 14px}
+.stage .page .tt{font-size:12px;font-weight:600}
+.stage .page .st{font-size:11px;color:var(--text3)}
+.bars{position:absolute;left:14px;right:14px;bottom:24px;height:96px;display:flex;align-items:flex-end;gap:12px}
+.bars i{flex:1;background:var(--text3);opacity:.45;border-radius:2px 2px 0 0}
+.bars i.hi{background:var(--text);opacity:.85}
+.months{position:absolute;left:14px;right:14px;bottom:8px;display:flex;gap:12px;font-size:10px;color:var(--text3)}
+.months span{flex:1;text-align:center}
+.frame{position:absolute;border:1.5px solid var(--mark);border-radius:3px;opacity:0}
+.cursor{position:absolute;width:16px;height:22px;z-index:3}
+.capsule{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);height:34px;border-radius:999px;background:#18191C;color:#fff;display:flex;align-items:center;gap:10px;padding:0 14px 0 12px;font-size:12px;opacity:0;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.capsule .wave{display:flex;gap:2px;align-items:center;height:16px}
+.capsule .wave i{width:3px;border-radius:2px;background:linear-gradient(#7AA2FF,#C77DFF);animation:wv .6s ease-in-out infinite alternate}
+.capsule.mono .wave i{background:#fff}
+.capsule .wave i:nth-child(2){animation-delay:.1s}.capsule .wave i:nth-child(3){animation-delay:.25s}.capsule .wave i:nth-child(4){animation-delay:.05s}.capsule .wave i:nth-child(5){animation-delay:.3s}.capsule .wave i:nth-child(6){animation-delay:.15s}
+@keyframes wv{from{height:4px}to{height:16px}}
+.capsule .cb{width:20px;height:20px;border-radius:999px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:11px}
+.apanel{position:absolute;right:20px;top:18px;width:250px;background:var(--elevated);border-radius:12px;box-shadow:var(--pop-shadow);padding:12px 14px;opacity:0;font-size:12px}
+.apanel .h{display:flex;align-items:center;gap:6px;color:var(--text3);font-size:11px;margin-bottom:6px}
+.apanel .qq{font-weight:500;margin-bottom:4px;font-size:12px}
+.apanel .aa{color:var(--text);line-height:1.6}
+.presskey{position:absolute;right:24px;bottom:18px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);opacity:0}
+.presskey .kc{background:var(--elevated)}
+.stage.play .cursor{animation:cur 7s ease-in-out infinite}
+.stage.play .frame{animation:frm 7s infinite}
+.stage.play .capsule{animation:cap 7s infinite}
+.stage.play .apanel{animation:ans 7s infinite}
+.stage.play .presskey{animation:prk 7s infinite}
+.stage.play .typed{animation:typ 7s steps(9) infinite;overflow:hidden;display:inline-block;white-space:nowrap;vertical-align:bottom}
+@keyframes cur{0%{left:330px;top:170px;opacity:0}6%{opacity:1}18%{left:236px;top:66px}86%{left:236px;top:66px;opacity:1}96%{opacity:0}100%{left:330px;top:170px;opacity:0}}
+@keyframes frm{0%,20%{opacity:0;transform:scale(1.15)}24%{opacity:1;transform:scale(1)}86%{opacity:1}94%,100%{opacity:0}}
+@keyframes cap{0%,20%{opacity:0;transform:translate(-50%,8px)}24%{opacity:1;transform:translate(-50%,0)}52%{opacity:1;transform:translate(-50%,0)}56%,100%{opacity:0;transform:translate(-50%,8px)}}
+@keyframes prk{0%,16%{opacity:0}20%{opacity:1}52%{opacity:1}55%,100%{opacity:0}}
+@keyframes typ{0%,26%{width:0}48%,100%{width:9.2em}}
+@keyframes ans{0%,56%{opacity:0;transform:translateY(-6px)}61%{opacity:1;transform:translateY(0)}90%{opacity:1}96%,100%{opacity:0}}
+.stage.still .cursor{left:236px;top:66px}
+.stage.still .frame,.stage.still .apanel{opacity:1}
+/* setup steps */
+.steps{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--elevated)}
+.step{display:flex;gap:14px;padding:16px 18px;border-top:1px solid var(--border);align-items:flex-start}
+.step:first-child{border-top:0}
+.step.cur{background:var(--surface)}
+.step .num{width:26px;height:26px;border-radius:999px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--text2);flex:none;margin-top:1px}
+.step.cur .num{background:var(--ink);color:var(--on-ink);border-color:transparent}
+.step.done .num{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.step .tx{flex:1;min-width:0}
+.step .tx .a{font-weight:500;font-size:14px}
+.step.done .tx .a{color:var(--text2)}
+.step .tx .b{font-size:12px;color:var(--text2);margin-top:2px}
+.sub{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.subrow{display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:6px;background:var(--elevated);border:1px solid var(--border)}
+.step.cur .subrow{background:var(--elevated)}
+.subrow .nm{width:72px;font-weight:500}
+.subrow .why{flex:1;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ok-t{color:var(--ok);font-size:12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.warn-t{color:var(--warn);font-size:12px;white-space:nowrap}
+.danger-t{color:var(--danger);font-size:12px}
+/* providers */
+.prov{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 16px;border-top:1px solid var(--border);cursor:default}
+.prov:first-child{border-top:0}
+.radio{width:16px;height:16px;border-radius:999px;border:1.5px solid var(--border2);flex:none;position:relative}
+.radio.on{border-color:var(--ink)}
+.radio.on:after{content:"";position:absolute;inset:3px;border-radius:999px;background:var(--ink)}
+.prov .nm{font-weight:500}
+.prov .ds{color:var(--text2);font-size:12px}
+.provx{padding:4px 16px 16px 44px;display:flex;flex-direction:column;gap:10px;border-top:0}
+.frow{display:flex;align-items:center;gap:10px}
+.frow .lb{width:64px;font-size:12px;color:var(--text2);flex:none}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;height:100%}
+.fnode{display:flex;flex-direction:column;align-items:center;gap:6px;width:118px}
+.fnode .ic{width:46px;height:46px;border-radius:12px;background:var(--elevated);box-shadow:0 0 0 .5px var(--border2),0 2px 6px rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center;position:relative}
+.fnode .ic .st{position:absolute;right:-4px;top:-4px;width:16px;height:16px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.fnode .l1{font-size:12px;font-weight:500}
+.fnode .l2{font-size:12px;color:var(--text2);margin-top:-4px}
+.farrow{width:44px;height:2px;background:var(--border2);position:relative;margin-bottom:34px}
+.farrow:after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid var(--border2);border-top:4px solid transparent;border-bottom:4px solid transparent}
+.farrow.go{background:linear-gradient(90deg,var(--border2) 0 40%,var(--ink) 40% 60%,var(--border2) 60%);background-size:200% 100%;animation:flowmv 1.6s linear infinite}
+@keyframes flowmv{from{background-position:100% 0}to{background-position:-100% 0}}
+/* history */
+.hl{width:330px;flex:none;border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+.hl .top{padding:12px 14px 8px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--border)}
+.search{display:flex;align-items:center;gap:6px;height:28px;border-radius:6px;background:var(--surface);border:1px solid var(--border);padding:0 8px;color:var(--text3)}
+.search input{border:0;background:transparent;outline:none;flex:1;font:13px var(--sans);color:var(--text);min-width:0}
+.search input::placeholder{color:var(--text3)}
+.search:focus-within{border-color:var(--border2);background:var(--elevated)}
+.chips{display:flex;gap:4px}
+.chip{height:24px;padding:0 9px;border-radius:6px;font-size:12px;color:var(--text2);display:inline-flex;align-items:center;gap:5px;cursor:default}
+.chip.on{background:var(--selected);color:var(--text);font-weight:500}
+.hlist{flex:1;overflow:auto;padding:4px 8px 16px}
+.hlist::-webkit-scrollbar{width:8px}.hlist::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.dayh{font-size:12px;font-weight:500;color:var(--text2);padding:12px 8px 4px;display:flex;gap:6px}
+.dayh .c{color:var(--text3);font-weight:400}
+.hrow{display:flex;gap:10px;padding:8px 8px;border-radius:8px;align-items:flex-start;cursor:default}
+.hrow.on{background:var(--selected)}
+.hrow .mi{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--text3);flex:none;margin-top:0}
+.hrow .tx{flex:1;min-width:0}
+.hrow .q1{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hrow .p1{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hrow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+.hrow .tm{font-size:12px;color:var(--text3);font-variant-numeric:tabular-nums;width:40px;text-align:right}
+.hrow .tn{font-size:12px;color:var(--text3)}
+mark{background:var(--warn-soft);color:inherit;border-radius:2px;padding:0 1px}
+.hd{flex:1;min-width:0;display:flex;flex-direction:column}
+.hd .bar{height:44px;display:flex;align-items:center;justify-content:flex-end;gap:2px;padding:0 14px;flex:none}
+.hd .sc{flex:1;overflow:auto;padding:0 32px 32px}
+.hd .sc::-webkit-scrollbar{width:8px}.hd .sc::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.hd h2{font-size:17px;font-weight:600;line-height:1.35;margin:0 0 6px}
+.meta{font-size:12px;color:var(--text2);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.meta .sepd{color:var(--text3)}
+.turn{margin-top:18px}
+.turn .lab{font-size:12px;color:var(--text3);margin-bottom:4px;display:flex;gap:6px;align-items:center}
+.turn .qq{font-weight:500;font-size:14px;margin-bottom:8px}
+.answer{line-height:1.65;font-size:13px}
+.answer p{margin:0 0 8px}
+.answer ol,.answer ul{margin:0 0 8px;padding-left:20px}
+.answer code{font:12px var(--mono);background:var(--surface);border-radius:4px;padding:1px 4px}
+.shot{position:relative;width:100%;max-width:440px;height:170px;border-radius:8px;overflow:hidden;background:var(--stage);border:1px solid var(--border);margin:4px 0 12px;cursor:zoom-in}
+.imgs{display:flex;gap:8px;margin:6px 0 4px}
+.img{width:120px;height:84px;border-radius:6px;overflow:hidden;border:1px solid var(--border);position:relative;cursor:default}
+.img .cap{position:absolute;left:0;right:0;bottom:0;font-size:11px;color:#fff;padding:3px 6px;background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;height:100%;padding:24px}
+.empty svg{opacity:.6;color:var(--text2)}
+.empty .a{font-weight:500}
+.empty .b{font-size:12px;color:var(--text2);max-width:46ch}
+/* misc page parts */
+.ptitle{font-size:22px;font-weight:600;line-height:1.35;margin:24px 0 4px}
+.plead{color:var(--text2);margin:0 0 16px}
+.pl{font-size:12px;font-weight:500;color:var(--text2);margin:24px 0 8px;display:flex;align-items:center;gap:8px}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mcard{background:var(--elevated);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:118px}
+.mcard .h{display:flex;align-items:center;gap:8px;font-weight:500}
+.mcard .h svg{color:var(--text2)}
+.mcard .d{font-size:12px;color:var(--text2);flex:1}
+.gest{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gest div{display:flex;align-items:center;gap:8px;font-size:13px}
+.gest .arr{color:var(--text3)}
+.tiles{display:flex;gap:10px}
+.tile{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;align-items:center;cursor:default;background:var(--elevated)}
+.tile.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.tile .pv{width:100%;height:64px;border-radius:6px;background:var(--stage);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.tile .lb{font-size:12px;font-weight:500}
+.vu{display:flex;gap:2px;align-items:flex-end;height:14px}
+.vu i{width:3px;background:var(--ok);border-radius:1px;animation:vu .5s ease-in-out infinite alternate}
+.vu i:nth-child(2n){animation-delay:.15s}.vu i:nth-child(3n){animation-delay:.3s}
+@keyframes vu{from{height:2px}to{height:14px}}
+.about{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 0 8px;text-align:center}
+.about h2{font-size:22px;font-weight:600;margin:6px 0 0}
+.disc{font-size:12px;color:var(--text2);display:inline-flex;gap:4px;align-items:center;cursor:default;margin-top:2px}
+.note{font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface);border-radius:6px;padding:10px 12px}
+.banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:var(--ok-soft);margin-bottom:16px}
+.banner .t{flex:1}
+/* system sims */
+.sys{position:absolute;left:120px;top:150px;width:660px;height:470px;background:var(--bg);border-radius:12px;box-shadow:var(--win-shadow);display:flex;overflow:hidden;z-index:60}
+.sys .sl{width:190px;background:var(--surface);padding:44px 10px;border-right:1px solid var(--border)}
+.sys .sl div{height:26px;border-radius:5px;padding:0 8px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.sys .sl div.on{background:var(--selected);color:var(--text)}
+.sys .sl div i{width:16px;height:16px;border-radius:4px;background:var(--text3);opacity:.5}
+.sys .sr{flex:1;padding:16px 22px}
+.sys .sr h3{font-size:15px;margin:2px 0 4px}
+.sys .sr p{font-size:12px;color:var(--text2);margin:0 0 12px}
+.sys .lst{border:1px solid var(--border);border-radius:8px;background:var(--elevated);transition:box-shadow .15s}
+.sys .lst.hot{box-shadow:0 0 0 2px var(--ink)}
+.sys .li{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-top:1px solid var(--border);font-size:13px}
+.sys .li:first-child{border-top:0}
+.sys .li .ai{width:22px;height:22px;border-radius:5px}
+.sys .li .tg{margin-left:auto}
+.sys .li.new{animation:tin2 .3s ease-out}
+@keyframes tin2{from{background:var(--selected)}to{background:transparent}}
+.helper{position:absolute;width:340px;height:92px;background:#FFFFFF;color:#18191C;border-radius:12px;box-shadow:var(--pop-shadow);display:flex;align-items:center;gap:14px;padding:0 16px;z-index:61}
+.helper .ico{width:52px;height:52px;border-radius:10px;border:1.2px dashed #18191C;display:flex;align-items:center;justify-content:center;background:#F4F4F5;cursor:grab}
+.helper .ht{flex:1;font-size:13px;line-height:1.45}
+.helper .ht .s{font-size:12px;color:#5F636C}
+.helper .x{position:absolute;right:10px;top:8px;color:#969AA2;font-size:12px;cursor:default}
+.ghost{position:absolute;z-index:99;pointer-events:none;width:44px;height:44px;opacity:.9;filter:drop-shadow(0 6px 12px rgba(0,0,0,.3))}
+.alert{position:absolute;left:50%;top:260px;transform:translateX(-50%);width:280px;background:var(--elevated);border-radius:12px;box-shadow:var(--win-shadow);padding:20px 16px 14px;text-align:center;z-index:70;display:flex;flex-direction:column;align-items:center;gap:6px}
+.alert .a{font-weight:600}
+.alert .b{font-size:12px;color:var(--text2)}
+.alert .bs{display:flex;gap:8px;width:100%;margin-top:10px}
+.alert .bs .btn{flex:1;justify-content:center}
+.lightbox{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:95;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
+.lightbox .shot{width:820px;max-width:820px;height:520px;cursor:zoom-out}
+.proto{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:rgba(20,20,22,.88);color:#fff;border-radius:9px;padding:4px 6px;font-size:12px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.proto .lab{color:rgba(255,255,255,.55);padding:0 6px}
+.proto button{background:transparent;border:0;color:rgba(255,255,255,.8);height:24px;padding:0 10px;border-radius:6px;cursor:default;font-size:12px}
+.proto button.on{background:rgba(255,255,255,.18);color:#fff}
+.proto .bar{width:1px;height:14px;background:rgba(255,255,255,.2);margin:0 4px}
+.confirm{position:absolute;z-index:85;width:260px;background:var(--elevated);border-radius:10px;box-shadow:var(--pop-shadow);padding:14px}
+.confirm .a{font-weight:500}.confirm .b{font-size:12px;color:var(--text2);margin:4px 0 12px}
+.confirm .bs{display:flex;justify-content:flex-end;gap:8px}
+.btn.danger{background:var(--danger);color:#fff;border-color:transparent}
+.toolbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--border);flex:none}
+.toolbar h1{font-size:17px;font-weight:600;margin:0}
+</style></head><body><script>
+const DIR="B";
+const I={
+ home:'<path d="M2.5 7.2 8 2.8l5.5 4.4V13a.5.5 0 0 1-.5.5H10V10H6v3.5H3a.5.5 0 0 1-.5-.5z"/>',
+ flag:'<path d="M3.5 14V2.5M3.5 3h8l-1.8 3 1.8 3h-8"/>',
+ clock:'<circle cx="8" cy="8" r="5.8"/><path d="M8 4.8V8l2.2 1.4"/>',
+ key:'<rect x="1.8" y="4" width="12.4" height="8" rx="1.6"/><path d="M4.6 6.6h.01M7 6.6h.01M9.4 6.6h.01M11.6 6.6h.01M5.2 9.4h5.6"/>',
+ wave:'<path d="M2.2 8h.6M4.6 5.6v4.8M7 3.4v9.2M9.4 5.6v4.8M11.8 7v2M13.8 8h.01"/>',
+ bubble:'<path d="M3 3.2h10a1 1 0 0 1 1 1v6.2a1 1 0 0 1-1 1H7.2L4.2 14v-2.6H3a1 1 0 0 1-1-1V4.2a1 1 0 0 1 1-1z"/>',
+ mic:'<rect x="6" y="2" width="4" height="7.6" rx="2"/><path d="M3.8 7.8a4.2 4.2 0 0 0 8.4 0M8 12v2"/>',
+ lock:'<rect x="3.2" y="7" width="9.6" height="6.8" rx="1.4"/><path d="M5.3 7V5.2a2.7 2.7 0 0 1 5.4 0V7"/>',
+ gear:'<circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.7M8 12.5v1.7M1.8 8h1.7M12.5 8h1.7M3.6 3.6l1.2 1.2M11.2 11.2l1.2 1.2M3.6 12.4l1.2-1.2M11.2 4.8l1.2-1.2"/>',
+ info:'<circle cx="8" cy="8" r="5.8"/><path d="M8 7.2v3.6M8 5.1h.01"/>',
+ search:'<circle cx="7" cy="7" r="4.2"/><path d="m10.2 10.2 3.3 3.3"/>',
+ copy:'<rect x="5.2" y="5.2" width="8" height="8" rx="1.4"/><path d="M10.8 5.2V3.8a1 1 0 0 0-1-1H3.8a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h1.4"/>',
+ trash:'<path d="M2.8 4.3h10.4M6.3 4.3V3a.7.7 0 0 1 .7-.7h2a.7.7 0 0 1 .7.7v1.3M4.2 4.3l.6 8.6a1 1 0 0 0 1 .9h4.4a1 1 0 0 0 1-.9l.6-8.6"/>',
+ more:'<path d="M3.5 8h.01M8 8h.01M12.5 8h.01" stroke-width="2.4"/>',
+ screen:'<rect x="1.8" y="2.6" width="12.4" height="8.6" rx="1.2"/><path d="M5.6 13.8h4.8M7 5v4.4l1.1-1.1 1 1.9"/>',
+ type:'<rect x="1.8" y="4" width="12.4" height="8" rx="1.6"/><path d="M4.6 9.4h6.8M4.6 6.6h.01M7 6.6h.01M9.4 6.6h.01M11.6 6.6h.01"/>',
+ globe:'<circle cx="8" cy="8" r="5.8"/><path d="M2.2 8h11.6M8 2.2c1.7 1.8 2.5 3.7 2.5 5.8S9.7 12 8 13.8C6.3 12 5.5 10.1 5.5 8S6.3 4 8 2.2z"/>',
+ image:'<rect x="2.2" y="3" width="11.6" height="10" rx="1.4"/><circle cx="6" cy="6.5" r="1.1"/><path d="m2.8 12 3.6-3.4 2.4 2.2 1.8-1.6 2.6 2.4"/>',
+ check:'<path d="m3.5 8.3 3 3 6-6.3"/>',
+ chev:'<path d="m4.5 6.3 3.5 3.5 3.5-3.5"/>',
+ chevr:'<path d="m6.3 4.5 3.5 3.5-3.5 3.5"/>',
+ ext:'<path d="M6 3.5h6.5V10M12.3 3.7 4 12"/>',
+ x:'<path d="m4.5 4.5 7 7M11.5 4.5l-7 7"/>',
+ play:'<path d="M5 3.5v9l7.5-4.5z" fill="currentColor"/>',
+ folder:'<path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/>',
+ sidebar:'<rect x="1.8" y="2.8" width="12.4" height="10.4" rx="1.6"/><path d="M6 2.8v10.4"/>',
+ wifi:'<path d="M2 6.2a8.5 8.5 0 0 1 12 0M4.2 8.6a5.4 5.4 0 0 1 7.6 0M6.4 11a2.3 2.3 0 0 1 3.2 0"/>',
+ inbox:'<path d="M2.2 9.2 4 3.6h8l1.8 5.6V13H2.2zM2.2 9.2h3.4l.8 1.6h3.2l.8-1.6h3.4"/>',
+};
+const ic=(n,s=16,sw=1.5)=>`<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+const GP="300,268 300,690 404,590 470,744 540,714 474,562 616,562";
+const QP="M618 300 A42 42 0 1 1 680 337 C666 345 660 355 660 371 L660 379";
+const glyphInner=(ink,q)=>`<polygon points="${GP}" fill="${ink}" stroke="${ink}" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="${ink}"/><polygon points="584,428 560,482 628,452" fill="${ink}"/><path d="${QP}" stroke="${q}" stroke-width="30" fill="none" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="${q}"/>`;
+const appIcon=s=>`<svg width="${s}" height="${s}" viewBox="80 80 864 864"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="5"/>${glyphInner("#18191C","#fff")}</svg>`;
+const tmpl=s=>`<svg width="${s}" height="${s}" viewBox="230 180 610 610"><defs><mask id="mq${s}"><rect width="1024" height="1024" fill="#fff"/><path d="${QP}" stroke="#000" stroke-width="30" fill="none" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#000"/></mask></defs><g mask="url(#mq${s})" fill="currentColor"><polygon points="${GP}" stroke="currentColor" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128"/><polygon points="584,428 560,482 628,452"/></g></svg>`;
+const LOGO={
+ volc:s=>`<svg width="${s}" height="${s}" viewBox="0 0 20 20"><path d="M1.5 16.5 8 4.5l3.4 6 1.8-3 5.3 9z" fill="#1664FF"/><path d="M8 4.5l3.4 6-2 3.4-3.6 2.6H1.5z" fill="#00C8D2" opacity=".9"/></svg>`,
+ qwen:s=>`<svg width="${s}" height="${s}" viewBox="0 0 20 20"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="#615CED" stroke-width="2.2" stroke-linejoin="round"/><path d="M10 6.6 13 8.3v3.4L10 13.4 7 11.7V8.3z" fill="#615CED"/></svg>`,
+ deepseek:s=>`<svg width="${s}" height="${s}" viewBox="0 0 20 20"><path d="M2.4 9.6c0 3.6 3 6 6.8 6 3.3 0 5.8-1.7 6.7-4.2.4.3 1 .4 1.6.2-.5-.4-.8-1-.8-1.7.9-.6 1.3-1.6 1.1-2.6-.9.7-2 .8-2.9.5C13.5 5.4 11.4 4 9 4c-.6 0-1 .4-.8.9.6 1.6.4 3-.6 4C6.5 9.9 4.6 9.6 3.3 8.4c-.6-.5-.9.3-.9 1.2z" fill="#4D6BFE"/><circle cx="12.1" cy="8.3" r=".9" fill="#fff"/></svg>`,
+};
+const PROV={asr:{volc:["火山引擎（豆包）","每个识别版本送 20 小时，最稳","推荐","console.volcengine.com"],qwen:["阿里百炼","和回答用的通义千问共用一个 Key","","bailian.console.aliyun.com"]},
+ ans:{deepseek:["DeepSeek","最快，约 1 秒出字；要新消息时自己联网","推荐","platform.deepseek.com"],qwen:["通义千问（阿里百炼）","自带联网搜索；每个模型送 100 万 Token","","bailian.console.aliyun.com"]}};
+const HK_CHOICES=["Fn","右 Command","右 Option","Control","Option","Command","Shift"];
+const TYPE_CHOICES=["⌃ Control","⌘ Command","⇧ Shift","⌥ Option"];
+const HKN={screen:"看屏幕问 AI",plain:"只提问",type:"打字问 AI"};
+const MODE={screen:["screen","看屏幕问"],plain:["mic","只提问"],type:["type","打字问"]};
+const IMG=(a,b,cap)=>({a,b,cap});
+const HIST=[
+ {id:1,day:"今天",time:"14:32",mode:"screen",model:"DeepSeek",shot:"xcode",turns:[
+  {q:"这个报错是什么意思？",a:"<p>Swift 说：你把一个可选值 <code>String?</code> 传给了要 <code>String</code> 的参数。<code>user.name</code> 可能是空的，编译器不让你直接用。</p><p>最省事的改法是给个默认值：<code>user.name ?? \"\"</code>。</p>"},
+  {q:"那用 if let 怎么写？",t:"14:34",a:"<p>这样写：<code>if let name = user.name { label.text = name }</code></p><p>名字是空的时候这一行就跳过，不会崩。</p>"}]},
+ {id:2,day:"今天",time:"11:05",mode:"screen",model:"通义千问",web:true,shot:"chart",turns:[
+  {q:"这张图里 7 月为什么突然涨这么多？",a:"<p>图上 7 月比 6 月多了三成多。标题是「每月新用户」，7 月是暑假，学生用户集中进来；图下面的注释也写了 7 月上了新版本。</p><p>想确认原因，可以把 7 月按来源拆开看。</p>"}]},
+ {id:3,day:"今天",time:"09:48",mode:"plain",model:"DeepSeek",turns:[
+  {q:"Nachhaltigkeit 怎么读？",a:"<p>读作「纳赫-哈尔提希-凯特」，重音在第一个音节 Nach。</p><p>意思是「可持续性」，阴性名词：die Nachhaltigkeit。</p>"}]},
+ {id:4,day:"今天",time:"09:20",mode:"plain",model:"DeepSeek",web:true,imgs:[IMG("#7FA7F5","#3D5BB8","软件更新"),IMG("#F2A65A","#B8572E","Tahoe 壁纸"),IMG("#9AA3B5","#596277","发布说明")],turns:[
+  {q:"搜一下 macOS 26.1 什么时候发布",a:"<p>苹果在 10 月 20 日推送了 macOS Tahoe 26.1 正式版，主要修了 Wi-Fi 断连和 Spotlight 的几个问题。</p><p>在「系统设置 › 通用 › 软件更新」里就能装。</p>"}]},
+ {id:5,day:"昨天",time:"22:14",mode:"type",model:"DeepSeek",shot:"mail",turns:[
+  {q:"帮我把这封邮件改得客气一点",a:"<p>可以这样写：</p><p>「王老师您好，想跟您确认一下周五组会的时间，如果不方便，我们也可以改到下周一。谢谢您！」</p><p>开头先问好，把「你必须」换成「想跟您确认」，结尾给一个备选时间，读起来就软很多。</p>"}]},
+ {id:6,day:"昨天",time:"17:40",mode:"screen",model:"DeepSeek",shot:"terminal",turns:[
+  {q:"这行 git 命令会把我的改动删掉吗？",a:"<p>会。<code>git reset --hard HEAD~1</code> 会把最近一次提交和还没提交的改动一起扔掉，找回来很麻烦。</p><p>只想撤销提交、保留改动，用 <code>git reset --soft HEAD~1</code>。</p>"},
+  {q:"那 soft 之后改动在哪？",t:"17:42",a:"<p>都还在暂存区里，<code>git status</code> 能看到，绿色的那些就是。</p>"}]},
+ {id:7,day:"昨天",time:"15:02",mode:"screen",model:"通义千问",shot:"figma",turns:[
+  {q:"这个按钮的阴影是怎么做的？",a:"<p>右边属性栏里是一层投影：向下 4、模糊 12、黑色 8% 透明度。</p><p>想更轻一点，把透明度降到 5% 左右。</p>"}]},
+ {id:8,day:"昨天",time:"10:31",mode:"plain",model:"通义千问",web:true,imgs:[IMG("#A9C6E8","#5B7FA8","埃菲尔铁塔"),IMG("#2B3350","#C99A4A","夜景"),IMG("#C9BFA8","#8A7D62","建造时")],turns:[
+  {q:"埃菲尔铁塔有多高？",a:"<p>现在是 330 米（2022 年顶上换了新天线之后）。1889 年刚建成时是 300 米左右。</p>"}]},
+ {id:9,day:"10月20日 周二",time:"21:16",mode:"screen",model:"DeepSeek",shot:"formula",turns:[
+  {q:"这个公式里的 σ 是什么意思？",a:"<p>这里的 σ 是标准差，表示数据离平均值有多散。</p><p>整个式子是正态分布的密度函数：μ 决定中心在哪，σ 决定曲线胖瘦，σ 越大曲线越扁。</p>"}]},
+ {id:10,day:"10月20日 周二",time:"16:47",mode:"type",model:"DeepSeek",shot:"pdf",turns:[
+  {q:"第三段到底在说什么？",a:"<p>一句话：作者认为供应链变「绿」不是因为环保法规，而是因为大客户在采购合同里加了要求。</p><p>后面两个例子（汽车零件和服装）都在说这件事。</p>"}]},
+ {id:11,day:"10月20日 周二",time:"09:03",mode:"plain",model:"DeepSeek",turns:[
+  {q:"新话题，一杯美式大概多少咖啡因？",a:"<p>一杯中杯美式（约 350 毫升）大概 150 毫克，不同店差别挺大。</p><p>成年人一天建议不超过 400 毫克。</p>"}]},
+ {id:12,day:"10月18日 周日",time:"20:25",mode:"screen",model:"通义千问",web:true,shot:"map",imgs:[IMG("#E8B26A","#A5532A","招牌烤鸭"),IMG("#8D6E5A","#3E2C22","店内"),IMG("#9FB7C9","#4C6577","门口")],turns:[
+  {q:"这家餐厅评价怎么样？",a:"<p>点评 4.6 分，两千多条评价。常被夸的是烤鸭皮脆、上菜快；差评多半说周末要等一个小时。</p><p>想去的话，工作日晚上 6 点前到比较稳。</p>"}]},
+ {id:13,day:"10月18日 周日",time:"14:10",mode:"screen",model:"DeepSeek",shot:"keynote",turns:[
+  {q:"Keynote 里怎么让图片变成圆角？",a:"<p>选中图片，右边「格式 › 图像 › 遮罩」，选圆角矩形，再拖黄色小点调圆角大小。</p>"}]},
+];
+const DEMO={id:99,day:"今天",time:"14:40",mode:"screen",model:"DeepSeek",shot:"chart",turns:[{q:"这根最高的是几月？",a:"<p>是 7 月，大约 4.2 万人，比 6 月多了三成多。</p>"}]};
+// ---------- theme ----------
+addEventListener("message", e => { if (e.data && e.data.type === "dispatch-theme") { pageTheme = e.data.theme; applyTheme(); } });
+const hp = k => { const m = location.hash.match(new RegExp("[#&]" + k + "=([^&]+)")); return m ? decodeURIComponent(m[1]) : null; };
+let pageTheme = hp("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+function applyTheme() { const a = S.gen.appearance; document.documentElement.dataset.theme = a === "system" ? pageTheme : a; }
+
+// ---------- state ----------
+const S = {
+  user: "new", page: "start",
+  keys: { asr: "", asrOk: false, asrBusy: false, asrErr: "", ans: "", ansOk: false, ansBusy: false, ansErr: "" },
+  asrProv: "volc", ansProv: "deepseek", asrVer: "极速版", dsModel: "deepseek-flash", qwModel: "自动 · 质量优先",
+  perm: { mic: false, ax: false, scr: false },
+  hk: { screen: null, plain: null, type: null }, recording: null,
+  ans: { screen: true, images: true, think: false, effort: "高", vision: "" },
+  rec: { style: "color", controls: true, mic: "跟随系统（MacBook Pro 麦克风）" },
+  gen: { login: false, appearance: "system", dock: true },
+  hist: [], sel: null, q: "", filt: "all",
+  menu: null, ctx: null, sys: null, sysAdded: false, micAsk: false, toast: null, lightbox: null, confirm: null,
+  setOpen: false, setPage: "hotkeys", front: "main", winOpen: true, trying: false, adv: false, qwHelp: false,
+};
+function setNew() {
+  Object.assign(S.keys, { asr: "", asrOk: false, asrErr: "", ans: "", ansOk: false, ansErr: "" });
+  S.perm = { mic: false, ax: false, scr: false }; S.hk = { screen: null, plain: null, type: null };
+  S.hist = []; S.sel = null; S.user = "new"; S.trying = false; S.q = ""; S.filt = "all";
+}
+function setReady() {
+  Object.assign(S.keys, { asr: "volc-3f9a8c2e71d04b", asrOk: true, asrErr: "", ans: "sk-7d21c0a94e8b4f6a", ansOk: true, ansErr: "" });
+  S.perm = { mic: true, ax: true, scr: true }; S.hk = { screen: "右 Command", plain: null, type: "⌃ Control" };
+  S.hist = HIST.map(h => ({ ...h })); S.sel = 1; S.user = "ready"; S.trying = false;
+}
+const stepDone = [() => S.keys.asrOk && S.keys.ansOk, () => S.perm.mic && S.perm.ax && S.perm.scr, () => !!(S.hk.screen || S.hk.plain)];
+const stepsLeft = () => stepDone.filter(f => !f()).length;
+const asrName = () => S.asrProv === "volc" ? "火山引擎" : "阿里百炼";
+const ansName = () => S.ansProv === "deepseek" ? "DeepSeek" : "通义千问";
+const askKey = () => S.hk.screen || S.hk.plain;
+const pageDot = p => p === "models" ? !stepDone[0]() : p === "perm" ? !stepDone[1]() : p === "hotkeys" ? !stepDone[2]() : false;
+const PAGES = [["hotkeys", "快捷键", "key"], ["models", "语音与模型", "wave"], ["answer", "回答方式", "bubble"], ["rec", "录音", "mic"], ["perm", "权限", "lock"], ["general", "通用", "gear"], ["about", "关于", "info"]];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------- small parts ----------
+const tg = (on, a, dis) => `<span class="tg ${on ? "on" : ""} ${dis ? "dis" : ""}" data-a="${dis ? "" : a}" role="switch" aria-checked="${on}"><i></i></span>`;
+const seg = (opts, cur, a, dis) => `<span class="seg ${dis ? "dis" : ""}">${opts.map(o => `<b class="${o === cur ? "on" : ""}" data-a="${dis ? "" : a + ":" + o}">${o}</b>`).join("")}</span>`;
+const row = (a, b, right, icon) => `<div class="row">${icon ? `<span class="faint" style="display:flex">${ic(icon)}</span>` : ""}<div class="tx"><div class="a">${a}</div>${b ? `<div class="b">${b}</div>` : ""}</div>${right || ""}</div>`;
+function hkBtn(id) {
+  const v = S.hk[id];
+  if (S.recording === id) return `<span class="kc" style="border-color:var(--ink)">请按下组合键…</span>`;
+  const txt = v ? (id === "type" ? "双击 " + v : v) : (id === "type" ? "不设置" : "选一个键");
+  return `<span class="kc ${v ? "" : "unset"}" data-a="hkmenu:${id}">${txt}<span class="car">${ic("chev", 10, 2)}</span></span>`;
+}
+function stage(o = {}) {
+  const key = o.key || "提问键";
+  const sig = [key, S.rec.style, S.rec.controls, ansName(), S.trying].join("|");
+  return `<div class="stage play" data-sig="${esc(sig)}" data-part="演示舞台" style="${o.h ? "height:" + o.h + "px" : ""}">
+  <div class="page"><div class="tt">每月新用户</div><div class="st">2026 年 · 千人</div>
+   <div class="bars">${[22, 28, 25, 31, 42, 30].map((h, i) => `<i class="${i === 4 ? "hi" : ""}" style="height:${h * 2}px"></i>`).join("")}</div>
+   <div class="months">${["3月", "4月", "5月", "6月", "7月", "8月"].map(m => `<span>${m}</span>`).join("")}</div></div>
+  <div class="frame" style="left:219px;top:52px;width:52px;height:100px"></div>
+  <svg class="cursor" viewBox="0 0 16 22"><path d="M1 1v17l4.3-4 3 6.5 2.6-1.1-3-6.4H14z" fill="#18191C" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>
+  <div class="presskey">按住 <span class="kc">${esc(key)}</span></div>
+  <div class="capsule ${S.rec.style === "mono" ? "mono" : ""}">${S.rec.controls ? '<span class="cb">✕</span>' : ""}<span class="wave">${"<i></i>".repeat(6)}</span><span class="typed">这根最高的是几月？</span>${S.rec.controls ? '<span class="cb">✓</span>' : ""}</div>
+  <div class="apanel"><div class="h">${tmpl(12)} Ask Free · ${ansName()}</div><div class="qq">这根最高的是几月？</div><div class="aa">是 7 月，大约 4.2 万人，比 6 月多了三成多。</div></div>
+ </div>`;
+}
+
+// ---------- screenshots drawn in CSS ----------
+function shotHTML(kind) {
+  const L = (x, y, w, c = "var(--text3)", h = 6, o = .5) => `<i style="position:absolute;left:${x}%;top:${y}%;width:${w}%;height:${h}px;border-radius:3px;background:${c};opacity:${o}"></i>`;
+  const F = (x, y, w, h) => `<i style="position:absolute;left:${x}%;top:${y}%;width:${w}%;height:${h}%;border:1.5px solid var(--mark);border-radius:3px"></i>`;
+  const T = (x, y, txt, st = "") => `<span style="position:absolute;left:${x}%;top:${y}%;white-space:nowrap;${st}">${txt}</span>`;
+  let h = "";
+  if (kind === "xcode") {
+    h = `<div style="position:absolute;inset:0;background:#1F2024"></div>` + [10, 20, 30, 40, 62, 72].map((y, i) => L(6 + (i % 3) * 4, y, 30 + (i * 13) % 40, ["#C77DFF", "#7AA2FF", "#9FD38A"][i % 3], 6, .7)).join("") +
+      `<div style="position:absolute;left:6%;top:50%;width:80%;height:9%;background:rgba(229,72,77,.18);border-radius:3px"></div>` + T(8, 50.5, "Cannot convert 'String?' to 'String'", "font:10px var(--mono);color:#FF8A8F") + F(5, 47, 84, 15);
+  } else if (kind === "chart") {
+    h = `<div style="position:absolute;inset:0;background:var(--paper)"></div>` + T(5, 8, "每月新用户", "font-size:12px;font-weight:600") +
+      [22, 28, 25, 31, 42, 30].map((v, i) => `<i style="position:absolute;bottom:14%;left:${8 + i * 14}%;width:9%;height:${v * 1.6}%;background:var(--text${i === 4 ? "" : "3"});opacity:${i === 4 ? .85 : .45};border-radius:2px 2px 0 0"></i>`).join("") + F(62, 22, 15, 66);
+  } else if (kind === "mail") {
+    h = `<div style="position:absolute;inset:0;background:var(--paper)"></div>` + T(5, 8, "收件人：王老师", "font-size:11px;color:var(--text2)") + T(5, 20, "主题：周五组会", "font-size:11px;color:var(--text2)") + L(5, 38, 70) + L(5, 48, 82) + L(5, 58, 60) + L(5, 74, 40) + F(3, 33, 86, 33);
+  } else if (kind === "terminal") {
+    h = `<div style="position:absolute;inset:0;background:#141517"></div>` + T(5, 12, "~/askfree main ✓", "font:10px var(--mono);color:#9FD38A") + T(5, 30, "$ git reset --hard HEAD~1", "font:12px var(--mono);color:#EDEDEF") + T(5, 50, "$ _", "font:12px var(--mono);color:#EDEDEF") + F(3, 25, 56, 17);
+  } else if (kind === "figma") {
+    h = `<div style="position:absolute;inset:0;background:var(--stage)"></div><div style="position:absolute;left:18%;top:38%;width:30%;height:22%;border-radius:8px;background:#18191C;box-shadow:0 4px 12px rgba(0,0,0,.18)"></div><div style="position:absolute;right:0;top:0;bottom:0;width:30%;background:var(--paper);border-left:1px solid var(--border)"></div>` +
+      T(73, 12, "投影", "font-size:11px;font-weight:600") + T(73, 28, "Y 4   模糊 12", "font-size:10px;color:var(--text2)") + T(73, 40, "#000000  8%", "font-size:10px;color:var(--text2)") + F(71, 22, 27, 30);
+  } else if (kind === "figmamini") {
+    h = `<div style="position:absolute;inset:0;background:var(--stage)"></div><div style="position:absolute;left:22%;top:30%;width:56%;height:36%;border-radius:4px;background:#18191C;box-shadow:0 3px 6px rgba(0,0,0,.25)"></div>` + F(14, 18, 72, 64);
+  } else if (kind === "formula") {
+    h = `<div style="position:absolute;inset:0;background:var(--paper)"></div>` + T(10, 34, "f(x) = <span style='font-size:1.1em'>1 ⁄ (σ√2π)</span> · e<sup>−(x−μ)² ⁄ 2σ²</sup>", "font:20px 'Times New Roman',serif") + L(10, 70, 60) + F(31, 28, 7, 30);
+  } else if (kind === "pdf") {
+    h = `<div style="position:absolute;inset:0;background:var(--stage)"></div><div style="position:absolute;left:20%;top:6%;width:60%;height:100%;background:var(--paper);box-shadow:0 0 0 .5px var(--border2)"></div>` +
+      [12, 18, 24, 36, 42, 48, 60, 66, 72, 78, 90].map((y, i) => L(25, y, 48 + (i * 7) % 10, "var(--text3)", 4)).join("") + F(23, 57, 54, 27);
+  } else if (kind === "map") {
+    h = `<div style="position:absolute;inset:0;background:#E7EBE3"></div><i style="position:absolute;left:0;right:0;top:45%;height:8px;background:#fff"></i><i style="position:absolute;top:0;bottom:0;left:40%;width:8px;background:#fff"></i><i style="position:absolute;left:30%;top:20%;width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#E5484D"></i>` +
+      `<div style="position:absolute;left:52%;top:16%;width:40%;height:62%;background:#fff;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.12)"></div>` + T(55, 22, "四季烤鸭店", "font-size:12px;font-weight:600;color:#18191C") + T(55, 36, "★ 4.6 · 2,184 条", "font-size:10px;color:#5F636C") + F(50, 13, 44, 68);
+  } else if (kind === "keynote") {
+    h = `<div style="position:absolute;inset:0;background:var(--stage)"></div><div style="position:absolute;left:8%;top:10%;width:58%;height:80%;background:var(--paper);box-shadow:0 0 0 .5px var(--border2)"></div><div style="position:absolute;left:20%;top:26%;width:30%;height:46%;background:linear-gradient(135deg,#9FB7C9,#4C6577)"></div>` + F(18, 22, 34, 54);
+  }
+  return h;
+}
+function imgTile(m) { return `<div class="img" data-a="openimg" style="background:linear-gradient(140deg,${m.a},${m.b})"><span style="position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);color:rgba(255,255,255,.75)">${ic("image", 22)}</span><span class="cap">${m.cap}</span></div>`; }
+// ---------- start (first run) ----------
+function startPage() {
+  const cur = stepDone.findIndex(f => !f());
+  const st = i => stepDone[i]() ? "done" : i === cur ? "cur" : "";
+  const num = i => stepDone[i]() ? ic("check", 14, 2) : i + 1;
+  const sub = (id, nm, why, btn) => `<div class="subrow"><span class="nm">${nm}</span><span class="why">${why}</span>${S.perm[id] ? `<span class="ok-t">${ic("check", 12, 2)}已允许</span>` : btn}</div>`;
+  const allDone = cur < 0;
+  return `<div class="wrap" data-part="开始三步">
+   ${stage({ key: askKey() })}
+   <div class="ptitle">${allDone ? "都好了，问一个试试" : "开始用 Ask Free"}</div>
+   <p class="plead">${allDone ? `按住 ${esc(askKey())} 说出问题，松开就问。也可以先看一遍演示。` : "做完下面三步，以后看到不懂的东西，按一个键就能问。"}</p>
+   <div class="steps">
+    <div class="step ${st(0)}"><div class="num">${num(0)}</div><div class="tx"><div class="a">填两个 Key</div>
+      <div class="b">${stepDone[0]() ? `听懂你说的话：${asrName()}；回答问题：${ansName()}。都验证过了。` : "一个把你说的话听成文字，一个回答问题。推荐火山引擎加 DeepSeek，都有免费额度。"}</div></div>
+      ${stepDone[0]() ? `<span class="ok-t">${ic("check", 12, 2)}能用</span>` : `<button class="btn ${cur === 0 ? "solid" : ""}" data-a="goModels">去填写</button>`}</div>
+    <div class="step ${st(1)}"><div class="num">${num(1)}</div><div class="tx"><div class="a">允许三项权限</div>
+      <div class="b">${stepDone[1]() ? "麦克风、辅助功能、屏幕录制都允许了。" : "麦克风点一下允许；另外两项打开系统设置，把 Ask Free 的图标拖进列表。"}</div>
+      ${stepDone[1]() ? "" : `<div class="sub">${sub("mic", "麦克风", "录下你说的问题", `<button class="btn sm ${cur === 1 && !S.perm.mic ? "solid" : ""}" data-a="askMic">允许</button>`)}${sub("ax", "辅助功能", "按快捷键时 Ask Free 才收得到", `<button class="btn sm ${cur === 1 && S.perm.mic && !S.perm.ax ? "solid" : ""}" data-a="sys:ax">打开系统设置</button>`)}${sub("scr", "屏幕录制", "看屏幕问时才看得到屏幕", `<button class="btn sm ${cur === 1 && S.perm.mic && S.perm.ax ? "solid" : ""}" data-a="sys:scr">打开系统设置</button>`)}</div>`}
+    </div></div>
+    <div class="step ${st(2)}"><div class="num">${num(2)}</div><div class="tx"><div class="a">选一个提问键</div>
+      <div class="b">${stepDone[2]() ? `按住 ${esc(askKey())} 说话，松开就问。别的问法在「快捷键」里设。` : "每台键盘不一样，Ask Free 不替你定。按住它说话，松开就问。"}</div></div>
+      ${hkBtn("screen")}</div>
+   </div>
+   ${allDone ? `<div style="display:flex;align-items:center;gap:12px;margin-top:16px"><button class="btn solid" data-a="try">${ic("play", 12)}看一遍演示</button><span class="small muted">或者现在就按住 <span class="kc" style="height:22px;font-size:12px">${esc(askKey())}</span> 问一个真问题</span></div>`
+      : `<p class="small faint" style="margin-top:12px">Key 只存在这台 Mac 的钥匙串里，问题直连你选的服务商。</p>`}
+  </div>`;
+}
+// ---------- A home (ready) ----------
+function homePage() {
+  const card = (id, icon, name, d) => `<div class="mcard"><div class="h">${ic(icon)}${name}</div><div class="d">${d}</div><div>${hkBtn(id)}</div></div>`;
+  const recent = S.hist.slice(0, 3);
+  return `<div class="wrap" data-part="首页">
+   ${stage({ key: askKey() })}
+   <div class="pl">三种问法</div>
+   <div class="cards3">${card("screen", "screen", "看屏幕问 AI", "按住说话，松开就问。指针指着哪，AI 就重点看哪。")}${card("plain", "mic", "只提问", "不截屏，更快；屏幕上的东西不会发出去。")}${card("type", "type", "打字问 AI", "双击一颗键，弹出输入框，回车发送。")}</div>
+   <div class="pl">说话时还能这样</div>${gestures()}
+   <div class="pl">最近问过<span style="flex:1"></span><span class="link" data-a="page:history">全部历史</span></div>
+   <div class="group">${recent.length ? recent.map(t => `<div class="row" data-a="open:${t.id}" style="min-height:44px"><span class="faint" style="display:flex">${ic(MODE[t.mode][0])}</span><div class="tx"><div class="a" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.turns[0].q)}</div></div><span class="small faint" style="font-variant-numeric:tabular-nums">${t.day} ${t.time}</span></div>`).join("") : `<div class="row"><div class="tx b muted small">还没有问过。</div></div>`}</div>
+  </div>`;
+}
+const gestures = () => `<div class="group" style="padding:14px 16px"><div class="gest">
+  <div><span class="q">回答还在时再按一次</span><span class="arr">→</span>追问</div>
+  <div><span class="q">开头说「新话题」</span><span class="arr">→</span>另起一个话题</div>
+  <div><span class="q">开头说「搜一下」</span><span class="arr">→</span>直接联网查</div>
+  <div><span class="q">说话时按 Esc</span><span class="arr">→</span>取消这一问</div></div></div>`;
+
+// ---------- settings pages (shared by A and B) ----------
+function pgHotkeys() {
+  return `<div class="wrap" data-part="快捷键">${stage({ key: askKey(), h: 190 })}
+   <div class="pl">三种问法</div>
+   <div class="group">
+    ${row("看屏幕问 AI", "按住说话，松开就问。按下那一刻指针指着哪，AI 就重点看哪。", hkBtn("screen"), "screen")}
+    ${row("只提问，不看屏幕", "不截屏，更快；屏幕上的东西不会发出去。", hkBtn("plain"), "mic")}
+    ${row("打字问 AI", "双击一颗键，截下此刻的屏幕，弹出输入框，回车发送。", hkBtn("type"), "type")}
+   </div>
+   <div class="pl">说话时还能这样</div>${gestures()}
+   <p class="small faint">Ask Free 不带默认键：每台键盘不一样，选一个你顺手的。两个问法设成同一个键时，只有「看屏幕问 AI」响应。</p></div>`;
+}
+function verifyLine(k) {
+  const K = S.keys;
+  const v = K[k + "Busy"] ? `<span class="small muted">验证中…</span>` : K[k + "Ok"] ? `<span class="ok-t">${ic("check", 12, 2)}能用，已存进钥匙串</span>` : K[k + "Err"] ? `<span class="danger-t">${K[k + "Err"]}</span>` : "";
+  return `<span data-st="${k}">${v}</span>`;
+}
+function keyRow(k, ph) {
+  return `<div class="frow"><span class="lb">API Key</span><input class="field mono" style="flex:1" type="password" data-k="${k}" value="${esc(S.keys[k])}" placeholder="${ph}" spellcheck="false"><button class="btn sm" data-a="verify:${k}">验证</button></div>`;
+}
+function provRow(kind, id) {
+  const [nm, ds, rec, site] = PROV[kind][id];
+  const on = (kind === "asr" ? S.asrProv : S.ansProv) === id;
+  let x = "";
+  if (on) {
+    const shared = kind === "ans" && id === "qwen" && S.asrProv === "qwen";
+    x = `<div class="provx">${shared ? `<div class="frow"><span class="lb">API Key</span><span class="small muted">用上面阿里百炼那个 Key，不用再填。</span></div>` : keyRow(kind, "粘贴 " + nm.replace(/（.*）/, "") + " 的 API Key")}
+      <div class="frow"><span class="lb"></span>${shared ? "" : verifyLine(kind)}<span style="flex:1"></span><span class="link small" data-a="ext:${site}">去 ${site} 拿 Key ${ic("ext", 11)}</span></div>
+      ${kind === "asr" && id === "volc" ? `<div class="frow"><span class="lb">识别版本</span>${seg(["极速版", "标准版", "2.0"], S.asrVer, "asrVer")}<span class="small faint">各送 20 小时，用完换下一个</span></div>` : ""}
+      ${kind === "asr" && id === "qwen" ? `<div class="frow"><span class="lb">模型</span><span class="small muted">qwen3-asr-flash：快，只认 5 分钟以内的话</span></div>` : ""}
+      ${kind === "ans" && id === "deepseek" ? `<div class="frow"><span class="lb">模型</span>${seg(["deepseek-flash", "deepseek-v4-pro"], S.dsModel, "dsModel")}<span class="small faint">${S.dsModel === "deepseek-flash" ? "快，看屏幕问也用它" : "答得更好，慢一些"}</span></div>` : ""}
+      ${kind === "ans" && id === "qwen" ? `<div class="frow"><span class="lb">模型</span><button class="btn sm" data-a="qwmenu">${S.qwModel}${ic("chev", 12)}</button><span class="disc" data-a="qwHelp">${ic(S.qwHelp ? "chev" : "chevr", 12)}自动是怎么换的</span></div>${S.qwHelp ? `<div class="note" style="margin-left:74px">某个模型的免费额度用完，就自动换下一个，不用你管。质量优先从 qwen3.7-plus 往下用；速度优先从 qwen3.7-flash 开始，出字更快。记得在百炼控制台打开「免费额度用完即停」，Ask Free 才知道额度用完了。</div>` : ""}` : ""}
+    </div>`;
+  }
+  return `<div class="prov" data-a="prov:${kind}:${id}"><span class="radio ${on ? "on" : ""}"></span>${LOGO[id](20)}<div style="flex:1;min-width:0"><div><span class="nm">${nm}</span>${rec ? ` <span class="tag" style="margin-left:6px">${rec}</span>` : ""}</div><div class="ds">${ds}</div></div></div>${x}`;
+}
+function fnode(icon, l1, l2, st) {
+  const s = st === "ok" ? `<span class="st" style="background:var(--ok)">✓</span>` : st === "warn" ? `<span class="st" style="background:var(--warn)">!</span>` : "";
+  return `<div class="fnode"><div class="ic">${icon}${s}</div><div class="l1">${l1}</div><div class="l2">${l2 || "&nbsp;"}</div></div>`;
+}
+function pgModels() {
+  const K = S.keys, both = stepDone[0]();
+  return `<div class="wrap" data-part="语音与模型">
+   ${S.user === "new" && both ? `<div class="banner"><span class="ok-t">${ic("check", 14, 2)}</span><span class="t">两个 Key 都能用了。</span><button class="btn sm" data-a="backStart">回到第一步那页</button></div>` : ""}
+   <div class="stage" style="height:150px" data-part="模型流程"><div class="flow">
+    ${fnode(`<span class="muted">${ic("mic", 20)}</span>`, "你说的话", "")}<i class="farrow ${K.asrOk ? "go" : ""}"></i>
+    ${fnode(LOGO[S.asrProv](24), "听成文字", asrName(), K.asrOk ? "ok" : "warn")}<i class="farrow ${K.asrOk && K.ansOk ? "go" : ""}"></i>
+    ${fnode(LOGO[S.ansProv](24), "回答", ansName(), K.ansOk || (S.ansProv === "qwen" && S.asrProv === "qwen" && K.asrOk) ? "ok" : "warn")}<i class="farrow ${K.ansOk ? "go" : ""}"></i>
+    ${fnode(`<span style="color:var(--text)">${tmpl(20)}</span>`, "显示在右上角", "")}
+   </div></div>
+   <div class="pl">① 听懂你说的话</div><div class="group">${provRow("asr", "volc")}${provRow("asr", "qwen")}</div>
+   <div class="pl">② 回答你的问题</div><div class="group">${provRow("ans", "deepseek")}${provRow("ans", "qwen")}</div>
+   <p class="small faint">Key 存在系统钥匙串里。语音和问题直连你选的服务商，不经过别的服务器。</p></div>`;
+}
+function pgAnswer() {
+  const A = S.ans;
+  const panel = `<div style="position:absolute;right:50%;transform:translateX(50%);top:18px;width:330px;opacity:1" class="apanel">
+    <div class="h">${tmpl(12)} Ask Free · ${ansName()}${A.think ? `<span class="tag" style="height:18px;margin-left:auto">想了 3 秒</span>` : ""}</div>
+    <div style="display:flex;gap:10px;align-items:flex-start">${A.screen ? `<div style="position:relative;width:74px;height:46px;border-radius:5px;overflow:hidden;flex:none;border:1px solid var(--border)">${shotHTML("figmamini")}</div>` : ""}<div class="qq">这个按钮的阴影是怎么做的？</div></div>
+    <div class="aa" style="margin-top:6px">一层投影：向下 4、模糊 12、黑色 8% 透明度。</div>
+    ${A.images ? `<div style="display:flex;gap:6px;margin-top:8px">${["#C9D3E6,#7D8DB0", "#E7D2B8,#A88458", "#CFE3D3,#6F9A7A"].map(c => `<i style="flex:1;height:38px;border-radius:5px;background:linear-gradient(140deg,${c})"></i>`).join("")}</div>` : ""}
+  </div>`;
+  return `<div class="wrap" data-part="回答方式">
+   <div class="stage" style="height:${A.images ? 214 : 170}px;transition:height .2s">${panel}</div>
+   <div class="pl">回答前</div><div class="group">
+    ${row("让 AI 看屏幕", "提问时把指针附近那块屏幕一起发过去；关掉就只发你说的话。", tg(A.screen, "ans:screen"))}
+    ${row("联网的回答附上图", "要联网查的问题，回答下面附 3 张相关的图，点一张看原图。", tg(A.images, "ans:images"))}
+    ${row("先想一想再答", "看图推理、要计算的难题答得更准，每问多等 1 到 3 秒。", tg(A.think, "ans:think"))}
+    ${row("想多久", A.think ? "越久越细；到点还没想完，就先给一个快答案。" : "打开「先想一想再答」后才用得上。", seg(["低", "高", "最高"], A.effort, "effort", !A.think))}
+   </div>
+   <div class="disc" style="margin-top:14px" data-a="adv">${ic(S.adv ? "chev" : "chevr", 12)}高级</div>
+   ${S.adv ? `<div class="group" style="margin-top:8px">${row("读图模型（可选）", "官方换了新模型时自己填名字，不用等 Ask Free 更新。只对现在选的那一家有效。", `<input class="field mono" style="width:200px" data-v="vision" value="${esc(A.vision)}" placeholder="留空就用默认的">`)}</div>` : ""}
+  </div>`;
+}
+function capsuleBig(style, controls) {
+  return `<div class="capsule ${style === "mono" ? "mono" : ""}" style="opacity:1;position:relative;left:auto;bottom:auto;transform:none">${controls ? '<span class="cb">✕</span>' : ""}<span class="wave">${"<i></i>".repeat(6)}</span><span>正在听…</span>${controls ? '<span class="cb">✓</span>' : ""}</div>`;
+}
+function pgRec() {
+  const R = S.rec;
+  return `<div class="wrap" data-part="录音">
+   <div class="stage" style="height:130px;display:flex;align-items:center;justify-content:center">${capsuleBig(R.style, R.controls)}</div>
+   <div class="pl">录音时屏幕底部的浮窗</div>
+   <div class="tiles">
+    <div class="tile ${R.style === "color" ? "on" : ""}" data-a="recStyle:color"><div class="pv">${capsuleBig("color", false)}</div><span class="lb">彩色</span></div>
+    <div class="tile ${R.style === "mono" ? "on" : ""}" data-a="recStyle:mono"><div class="pv">${capsuleBig("mono", false)}</div><span class="lb">墨黑</span></div>
+   </div>
+   <div class="group" style="margin-top:12px">${row("两边显示取消和完成", "点 ✕ 不问了，点 ✓ 说完就问；关掉就是一整条声波。下次录音生效。", tg(R.controls, "recCtl"))}</div>
+   <div class="pl">麦克风</div>
+   <div class="group">${row(esc(R.mic), "对着它说句话，右边的格子会跳。没声音就换一个。", `<span class="vu">${"<i></i>".repeat(8)}</span><button class="btn sm" data-a="micmenu">换一个${ic("chev", 12)}</button>`, "mic")}</div>
+  </div>`;
+}
+function permStage() {
+  return `<div class="stage" style="height:150px" data-part="拖图标示意">
+   <div style="position:absolute;left:24px;top:20px;width:290px;height:110px;background:var(--paper);border-radius:8px;box-shadow:0 0 0 .5px var(--border2)">
+    <div style="font-size:11px;font-weight:600;padding:8px 12px 4px">系统设置 › 辅助功能</div>
+    ${["Raycast", "终端"].map((n, i) => `<div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;border-top:1px solid var(--border);font-size:11px"><i style="width:14px;height:14px;border-radius:4px;background:${["#FF6363", "#3A3B40"][i]}"></i>${n}<span class="tg on" style="margin-left:auto;transform:scale(.8)"><i></i></span></div>`).join("")}
+    <div class="permnew" style="display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;border-top:1px solid var(--border);font-size:11px">${appIcon(14)}Ask Free<span class="tg on" style="margin-left:auto;transform:scale(.8)"><i></i></span></div>
+   </div>
+   <div class="permicon" style="position:absolute;top:44px;width:44px;height:44px;border:1.2px dashed var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--elevated)">${appIcon(32)}</div>
+   <div class="small muted" style="position:absolute;left:350px;top:100px;width:200px">把图标往左拖进列表</div>
+  </div><style>.permicon{animation:pmv 4s ease-in-out infinite}.permnew{animation:pnew 4s infinite}
+  @keyframes pmv{0%,15%{left:410px;opacity:1}55%{left:120px;top:96px;opacity:1}62%,100%{left:120px;top:96px;opacity:0}}
+  @keyframes pnew{0%,55%{opacity:0}62%,100%{opacity:1}}</style>`;
+}
+function pgPerm() {
+  const pr = (id, nm, why, btn) => row(nm, why, S.perm[id] ? `<span class="ok-t">${ic("check", 12, 2)}已允许</span>` : `<span class="warn-t">未允许</span>${btn}`);
+  return `<div class="wrap" data-part="权限">${permStage()}
+   <div class="group" style="margin-top:16px">
+    ${pr("mic", "麦克风", "录下你说的问题。系统会弹框问一次。", `<button class="btn sm" data-a="askMic">允许</button>`)}
+    ${pr("ax", "辅助功能", "按快捷键时 Ask Free 才收得到；没开时按键没反应。", `<button class="btn sm" data-a="sys:ax">打开系统设置</button>`)}
+    ${pr("scr", "屏幕录制", "看屏幕问时才看得到屏幕；开完要重新打开 Ask Free。", `<button class="btn sm" data-a="sys:scr">打开系统设置</button>`)}
+   </div>
+   <p class="small faint">打开系统设置后，它右边会浮出 Ask Free 的图标，往左拖进列表就行。</p></div>`;
+}
+function pgGeneral() {
+  const G = S.gen;
+  const thumb = m => `<div class="pv" style="background:${m === "dark" ? "#1C1D20" : m === "light" ? "#F4F4F6" : "linear-gradient(90deg,#F4F4F6 50%,#1C1D20 50%)"};height:70px"><div style="width:70%;height:46px;border-radius:5px;background:${m === "dark" ? "#2A2B30" : m === "light" ? "#fff" : "linear-gradient(90deg,#fff 50%,#2A2B30 50%)"};box-shadow:0 1px 3px rgba(0,0,0,.15)"></div></div>`;
+  return `<div class="wrap" data-part="通用">
+   <div class="group">${row("开机时自动启动", "登录后在后台打开，不用每次自己开。", tg(G.login, "gen:login"))}${row("在 Dock 里显示", "关掉后只在菜单栏，点顶上的图标打开。", tg(G.dock, "gen:dock"))}</div>
+   <div class="pl">外观</div>
+   <div class="tiles">${[["system", "跟随系统"], ["light", "浅色"], ["dark", "深色"]].map(([k, n]) => `<div class="tile ${G.appearance === k ? "on" : ""}" data-a="appear:${k}">${thumb(k)}<span class="lb">${n}</span></div>`).join("")}</div>
+   <p class="small faint">主窗口和回答面板一起换。</p></div>`;
+}
+function pgAbout() {
+  return `<div class="wrap" data-part="关于"><div class="about">${appIcon(76)}<h2>Ask Free</h2><div class="muted">按一个键说出问题，AI 看着你的屏幕回答。</div>
+    <div style="display:flex;gap:6px;margin-top:8px"><span class="tag">版本 1.0.1</span><span class="tag">开源 · GPL-3.0</span><span class="tag">免费</span></div></div>
+   <div class="group" style="margin-top:16px">
+    ${row("源码", "在 GitHub 上，欢迎提问题和改进。", `<button class="btn sm" data-a="ext:github.com">查看源码${ic("ext", 11)}</button>`)}
+    ${row("你的数据", "Key 在系统钥匙串里；问答、截图和找到的图只存在这台 Mac 上。", `<button class="btn sm" data-a="finder">在访达中打开</button>`)}
+    ${row("致谢", "从 Typefree（kdsz001）的「问 AI」改出来，同样用 GPL-3.0。", "")}
+   </div></div>`;
+}
+const PG = { hotkeys: pgHotkeys, models: pgModels, answer: pgAnswer, rec: pgRec, perm: pgPerm, general: pgGeneral, about: pgAbout };
+// ---------- history ----------
+const strip = h => h.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"');
+const reQ = () => new RegExp(S.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+const hlHTML = html => !S.q ? html : html.split(/(<[^>]+>)/).map(p => p.startsWith("<") ? p : p.replace(reQ(), m => `<mark>${m}</mark>`)).join("");
+const matchQ = t => !S.q || t.turns.some(u => (u.q + " " + strip(u.a)).toLowerCase().includes(S.q.toLowerCase()));
+const matchF = (t, f = S.filt) => f === "all" || (f === "web" ? !!t.web : f === "shot" ? !!t.shot : t.mode === f);
+const shown = () => S.hist.filter(t => matchF(t) && matchQ(t));
+function preview(t) {
+  const all = t.turns.map(u => strip(u.a)).join(" ");
+  if (S.q) { const i = all.toLowerCase().indexOf(S.q.toLowerCase()); if (i > 14) return "…" + all.slice(i - 12); }
+  return all;
+}
+function listHTML() {
+  const L = shown();
+  if (!L.length) return `<div class="empty" style="height:auto;padding:48px 16px"><span>${ic("search", 32, 1.2)}</span><div class="a">没有找到${S.q ? "「" + esc(S.q) + "」" : ""}</div><div class="b">换个词试试，问题和回答都会搜。</div></div>`;
+  let out = "", day = null;
+  L.forEach(t => {
+    if (t.day !== day) { day = t.day; out += `<div class="dayh">${day}<span class="c">${L.filter(x => x.day === day).length}</span></div>`; }
+    out += `<div class="hrow ${S.sel === t.id ? "on" : ""}" data-a="sel:${t.id}" data-ctx="${t.id}"><span class="mi">${ic(MODE[t.mode][0])}</span><div class="tx"><div class="q1">${hlHTML(esc(t.turns[0].q))}</div><div class="p1">${hlHTML(esc(preview(t)))}</div></div><div class="rt"><span class="tm">${t.time}</span>${t.turns.length > 1 ? `<span class="tn">${t.turns.length} 轮</span>` : ""}</div></div>`;
+  });
+  return out;
+}
+function detailHTML() {
+  const t = S.hist.find(x => x.id === S.sel && matchF(x) && matchQ(x)) || null;
+  if (!t) return `<div class="hd" data-part="历史详情"><div class="empty"><span>${ic("bubble", 32, 1.2)}</span><div class="a">选一条看看</div><div class="b">左边点一条问答，或者用上下方向键翻。</div></div></div>`;
+  const [mi, mn] = MODE[t.mode];
+  const first = `<div class="answer">${hlHTML(t.turns[0].a)}</div>`;
+  const follow = t.turns.slice(1).map(u => `<div class="turn"><div class="lab">${ic("bubble", 12)}追问 · ${u.t || t.time}</div><div class="qq">${hlHTML(esc(u.q))}</div><div class="answer">${hlHTML(u.a)}</div></div>`).join("");
+  return `<div class="hd" data-part="历史详情">
+   <div class="bar"><span class="ibtn" data-a="copy" title="复制这段问答">${ic("copy")}</span><span class="ibtn" data-a="del" title="删除">${ic("trash")}</span><span class="ibtn" data-a="hmore" title="更多">${ic("more")}</span></div>
+   <div class="sc" data-sk="hd-${t.id}">
+    <h2>${hlHTML(esc(t.turns[0].q))}</h2>
+    <div class="meta"><span style="display:inline-flex;gap:4px;align-items:center">${ic(mi, 13)}${mn}</span><span class="sepd">·</span>${t.day} ${t.time}<span class="sepd">·</span>${t.model}${t.web ? `<span class="sepd">·</span>联网查过` : ""}${t.turns.length > 1 ? `<span class="sepd">·</span>${t.turns.length} 轮` : ""}</div>
+    <div style="height:14px"></div>
+    ${t.shot ? `<div class="shot" data-a="lightbox:${t.id}">${shotHTML(t.shot)}</div><div class="small faint" style="margin:-6px 0 14px">发给 AI 的画面，红框是你指着的地方。点开看大图</div>` : ""}
+    ${first}
+    ${t.imgs ? `<div class="pl" style="margin-top:14px">找到的图</div><div class="imgs">${t.imgs.map(imgTile).join("")}</div>` : ""}
+    ${follow}
+   </div></div>`;
+}
+function emptyHist() {
+  const n = stepsLeft();
+  return `<div class="empty" data-part="历史列表"><span>${ic("clock", 32, 1.2)}</span><div class="a">还没有问过</div><div class="b">${n ? "做完「开始」里的三步，问一个问题，答完就出现在这里。" : "按住 " + esc(askKey()) + " 问一个问题，答完就出现在这里。"}</div>${n ? `<button class="btn" data-a="page:start" style="margin-top:8px">去开始</button>` : ""}</div>`;
+}
+const CHIPS = [["all", "全部"], ["screen", "看屏幕"], ["plain", "只提问"], ["type", "打字"], ["web", "联网"]];
+function historyA() {
+  if (!S.hist.length) return `<div class="body">${emptyHist()}</div>`;
+  return `<div style="display:flex;flex:1;min-height:0"><div class="hl" data-part="历史列表"><div class="top"><div class="search">${ic("search", 14)}<input id="hq" placeholder="搜问题和回答" value="${esc(S.q)}" autocomplete="off"></div>
+   <div class="chips">${CHIPS.map(([k, n]) => `<span class="chip ${S.filt === k ? "on" : ""}" data-a="filt:${k}">${n}</span>`).join("")}</div></div>
+   <div class="hlist" id="hlist" data-sk="hlist">${listHTML()}</div></div>${detailHTML()}</div>`;
+}
+function statusCard() {
+  const n = stepsLeft();
+  if (n) {
+    const miss = [!stepDone[0]() && "填 Key", !stepDone[1]() && "允许权限", !stepDone[2]() && "选提问键"].filter(Boolean).join("、");
+    return `<div class="statuscard" data-part="状态卡" data-a="goStart"><div class="t"><span class="dot warn"></span>还差 ${n} 步</div><div class="s">${miss}</div></div>`;
+  }
+  return `<div class="statuscard" data-part="状态卡" data-a="goModels"><div class="t"><span class="dot ok"></span>一切就绪</div><div class="s">${asrName()}听，${ansName()}答</div></div>`;
+}
+const tl = a => `<div class="tl"><i data-a="${a}" title="关闭"></i><i></i><i></i></div>`;
+const navP = (k, n, i, on) => `<div class="nav ${on ? "on" : ""}" data-a="page:${k}">${ic(i)}<span>${n}</span>${pageDot(k) ? `<span class="dot warn"></span>` : ""}</div>`;
+
+// ---------- direction A: one window ----------
+function shellA() {
+  if (!S.winOpen) return "";
+  const isNew = S.user === "new";
+  const title = S.page === "start" ? (isNew ? "开始" : "首页") : S.page === "history" ? "历史" : PAGES.find(p => p[0] === S.page)[1];
+  const body = S.page === "history" ? historyA() : `<div class="body" data-sk="body-${S.page}">${S.page === "start" ? (isNew ? startPage() : homePage()) : PG[S.page]()}</div>`;
+  const right = S.page === "history" && S.hist.length ? `<span class="small faint">${S.hist.length} 条，只存在这台 Mac 上</span><span class="ibtn" data-a="hmoreAll">${ic("more")}</span>` : "";
+  return `<div class="win mainwin" style="left:170px;top:84px;width:1100px;height:720px;z-index:10">${tl("closeMain")}
+   <div class="side" data-part="侧栏">
+    <div class="nav ${S.page === "start" ? "on" : ""}" data-a="page:start">${ic(isNew ? "flag" : "home")}<span>${isNew ? "开始" : "首页"}</span>${isNew && stepsLeft() ? `<span class="dot warn"></span>` : ""}</div>
+    <div class="nav ${S.page === "history" ? "on" : ""}" data-a="page:history">${ic("clock")}<span>历史</span><span class="n">${S.hist.length || ""}</span></div>
+    <div class="gt">设置</div>${PAGES.map(([k, n, i]) => navP(k, n, i, S.page === k)).join("")}
+    ${statusCard()}
+   </div>
+   <div class="main"><div class="hdr"><h1>${title}</h1><span class="sp"></span>${right}</div>${body}</div></div>`;
+}
+
+// ---------- direction B: history window + settings window ----------
+const FILT_NAME = { all: "全部问答", screen: "看屏幕问", plain: "只提问", type: "打字问", web: "联网查过", shot: "有截图" };
+function shellB() { return (S.winOpen ? mainB() : "") + (S.setOpen ? settingsB() : ""); }
+function mainB() {
+  const isNew = S.user === "new";
+  const nav = (f, i) => `<div class="nav ${S.filt === f && !isNew ? "on" : ""}" data-a="${isNew ? "" : "filt:" + f}" style="${isNew ? "opacity:.45" : ""}">${ic(i)}<span>${FILT_NAME[f]}</span><span class="n">${S.hist.filter(t => matchF(t, f)).length || ""}</span></div>`;
+  const front = !S.setOpen || S.front === "main";
+  const key = askKey();
+  const chip = key ? `<span class="q" data-a="openSet:hotkeys" title="改快捷键" style="gap:6px;height:28px">${ic("screen", 13)}按住 <b style="font-weight:500">${esc(key)}</b> 提问</span>` : `<span class="q" data-a="openSet:hotkeys" style="height:28px;color:var(--warn)">还没选提问键</span>`;
+  return `<div class="win mainwin ${front ? "" : "inactive"}" data-a="${front ? "" : "front:main"}" style="left:110px;top:64px;width:1100px;height:720px;z-index:${front ? 20 : 10}">${tl("closeMain")}
+   <div class="side" data-part="侧栏">
+    ${nav("all", "inbox")}<div class="gt">问法</div>${nav("screen", "screen")}${nav("plain", "mic")}${nav("type", "type")}<div class="gt">带了什么</div>${nav("web", "globe")}${nav("shot", "image")}
+    ${statusCard()}
+    <div class="nav" data-a="openSet:${isNew ? "models" : "hotkeys"}" style="margin-top:8px">${ic("gear")}<span>设置</span><span class="n">⌘,</span></div>
+   </div>
+   <div class="main"><div class="toolbar"><h1>${isNew ? "开始用 Ask Free" : FILT_NAME[S.filt]}</h1>${isNew ? "" : `<span class="small faint">${shown().length} 条</span>`}<span style="flex:1"></span>
+     ${isNew ? "" : chip}<div class="search" style="width:240px;${isNew ? "opacity:.5" : ""}">${ic("search", 14)}<input id="hq" placeholder="搜问题和回答" value="${esc(S.q)}" autocomplete="off" ${isNew ? "disabled" : ""}></div>${isNew ? "" : `<span class="ibtn" data-a="hmoreAll">${ic("more")}</span>`}</div>
+    ${isNew ? `<div class="body" data-sk="b-start">${startPage()}</div>` : !S.hist.length ? `<div class="body">${emptyHist()}</div>` :
+      `<div style="display:flex;flex:1;min-height:0"><div class="hl" data-part="历史列表" style="width:350px"><div class="hlist" id="hlist" data-sk="hlist" style="padding-top:6px">${listHTML()}</div></div>${detailHTML()}</div>`}
+   </div></div>`;
+}
+function settingsB() {
+  const p = S.setPage, front = S.front === "settings";
+  return `<div class="win set ${front ? "" : "inactive"}" data-a="${front ? "" : "front:settings"}" data-part="设置窗口" style="left:470px;top:166px;width:840px;height:624px;z-index:${front ? 20 : 10}">${tl("closeSet")}
+   <div class="side" style="width:200px" data-part="设置侧栏">${PAGES.map(([k, n, i]) => `<div class="nav ${p === k ? "on" : ""}" data-a="setPage:${k}">${ic(i)}<span>${n}</span>${pageDot(k) ? `<span class="dot warn"></span>` : ""}</div>`).join("")}</div>
+   <div class="main"><div class="hdr"><h1>${PAGES.find(x => x[0] === p)[1]}</h1></div><div class="body" data-sk="sb-${p}" style="padding:20px 28px 32px">${PG[p]()}</div></div></div>`;
+}
+// ---------- overlays ----------
+function desk() {
+  return `<div class="desk"></div><div class="mbar" data-part="菜单栏"><b>Ask Free</b><span>编辑</span><span>窗口</span><span>帮助</span><span class="sp"></span><span class="faint" style="display:flex">${ic("wifi", 15)}</span><span class="mic ${S.menu && S.menu.t === "mbar" ? "on" : ""}" data-a="mbar" title="Ask Free">${tmpl(15)}</span><span class="clock">10月23日 周五 14:40</span></div>`;
+}
+function menuHTML() {
+  const M = S.menu; if (!M) return "";
+  let items = "";
+  const mi = (label, a, r = "", cls = "") => `<div class="mi ${cls}" data-a="${a}">${label}${r ? `<span class="r">${r}</span>` : ""}</div>`;
+  if (M.t === "mbar") {
+    const k = id => S.hk[id] ? (id === "type" ? "双击 " + S.hk[id] : S.hk[id]) : "未设置";
+    items = `<div class="mh">Ask Free</div>${mi("看屏幕问 AI", "openSet:hotkeys", k("screen"))}${mi("只提问", "openSet:hotkeys", k("plain"))}${mi("打字问 AI", "openSet:hotkeys", k("type"))}<div class="sep"></div>
+     ${mi("打开主窗口", "mopen:main")}${mi("历史记录", "mopen:history")}${mi("设置…", "openSet:hotkeys", "⌘,")}<div class="sep"></div>${mi("退出 Ask Free", "toast:原型里不退出")}`;
+  } else if (M.t === "hk") {
+    const id = M.id, other = { screen: "plain", plain: "screen" }[id];
+    if (id === "type") items = `<div class="mh">双击哪颗键</div>${TYPE_CHOICES.map(c => mi((S.hk.type === c ? "✓ " : "") + "双击 " + c, "hkset:type:" + c)).join("")}<div class="sep"></div>${mi("不设置", "hkset:type:")}`;
+    else items = `<div class="mh">按住它说话，松开就问</div>${HK_CHOICES.map(c => mi((S.hk[id] === c ? "✓ " : "") + c, "hkset:" + id + ":" + c, S.hk[other] === c ? "「" + HKN[other] + "」在用" : "")).join("")}<div class="sep"></div>${mi("自定义组合键…", "hkcustom:" + id)}${mi("不设置", "hkset:" + id + ":")}`;
+  } else if (M.t === "qw") {
+    items = ["自动 · 质量优先", "自动 · 速度优先", "qwen3.8-max", "qwen3.7-plus", "qwen3.7-flash"].map(c => mi((S.qwModel === c ? "✓ " : "") + c, "qwset:" + c, c === "自动 · 质量优先" ? "推荐" : "")).join("");
+  } else if (M.t === "mic") {
+    items = ["跟随系统（MacBook Pro 麦克风）", "MacBook Pro 麦克风", "AirPods Pro", "USB 麦克风"].map(c => mi((S.rec.mic === c ? "✓ " : "") + c, "micset:" + c)).join("");
+  } else if (M.t === "hmore") {
+    items = `${mi("复制回答", "toast:已复制回答")}${mi("在访达中显示截图", "toast:会在访达里显示这张截图")}<div class="sep"></div>${mi("删除这条", "del", "", "danger")}`;
+  } else if (M.t === "hmoreAll") {
+    items = `${mi("在访达中打开历史文件夹", "finder")}<div class="sep"></div>${mi("清空全部历史…", "clearAll", "", "danger")}`;
+  } else if (M.t === "ctx") {
+    items = `${mi("复制问答", "toast:已复制这段问答")}${mi("复制回答", "toast:已复制回答")}<div class="sep"></div>${mi("删除", "delId:" + M.id, "", "danger")}`;
+  }
+  const x = Math.min(M.x, 1440 - 250);
+  const n = (items.match(/class="mi/g) || []).length, est = n * 26 + (items.match(/class="(sep|mh)"/g) || []).length * 14 + 10;
+  const y = M.y + est > 850 ? Math.max(30, M.y - est - 40) : M.y;
+  return `<div class="menu" data-part="菜单" style="left:${x}px;top:${y}px">${items}</div>`;
+}
+function overlays() {
+  let h = menuHTML();
+  if (S.confirm) {
+    const C = S.confirm;
+    const [a, b, yes] = C.kind === "clear" ? ["清空全部历史？", "所有问答、截图和找到的图都会删掉，不能恢复。", "clearYes"] : ["删除这条问答？", "截图和找到的图一起删掉，不能恢复。", "delYes"];
+    h += `<div class="confirm" style="left:${Math.min(C.x, 1440 - 280)}px;top:${C.y}px"><div class="a">${a}</div><div class="b">${b}</div><div class="bs"><button class="btn sm" data-a="confirmNo">取消</button><button class="btn sm danger" data-a="${yes}">${C.kind === "clear" ? "清空" : "删除"}</button></div></div>`;
+  }
+  if (S.micAsk) h += `<div class="alert" data-part="系统麦克风弹框">${appIcon(52)}<div class="a">“Ask Free”想访问麦克风</div><div class="b">说出问题时要用它录音。</div><div class="bs"><button class="btn" data-a="micNo">不允许</button><button class="btn solid" data-a="micYes">允许</button></div></div>`;
+  if (S.sys) {
+    const nm = S.sys === "ax" ? "辅助功能" : "屏幕录制";
+    const apps = S.sys === "ax" ? [["Raycast", "#FF6363", true], ["终端", "#3A3B40", true], ["Typefree", "#18191C", false]] : [["腾讯会议", "#2E7CF6", true], ["Zoom", "#2D8CFF", false]];
+    h += `<div class="sys" data-part="系统设置拖图标"><div class="tl"><i data-a="closeSys"></i><i></i><i></i></div>
+      <div class="sl"><div><i></i>通用</div><div><i></i>外观</div><div><i></i>控制中心</div><div class="on"><i></i>隐私与安全性</div><div><i></i>桌面与程序坞</div><div><i></i>键盘</div></div>
+      <div class="sr"><div class="small faint">‹ 隐私与安全性</div><h3>${nm}</h3><p>${S.sys === "ax" ? "允许下面的应用控制你的电脑。" : "允许下面的应用录制屏幕和系统录音。"}</p>
+       <div class="lst" id="syslist">${apps.map(([n, c, on]) => `<div class="li"><span class="ai" style="background:${c}"></span>${n}<span class="tg ${on ? "on" : ""}"><i></i></span></div>`).join("")}${S.sysAdded ? `<div class="li new">${appIcon(22)}Ask Free<span class="tg on"><i></i></span></div>` : ""}</div>
+       <p style="margin-top:10px" class="small">${S.sysAdded ? "已加进列表，开关打开了。" : "列表下面没有 +？直接把右边的图标拖进来。"}</p></div></div>
+     ${S.sysAdded ? "" : `<div class="helper" style="left:792px;top:300px" data-part="拖图标面板"><div class="ico" data-drag="1">${appIcon(40)}</div><div class="ht">把 Ask Free 拖进左边的列表<div class="s">拖进去就加上并打开${nm}。</div></div><span class="x" data-a="closeSys">✕</span></div>`}`;
+  }
+  if (S.lightbox) { const t = S.hist.find(x => x.id === S.lightbox); h += `<div class="lightbox" data-a="closeLB"><div style="display:flex;flex-direction:column;gap:10px;align-items:center"><div class="shot" style="transform:scale(1.7);transform-origin:center;width:440px;height:170px;margin:110px 0">${shotHTML(t.shot)}</div><div style="color:#fff;font-size:12px;opacity:.8">发给 AI 的画面 · 红框是你指着的地方 · 点任意处关闭</div></div></div>`; }
+  if (S.toast) h += `<div class="toast">${S.toast.t}${S.toast.a ? `<span class="link" style="color:inherit;text-decoration-color:currentColor" data-a="${S.toast.a}">${S.toast.al}</span>` : ""}</div>`;
+  return h;
+}
+const protoBar = () => `<div class="proto" data-part="原型控制条"><span class="lab">原型 ${DIR}</span><button class="${S.user === "new" ? "on" : ""}" data-a="scene:new">第一次打开</button><button class="${S.user === "ready" ? "on" : ""}" data-a="scene:ready">都配好了</button><span class="bar"></span><button data-a="replay">重放演示</button></div>`;
+
+// ---------- render ----------
+let stageCache = {};
+function render() {
+  const scroll = {}; document.querySelectorAll("[data-sk]").forEach(e => scroll[e.dataset.sk] = e.scrollTop);
+  stageCache = {}; document.querySelectorAll(".stage[data-sig]").forEach(e => stageCache[e.dataset.sig] = e);
+  const ae = document.activeElement, fid = ae && (ae.id || (ae.dataset && (ae.dataset.k || ae.dataset.v))), fsel = ae && ae.selectionStart;
+  document.body.innerHTML = desk() + (DIR === "A" ? shellA() : shellB()) + overlays() + protoBar();
+  document.querySelectorAll("[data-sk]").forEach(e => { if (scroll[e.dataset.sk] != null) e.scrollTop = scroll[e.dataset.sk]; });
+  document.querySelectorAll(".stage[data-sig]").forEach(e => { const o = stageCache[e.dataset.sig]; if (o) e.replaceWith(o); });
+  if (fid) { const el = document.getElementById(fid) || document.querySelector(`[data-k="${fid}"],[data-v="${fid}"]`); if (el) { el.focus(); try { el.setSelectionRange(fsel, fsel); } catch (_) { } } }
+  applyTheme();
+}
+let toastTimer;
+function toast(t, a, al) { S.toast = { t, a, al }; clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render(); }, a ? 4200 : 2400); }
+function anchor(el, dy = 4) { const r = el.getBoundingClientRect(); return { x: r.left, y: r.bottom + dy }; }
+function stash(kind) { S.stash = S.stash || {}; const p = kind === "asr" ? S.asrProv : S.ansProv; S.stash[kind + p] = { v: S.keys[kind], ok: S.keys[kind + "Ok"] }; }
+function unstash(kind) { const p = kind === "asr" ? S.asrProv : S.ansProv; const s = (S.stash || {})[kind + p] || { v: "", ok: false }; S.keys[kind] = s.v; S.keys[kind + "Ok"] = s.ok; S.keys[kind + "Err"] = ""; }
+function openPage(p) {
+  if (DIR === "A") { S.winOpen = true; S.page = p; return; }
+  if (p === "start" || p === "history") { S.winOpen = true; S.front = "main"; return; }
+  S.setOpen = true; S.setPage = p; S.front = "settings";
+}
+function firstMissing() { return !stepDone[0]() ? "models" : !stepDone[1]() ? "perm" : "hotkeys"; }
+function selectNear(id) { const L = shown(); const i = L.findIndex(t => t.id === id); S.hist = S.hist.filter(t => t.id !== id); const L2 = shown(); S.sel = L2.length ? L2[Math.min(Math.max(i, 0), L2.length - 1)].id : null; }
+function startTry() {
+  if (S.trying) return;
+  S.trying = true; render();
+  setTimeout(() => {
+    S.trying = false; S.user = "ready";
+    S.hist = [{ ...DEMO }, ...S.hist.filter(t => t.id !== DEMO.id)]; S.sel = DEMO.id; S.filt = "all"; S.q = "";
+    if (DIR === "A") { S.page = "start"; toast("第一个问答已经存进历史", "page:history", "去看看"); }
+    else { S.front = "main"; toast("第一个问答已经存进历史"); }
+    render();
+  }, 4600);
+}
+// ---------- actions ----------
+function act(a, el, e) {
+  const [k, v, w] = a.split(":"); const rest = a.slice(k.length + 1);
+  const keepMenu = ["hkmenu", "qwmenu", "micmenu", "mbar", "hmore", "hmoreAll", "del", "clearAll"].includes(k);
+  if (!keepMenu) S.menu = null;
+  if (k !== "del" && k !== "clearAll") S.confirm = null;
+  switch (k) {
+    case "page": openPage(v); break;
+    case "setPage": S.setPage = v; break;
+    case "openSet": openPage(v); break;
+    case "front": S.front = v; break;
+    case "goModels": openPage("models"); break;
+    case "goStart": if (S.user === "new") openPage("start"); else openPage(firstMissing()); break;
+    case "backStart": openPage("start"); if (DIR === "B") S.front = "main"; break;
+    case "mopen": S.winOpen = true; if (DIR === "A") S.page = v === "history" ? "history" : "start"; else S.front = "main"; break;
+    case "closeMain": S.winOpen = false; toast("主窗口关了，点菜单栏的 Ask Free 图标还能打开"); break;
+    case "closeSet": S.setOpen = false; S.front = "main"; break;
+    case "mbar": S.menu = S.menu && S.menu.t === "mbar" ? null : { t: "mbar", x: el.getBoundingClientRect().left - 8, y: 28 }; break;
+    case "hkmenu": S.menu = { t: "hk", id: v, ...anchor(el) }; break;
+    case "hkset": {
+      const val = rest.slice(v.length + 1) || null; S.hk[v] = val;
+      const other = { screen: "plain", plain: "screen" }[v];
+      if (val && other && S.hk[other] === val) { S.hk[other] = null; toast("「" + HKN[other] + "」改成了不设置：一个键只给一个问法"); }
+      break;
+    }
+    case "hkcustom": S.recording = v; break;
+    case "askMic": S.micAsk = true; break;
+    case "micYes": S.micAsk = false; S.perm.mic = true; break;
+    case "micNo": S.micAsk = false; toast("没允许。以后可以在「权限」里再开"); break;
+    case "sys": S.sys = v; S.sysAdded = false; break;
+    case "closeSys": S.sys = null; break;
+    case "try": startTry(); return;
+    case "verify": {
+      const K = S.keys; K[v + "Busy"] = true; K[v + "Ok"] = false; K[v + "Err"] = "";
+      setTimeout(() => { K[v + "Busy"] = false; if (K[v].trim().length >= 8) K[v + "Ok"] = true; else K[v + "Err"] = K[v] ? "这个 Key 不对，看看有没有复制全" : "先把 Key 粘贴进来"; render(); }, 700);
+      break;
+    }
+    case "prov": { if ((v === "asr" ? S.asrProv : S.ansProv) === w) break; stash(v); if (v === "asr") S.asrProv = w; else S.ansProv = w; unstash(v); break; }
+    case "asrVer": S.asrVer = v; break;
+    case "dsModel": S.dsModel = v; break;
+    case "qwmenu": S.menu = { t: "qw", ...anchor(el) }; break;
+    case "qwset": S.qwModel = rest; break;
+    case "qwHelp": S.qwHelp = !S.qwHelp; break;
+    case "ext": toast("会在浏览器里打开 " + v); break;
+    case "ans": S.ans[v] = !S.ans[v]; break;
+    case "effort": S.ans.effort = v; break;
+    case "adv": S.adv = !S.adv; break;
+    case "recStyle": S.rec.style = v; break;
+    case "recCtl": S.rec.controls = !S.rec.controls; break;
+    case "micmenu": S.menu = { t: "mic", ...anchor(el) }; break;
+    case "micset": S.rec.mic = rest; break;
+    case "gen": S.gen[v] = !S.gen[v]; break;
+    case "appear": S.gen.appearance = v; break;
+    case "finder": toast("会在访达里打开 Ask Free 的数据文件夹"); break;
+    case "sel": S.sel = +v; break;
+    case "open": S.sel = +v; S.filt = "all"; S.q = ""; openPage("history"); break;
+    case "filt": S.filt = v; { const L = shown(); if (!L.find(t => t.id === S.sel)) S.sel = L.length ? L[0].id : null; } break;
+    case "copy": toast("已复制这段问答"); break;
+    case "del": { const r = el.getBoundingClientRect(); S.menu = null; S.confirm = { kind: "del", x: r.right - 260, y: r.bottom + 6 }; break; }
+    case "delId": S.sel = +v; { const r = { x: S.ctxXY ? S.ctxXY.x : 600, y: S.ctxXY ? S.ctxXY.y : 300 }; S.confirm = { kind: "del", ...r }; } break;
+    case "delYes": { const id = S.sel; selectNear(id); S.confirm = null; toast("已删除"); break; }
+    case "hmore": S.menu = { t: "hmore", ...anchor(el), x: el.getBoundingClientRect().right - 210 }; break;
+    case "hmoreAll": S.menu = { t: "hmoreAll", ...anchor(el), x: el.getBoundingClientRect().right - 230 }; break;
+    case "clearAll": S.menu = null; S.confirm = { kind: "clear", x: 600, y: 330 }; break;
+    case "clearYes": S.hist = []; S.sel = null; S.confirm = null; toast("历史清空了"); break;
+    case "confirmNo": S.confirm = null; break;
+    case "lightbox": S.lightbox = +v; break;
+    case "closeLB": S.lightbox = null; break;
+    case "openimg": toast("会在浏览器里打开原图"); break;
+    case "toast": toast(rest); break;
+    case "scene":
+      if (v === "new") { setNew(); S.page = "start"; S.setOpen = false; S.front = "main"; }
+      else { setReady(); if (S.page === "start") S.page = DIR === "A" ? "start" : S.page; S.setOpen = false; S.front = "main"; }
+      S.winOpen = true; S.sys = null; S.micAsk = false; S.lightbox = null; break;
+    case "replay": document.querySelectorAll(".stage[data-sig]").forEach(s => s.removeAttribute("data-sig")); break;
+  }
+  render();
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-a]");
+  const a = el && el.dataset.a;
+  if (!a) {
+    let dirty = false;
+    if (S.menu || S.confirm) { S.menu = null; S.confirm = null; dirty = true; }
+    if (DIR === "B" && S.setOpen) { const w = e.target.closest(".win"); const f = w && (w.classList.contains("set") ? "settings" : "main"); if (f && f !== S.front) { S.front = f; dirty = true; } }
+    if (dirty) render(); return;
+  }
+  e.preventDefault();
+  if (DIR === "B" && S.setOpen) { const w = e.target.closest(".win"); if (w) S.front = w.classList.contains("set") ? "settings" : "main"; }
+  act(a, el, e);
+});
+document.addEventListener("contextmenu", e => {
+  const el = e.target.closest("[data-ctx]"); if (!el) return;
+  e.preventDefault(); S.sel = +el.dataset.ctx; S.ctxXY = { x: e.clientX, y: e.clientY }; S.menu = { t: "ctx", id: +el.dataset.ctx, x: e.clientX, y: e.clientY }; render();
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.id === "hq") {
+    S.q = t.value; const L = shown(); if (!L.find(x => x.id === S.sel)) S.sel = L.length ? L[0].id : null;
+    const hl = document.getElementById("hlist"); if (hl) hl.innerHTML = listHTML();
+    const hd = document.querySelector(".hd"); if (hd) hd.outerHTML = detailHTML();
+    const cnt = document.querySelector(".toolbar .small.faint"); if (cnt) cnt.textContent = L.length + " 条";
+  } else if (t.dataset.k) { const k = t.dataset.k; S.keys[k] = t.value; S.keys[k + "Ok"] = false; S.keys[k + "Err"] = ""; const st = document.querySelector(`[data-st="${k}"]`); if (st) st.innerHTML = ""; }
+  else if (t.dataset.v === "vision") S.ans.vision = t.value;
+});
+document.addEventListener("keydown", e => {
+  if (S.recording) {
+    e.preventDefault();
+    if (e.key === "Escape") { S.recording = null; render(); return; }
+    if (["Meta", "Alt", "Control", "Shift", "Fn"].includes(e.key)) return;
+    const combo = (e.ctrlKey ? "⌃" : "") + (e.altKey ? "⌥" : "") + (e.shiftKey ? "⇧" : "") + (e.metaKey ? "⌘" : "") + " " + (e.code === "Space" ? "Space" : e.key.length === 1 ? e.key.toUpperCase() : e.key);
+    if (!(e.ctrlKey || e.altKey || e.metaKey)) { toast("要带上 ⌃ ⌥ ⌘ 中的一颗，才不会和打字撞"); return; }
+    const id = S.recording; S.recording = null; act("hkset:" + id + ":" + combo.trim(), null, e); return;
+  }
+  if (e.key === "Escape") { S.menu = null; S.confirm = null; S.lightbox = null; S.sys = null; S.micAsk = false; render(); return; }
+  const inField = /INPUT|TEXTAREA/.test((document.activeElement || {}).tagName || "");
+  if (!inField && S.user === "new" && stepsLeft() === 0 && (DIR === "B" ? S.front === "main" || !S.setOpen : S.page === "start")) { startTry(); return; }
+  const histVisible = document.getElementById("hlist");
+  if (histVisible && (e.key === "ArrowDown" || e.key === "ArrowUp") && !inField) {
+    e.preventDefault(); const L = shown(); let i = L.findIndex(t => t.id === S.sel);
+    i = Math.max(0, Math.min(L.length - 1, i + (e.key === "ArrowDown" ? 1 : -1))); if (L[i]) { S.sel = L[i].id; render(); const on = document.querySelector(".hrow.on"); if (on) on.scrollIntoView({ block: "nearest" }); }
+  }
+  if (histVisible && (e.key === "Backspace" || e.key === "Delete") && e.metaKey && !inField && S.sel) { S.confirm = { kind: "del", x: 900, y: 140 }; render(); }
+});
+// drag the app icon into System Settings
+document.addEventListener("mousedown", e => {
+  const src = e.target.closest("[data-drag]"); if (!src) return;
+  e.preventDefault();
+  const g = document.createElement("div"); g.className = "ghost"; g.innerHTML = appIcon(44); document.body.appendChild(g);
+  const mv = ev => { g.style.left = ev.clientX - 22 + "px"; g.style.top = ev.clientY - 22 + "px"; const l = document.getElementById("syslist"); if (l) { const r = l.getBoundingClientRect(); l.classList.toggle("hot", ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top - 20 && ev.clientY < r.bottom + 40); } };
+  mv(e);
+  const up = ev => {
+    document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); g.remove();
+    const l = document.getElementById("syslist"); const r = l && l.getBoundingClientRect();
+    if (r && ev.clientX > r.left && ev.clientX < r.right && ev.clientY > r.top - 20 && ev.clientY < r.bottom + 40) {
+      const which = S.sys; S.sysAdded = true; render();
+      setTimeout(() => { S.perm[which] = true; S.sys = null; render(); if (which === "scr") toast("屏幕录制已允许，重新打开 Ask Free 后生效", "toast:已重新打开 Ask Free", "现在重开"); else toast("辅助功能已允许，快捷键能用了"); }, 900);
+    } else if (l) l.classList.remove("hot");
+  };
+  document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up);
+});
+
+// ---------- start ----------
+(function init() {
+  const user = hp("user"), scene = hp("scene");
+  if (user === "ready") setReady(); else setNew();
+  const p = scene || "start";
+  if (p === "start" || p === "history") { S.page = p; }
+  else openPage(p);
+  if (DIR === "B" && (p === "start" || p === "history")) S.setOpen = false;
+  render();
+})();
+</script></body></html>

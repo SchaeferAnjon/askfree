@@ -12,11 +12,15 @@ public struct AskHistoryTurn: Codable, Equatable, Sendable {
     public var hasScreenshot: Bool
     /// 回答附的图（联网找到的）；缩略图另存了一份在本机
     public var images: [AskImage]
+    /// 怎么问的：screen 看屏幕问、plain 只提问、type 打字问、panel 在回答面板上续聊。旧记录没有这一项
+    public var via: String?
+    /// 这一问联网查过
+    public var searched: Bool?
 
     public init(id: String = UUID().uuidString, thread: String, at: Date = Date(), question: String, answer: String,
-                hasScreenshot: Bool = false, images: [AskImage] = []) {
+                hasScreenshot: Bool = false, images: [AskImage] = [], via: String? = nil, searched: Bool? = nil) {
         self.id = id; self.thread = thread; self.at = at; self.question = question; self.answer = answer
-        self.hasScreenshot = hasScreenshot; self.images = images
+        self.hasScreenshot = hasScreenshot; self.images = images; self.via = via; self.searched = searched
     }
 }
 

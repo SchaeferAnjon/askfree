@@ -101,6 +101,7 @@ extension AppDelegate {
                          round: Int) {
         let thread = answerPanel.threadID
         let draft = AskHistoryDraft()
+        draft.via = Self.historyVia(trigger: askTiming.trigger)
         askInFlight = true
         // 问题已经发出，回答在面板里流式显示：放开录音，别让所有快捷键在回答的十几秒里都没反应
         finishAsk()
@@ -134,6 +135,7 @@ extension AppDelegate {
         }, onRouteNote: { [weak self] note in
             // 这一问转去联网了：「正在联网查…」→ 出字后换成「已联网查询」。
             // 已经有「没能看屏幕」的说明时不盖掉它，那条对用户更要紧
+            draft.searched = true
             guard let self, screenNote == nil else { return }
             DispatchQueue.main.async {
                 guard self.askRound == round else { return }
@@ -173,7 +175,8 @@ extension AppDelegate {
     /// 答完的一轮记进历史：文字、真发给模型的截图、已经到了的图；开着的历史页跟着刷新
     private func recordHistory(_ draft: AskHistoryDraft, thread: String, question: String, answer: String,
                                screen: AskAI.AskScreenContext?) {
-        let turn = AskHistoryTurn(id: draft.id, thread: thread, question: question, answer: answer, images: draft.images)
+        let turn = AskHistoryTurn(id: draft.id, thread: thread, question: question, answer: answer, images: draft.images,
+                                  via: draft.via, searched: draft.searched ? true : nil)
         do {
             try AskHistoryStore.shared.append(turn, screenshot: screen.map { ($0.overviewJPEG, $0.closeUpJPEG) })
             draft.recorded = true
@@ -201,6 +204,17 @@ extension AppDelegate {
         guard draft.recorded, !draft.images.isEmpty else { return }
         AskHistoryStore.shared.saveImageThumbs(draft.images, turnID: draft.id) {
             NotificationCenter.default.post(name: .askFreeHistoryDidChange, object: nil)
+        }
+    }
+
+    /// 历史里记下是怎么问的，历史页按它筛
+    private static func historyVia(trigger: String) -> String? {
+        switch trigger {
+        case "hotkey-screen", "onboarding": return "screen"
+        case "hotkey-plain": return "plain"
+        case "hotkey-type": return "type"
+        case "follow-up": return "panel"
+        default: return nil
         }
     }
 
@@ -317,4 +331,6 @@ private final class AskHistoryDraft {
     var screenUsed = false
     var images: [AskImage] = []
     var recorded = false
+    var via: String?
+    var searched = false
 }

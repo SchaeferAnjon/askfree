@@ -43,11 +43,11 @@ extension AppDelegate {
     }
 
     func showSettingsCenter() {
-        SettingsWindowController.show(delegate: self)
+        MainActor.assumeIsolated { SettingsWindowController.show() }
     }
 
-    /// 打开设置并直接跳到「模型」页（没填 Key 时用）
+    /// 打开主窗口并直接跳到「语音与模型」（没填 Key 时用）
     func showModelSettings() {
-        SettingsWindowController.show(delegate: self, initialPage: .model)
+        MainActor.assumeIsolated { SettingsWindowController.show(page: .models) }
     }
 }

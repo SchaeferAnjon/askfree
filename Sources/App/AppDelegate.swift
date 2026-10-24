@@ -11,23 +11,21 @@ enum AppLinks {
 }
 
 /// 启动参数（scripts/dev_run.sh 透传）：
-/// - `-openPage <home|history|models|settings|about>`：启动后打开主窗口并切到该页，正式版也认
+/// - `-openPage <start|history|hotkeys|models|answer|recording|permissions|general|about|onboarding>`：
+///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导），正式版也认
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效
 enum DevLaunchOptions {
     private static let arguments = ProcessInfo.processInfo.arguments
 
-    static let openPage: SettingsWindowController.Page? = {
+    static let openPageArgument: String? = {
         guard let i = arguments.firstIndex(of: "-openPage"), i + 1 < arguments.count else { return nil }
-        switch arguments[i + 1].lowercased() {
-        case "home": return .home
-        case "history": return .history
-        case "models", "model": return .model
-        case "settings": return .settings
-        case "about": return .about
-        default: return nil
-        }
+        return arguments[i + 1].lowercased()
     }()
+
+    static let openPage: MainPage? = openPageArgument.flatMap { MainPage(argument: $0) }
+
+    static let openOnboarding: Bool = openPageArgument == "onboarding"
 
     static let skipPermissionPrompts: Bool = AppIdentity.isDevBuild && arguments.contains("-skipPermissionPrompts")
 
@@ -44,7 +42,7 @@ extension Bundle {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate, SettingsWindowDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
     var statusBar: StatusBarController!
     var overlayWindow: OverlayWindow!
     var audioRecorder: AudioRecorder!
@@ -107,10 +105,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, SettingsWindowDelegate {
         // 补一个标准主菜单：没有它，Cmd+C/V/X/A 等编辑快捷键无法分发到输入框
         setupMainMenu()
 
-        // 启动就把要用的系统权限都申请掉，别等第一次提问才弹。系统只在第一次真的弹框，之后调用无声返回。
+        // 第一次打开先出欢迎引导：权限在引导第二步由用户点按钮时再申请，先说清为什么。
+        // 已经都配好的老用户直接记成看过引导
+        if !OnboardingProgress.isCompleted && SetupStatus.shared.allDone { OnboardingProgress.isCompleted = true }
+        let showsOnboarding = DevLaunchOptions.openOnboarding || !OnboardingProgress.isCompleted
+
+        // 看过引导之后：启动就把要用的系统权限都申请掉，别等第一次提问才弹。系统只在第一次真的弹框，之后调用无声返回。
         // 开发版带 -skipPermissionPrompts 启动：不弹任何系统授权框，方便无人值守实测
-        if DevLaunchOptions.skipPermissionPrompts {
-            debugLog("Dev launch: skipping permission prompts")
+        if DevLaunchOptions.skipPermissionPrompts || showsOnboarding {
+            debugLog(showsOnboarding ? "Onboarding: permission prompts wait for the user" : "Dev launch: skipping permission prompts")
             didPromptForAccessibility = true
             didReportMissingAccessibility = true
         } else {
@@ -148,12 +151,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, SettingsWindowDelegate {
         // 启动末尾主动调一次，注册快捷键
         updateAccessibilityDependentFeatures()
 
-        // 还没填 Key：直接打开「模型」页，不填用不了
-        if let page = DevLaunchOptions.openPage {
+        // 第一次打开出欢迎引导；看过引导但还没填 Key：打开主窗口的「开始」，不填用不了
+        if showsOnboarding {
+            debugLog("Launch: showing onboarding at step \(OnboardingProgress.step)")
+            OnboardingWindowController.show()
+        } else if let page = DevLaunchOptions.openPage {
             debugLog("Launch argument: opening page \(page)")
-            SettingsWindowController.show(delegate: self, initialPage: page)
+            SettingsWindowController.show(page: page)
         } else if !cloudTranscriber.isConfigured() || !askAI.isConfigured() {
-            SettingsWindowController.show(delegate: self, initialPage: .model)
+            SettingsWindowController.show(page: .start)
         }
         if let question = DevLaunchOptions.askText {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.devAsk(question) }

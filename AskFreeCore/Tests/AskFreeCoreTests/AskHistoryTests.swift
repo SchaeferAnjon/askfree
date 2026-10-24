@@ -40,6 +40,22 @@ final class AskHistoryTests: XCTestCase {
         XCTAssertEqual(store.threads()[0].turns[0].answer, answer)
     }
 
+    func testKeepsHowItWasAskedAndOldLinesStillLoad() throws {
+        try store.append(AskHistoryTurn(thread: "a", question: "打字问的", answer: "答", via: "type", searched: true))
+        // 加「问法」之前写下的一行：没有 via、searched
+        let old = #"{"id":"x","thread":"b","at":"2026-10-20T08:00:00Z","question":"旧的","answer":"答","hasScreenshot":true,"images":[]}"#
+        let handle = try FileHandle(forWritingTo: store.fileURL)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: Data((old + "\n").utf8))
+        try handle.close()
+        let turns = store.threads().flatMap(\.turns)
+        XCTAssertEqual(turns.first { $0.question == "打字问的" }?.via, "type")
+        XCTAssertEqual(turns.first { $0.question == "打字问的" }?.searched, true)
+        let oldTurn = try XCTUnwrap(turns.first { $0.question == "旧的" })
+        XCTAssertNil(oldTurn.via)
+        XCTAssertTrue(oldTurn.hasScreenshot)
+    }
+
     func testFileIsPrivate() throws {
         try store.append(turn("a", 0, "问"))
         try store.append(turn("a", 1, "再问"))

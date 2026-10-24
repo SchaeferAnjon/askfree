@@ -12,7 +12,7 @@ import AskFreeCore
 /// 录音浮窗样式的「静态缩略图」：按 OverlayWindow 里 SiriCapsuleView 的真实配色，
 /// 画一颗定格的小胶囊（不动画、不耗 CPU），让用户在设置里一眼看出两种样式的差别。
 final class OverlayStylePreview: NSView {
-    private let mono: Bool
+    var mono: Bool { didSet { needsDisplay = true } }
     init(mono: Bool) { self.mono = mono; super.init(frame: .zero) }
     required init?(coder: NSCoder) { fatalError() }
 

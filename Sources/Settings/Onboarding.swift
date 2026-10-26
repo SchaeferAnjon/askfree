@@ -151,8 +151,9 @@ struct OnboardingView: View {
         switch i {
         case 0: return step > 0
         case 1: return status.permissionsReady
-        case 2: return status.asrReady && (models.asrTest == .ok || step > 2)
-        case 3: return status.askReady && (models.askTest == .ok || step > 3)
+        // 选中那家框里有 Key、没测出错就算填好（回来看时 Key 早就填过）；能不能「继续」仍要这一步测通
+        case 2: return status.asrReady && models.asrKeyFilled && [.idle, .ok].contains(models.asrTest)
+        case 3: return status.askReady && models.askKeyFilled && [.idle, .ok].contains(models.askTest)
         case 4: return status.screenHotkeySet
         default: return false
         }
@@ -390,9 +391,9 @@ struct OnboardingView: View {
     /// 回来看这一步时 Key 已经填过：自己测一次，通了就能直接继续
     private func autoTest(asr: Bool) {
         if asr {
-            if models.asrTest == .idle && status.asrReady { models.testASR() }
+            if models.asrTest == .idle && models.asrKeyFilled { models.testASR() }
         } else {
-            if models.askTest == .idle && status.askReady { models.testAsk() }
+            if models.askTest == .idle && models.askKeyFilled { models.testAsk() }
         }
     }
 

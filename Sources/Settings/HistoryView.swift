@@ -324,6 +324,7 @@ struct HistoryView: View {
             NSAlert(error: error).runModal()
         }
         threads = AskHistoryStore.shared.threads()
+        NotificationCenter.default.post(name: .askFreeHistoryDidChange, object: nil)   // 侧栏和页头的条数
         // 删掉后选中下面那一条
         if let index {
             let remaining = visible
@@ -361,6 +362,7 @@ struct HistoryDetail: View {
                 .menuIndicator(.hidden)
                 .fixedSize()
                 .help("更多")
+                .accessibilityLabel("更多")
             }
             .padding(.horizontal, 16)
             .frame(height: 40)
@@ -462,6 +464,7 @@ struct HistoryDetail: View {
         }
         .buttonStyle(.plain)
         .help(help)
+        .accessibilityLabel(help)
     }
 
     private func clearAll() {

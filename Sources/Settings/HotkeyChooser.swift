@@ -38,7 +38,7 @@ enum HotkeyChooser {
 
     // MARK: 说话提问的两套键
 
-    static func showMenu(for hotkey: AskHotkey) {
+    static func showMenu(for hotkey: AskHotkey, below anchor: NSView?) {
         let menu = NSMenu()
         menu.autoenablesItems = false
         let current = hotkey.current
@@ -61,7 +61,7 @@ enum HotkeyChooser {
             hotkey.clear()
             SettingsStore.shared.hotkeysDidChange()
         })
-        popUp(menu)
+        popUp(menu, below: anchor)
     }
 
     /// 选一颗修饰键。被别的问法占着时先问；选了 Fn 提醒去关系统的 🌐 键动作
@@ -109,7 +109,7 @@ enum HotkeyChooser {
 
     // MARK: 打字问的双击键
 
-    static func showTypeAskMenu() {
+    static func showTypeAskMenu(below anchor: NSView?) {
         let menu = NSMenu()
         menu.autoenablesItems = false
         let current = TypeAskHotkey.current()
@@ -122,15 +122,20 @@ enum HotkeyChooser {
         menu.addItem(ClosureMenuItem("不设置", symbol: "nosign", checked: current == nil) {
             SettingsStore.shared.setTypeAsk(nil)
         })
-        popUp(menu)
+        popUp(menu, below: anchor)
     }
 
     // MARK: 内部
 
-    /// 在指针下面弹出（SwiftUI 按钮拿不到 NSView，按点击位置放）
-    private static func popUp(_ menu: NSMenu) {
-        let point = NSEvent.mouseLocation
-        menu.popUp(positioning: menu.items.first { $0.state == .on }, at: NSPoint(x: point.x - 12, y: point.y - 6), in: nil)
+    /// 挂在键帽下面弹出，左边对齐；拿不到键帽时退回指针位置
+    private static func popUp(_ menu: NSMenu, below anchor: NSView?) {
+        if let anchor, anchor.window != nil {
+            let y: CGFloat = anchor.isFlipped ? anchor.bounds.maxY + 4 : -4
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: y), in: anchor)
+        } else {
+            let point = NSEvent.mouseLocation
+            menu.popUp(positioning: nil, at: NSPoint(x: point.x - 12, y: point.y - 6), in: nil)
+        }
     }
 
     private static func owners(of shortcut: RecordingHotkeyShortcut, except hotkey: AskHotkey) -> [AskHotkey] {
@@ -184,6 +189,7 @@ struct HotkeyButton: View {
     let kind: Kind
     var height: CGFloat = 28
     @ObservedObject private var store = SettingsStore.shared
+    @State private var anchor = MenuAnchor.Box()
 
     var body: some View {
         let title = self.title
@@ -205,10 +211,12 @@ struct HotkeyButton: View {
                 }
             }
             .contentShape(Rectangle())
+            .background(MenuAnchor(box: anchor))
         }
         .buttonStyle(.plain)
         .help(conflict.map { "\($0)，现在不会响应" } ?? "点一下换键")
         .accessibilityLabel(accessibilityTitle)
+        .accessibilityValue(title ?? "没设置")
     }
 
     private var title: String? {
@@ -237,9 +245,23 @@ struct HotkeyButton: View {
 
     private func tap() {
         switch kind {
-        case .screen: HotkeyChooser.showMenu(for: .screen)
-        case .plain: HotkeyChooser.showMenu(for: .plain)
-        case .typeAsk: HotkeyChooser.showTypeAskMenu()
+        case .screen: HotkeyChooser.showMenu(for: .screen, below: anchor.view)
+        case .plain: HotkeyChooser.showMenu(for: .plain, below: anchor.view)
+        case .typeAsk: HotkeyChooser.showTypeAskMenu(below: anchor.view)
         }
     }
+}
+
+/// 垫在 SwiftUI 按钮后面的一个空 NSView，给 NSMenu 一个弹出的位置
+private struct MenuAnchor: NSViewRepresentable {
+    final class Box { weak var view: NSView? }
+    let box: Box
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        box.view = view
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) { box.view = view }
 }

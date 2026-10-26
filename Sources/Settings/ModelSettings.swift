@@ -117,6 +117,10 @@ final class ModelSettings: ObservableObject {
         return ok
     }
 
+    /// 选中的那家框里有没有 Key。SetupStatus 的 askReady 会退到别家有 Key 的，链路打勾和自动测试只看选中的这家
+    var asrKeyFilled: Bool { !keyBinding(forASR: asr).wrappedValue.isEmpty }
+    var askKeyFilled: Bool { !keyBinding(forAsk: ask).wrappedValue.isEmpty }
+
     func keyBinding(forASR choice: ASRChoice) -> Binding<String> {
         choice == .bailian ? binding(\.dashscopeKey) : binding(\.volcKey)
     }

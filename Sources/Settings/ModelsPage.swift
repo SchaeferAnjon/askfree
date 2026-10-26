@@ -43,9 +43,9 @@ struct ModelsPage: View {
         HStack(spacing: 0) {
             node(symbol: "mic", title: "你说的话", subtitle: nil, done: false)
             arrow
-            node(symbol: "waveform", title: "听成文字", subtitle: settings.asr == .bailian ? "阿里百炼" : "火山引擎", done: status.asrReady)
+            node(symbol: "waveform", title: "听成文字", subtitle: settings.asr == .bailian ? "阿里百炼" : "火山引擎", done: status.asrReady && settings.asrKeyFilled)
             arrow
-            node(symbol: "sparkles", title: "回答", subtitle: askShortName, done: status.askReady)
+            node(symbol: "sparkles", title: "回答", subtitle: askShortName, done: status.askReady && settings.askKeyFilled)
             arrow
             node(symbol: "rectangle.inset.topright.filled", title: "显示在右上角", subtitle: nil, done: false)
         }

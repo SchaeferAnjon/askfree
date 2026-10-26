@@ -95,7 +95,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let host = NSHostingView(rootView: MainWindowView(model: model))
         host.sizingOptions = [.minSize]
         window.contentView = host
-        if !window.setFrameAutosaveName("AskFreeMainWindow2") { window.center() }
+        // 先居中，有记下的位置再用记下的（setFrameAutosaveName 只要名字设上就返回 true，不能拿来判断有没有记录）
+        window.center()
+        window.setFrameAutosaveName("AskFreeMainWindow2")
         applyAppearance()
         MainWindowAppearance.observeSystemChanges()
         NotificationCenter.default.addObserver(self, selector: #selector(appearanceSettingDidChange),

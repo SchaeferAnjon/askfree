@@ -4,10 +4,9 @@ import AskFreeCore
 #endif
 import SwiftUI
 
-/// 问 AI 的回答面板。做法与 trade-capture 的采访浮窗一致：
-/// 通知中心同款的 .popover 磨砂材质 + maskImage 圆角、从屏幕右缘滑入、贴右上角、
-/// 内容高度变化时顶右角不动、Esc 关闭。内容用 SwiftUI 排版。
-/// 支持：多轮对话（按住面板续聊，面板泛蓝光）、图钉固定、逐字流出、复制。
+/// 问 AI 的回答面板（design/panels 方向 A「右上对话卡」）：贴右上角的一张卡，从屏幕右缘滑入，
+/// 内容高度变化时顶右角不动、Esc 关闭。卡顶一条固定高度的状态条，追问在卡里连成编号的线，
+/// 卡片还开着时换话题，旧话题折成一行；报错是带按钮的一块。内容用 SwiftUI 排版。
 final class AnswerPanel {
     static var log: ((String) -> Void)?
     private var panel: KeyablePanel?
@@ -21,7 +20,7 @@ final class AnswerPanel {
     private var appearanceObserver: NSObjectProtocol?
     private var hotkeyObserver: NSObjectProtocol?
     // 「点外面缩成小框」：小框静止 4s 后 1s 淡出；鼠标停留 150ms 回满；再离开重新倒计时
-    private static let collapsedWidth: CGFloat = 320
+    static let collapsedWidth: CGFloat = 320
     private var dismissTimer: Timer?
     private var hoverTimer: Timer?
     private var hoverSince: Date?
@@ -35,10 +34,13 @@ final class AnswerPanel {
     private var frameAnimationEnds = Date.distantPast
     /// 续聊录音进行中（面板侧兜底记录，防止 SwiftUI 手势丢了 onEnded 之后录音停不下来）
     private var followUpActive = false
-    private static let width: CGFloat = 420
-    private static let margin: CGFloat = 14
+    static let width: CGFloat = 400
+    static let cornerRadius: CGFloat = 12
+    private static let margin: CGFloat = 12
     /// 正文左右内边距：左右等距，正文居中不偏
-    static let contentInset: CGFloat = 18
+    static let contentInset: CGFloat = 16
+    /// 回答区上下内边距（上 14、下 6）：离屏测高只量内容，摆窗口时加回来
+    static let bodyPadding: (top: CGFloat, bottom: CGFloat) = (14, 6)
     /// 对话正文宽度：面板宽 − 两侧内边距。滚动条强制成细的 overlay 样式，
     /// 浮在右侧那 18pt 留白上，不占布局、也压不到字，所以不再额外让出通道
     static var contentWidth: CGFloat { width - contentInset * 2 }
@@ -47,6 +49,14 @@ final class AnswerPanel {
     var onFollowUpStart: (() -> Bool)?
     /// 续聊松手（cancelled = 拖开取消）
     var onFollowUpEnd: ((_ cancelled: Bool) -> Void)?
+    /// 底栏「打字」
+    var onType: (() -> Void)?
+    /// 报错卡「重试」：把这一句再问一遍（面板已经撤掉了没答成的那一轮）
+    var onRetry: ((_ question: String) -> Void)?
+    /// 报错卡「去填 Key」「去换一家」
+    var onOpenModels: (() -> Void)?
+    /// 「这次没看屏幕」那条的「去授权」
+    var onGrantScreen: (() -> Void)?
 
     /// 正在滑出的面板不算在屏上（马上就收起了）
     var isVisible: Bool { (panel?.isVisible ?? false) && !isHiding }
@@ -72,8 +82,12 @@ final class AnswerPanel {
         model.turns.filter { $0.state == .answered }.map { ($0.question, $0.answer) }
     }
 
-    /// 新话题：清空重来
+    /// 新话题：清空重来。卡片还在屏上、上个话题答过时，旧话题折成卡顶一行
     func startThread(question: String) {
+        let answered = model.turns.filter { $0.state == .answered }
+        model.previousTopic = isVisible && !answered.isEmpty ? PreviousTopic(question: answered[0].question, turns: answered) : nil
+        model.showPrevious = false
+        model.expandedTurns = []
         model.turns = [AnswerTurn(question: question)]
         model.headerIndex = 0
         threadID = UUID().uuidString
@@ -128,8 +142,21 @@ final class AnswerPanel {
         if collapseWhenDone { collapseWhenDone = false; collapse() }
     }
 
-    /// 给当前这一轮加一条附注（没能带屏幕内容的原因、网络较慢）。传 nil 清掉。
-    /// 失败必须让用户看见：原功能最大的不满就是「按了没反应」。
+    /// 这次没看屏幕：回答上面一条橙底提示；没给屏幕录制权限时带「去授权」
+    func setScreenNote(_ text: String, needsPermission: Bool) {
+        guard let last = model.turns.indices.last else { return }
+        model.turns[last].screenNote = text
+        model.turns[last].screenNeedsPermission = needsPermission
+        relayoutAfterStateChange()
+    }
+
+    /// 这一问转去联网查了：状态条答完写「联网」
+    func markSearched() {
+        guard let last = model.turns.indices.last else { return }
+        model.turns[last].searched = true
+    }
+
+    /// 给当前这一轮加一行小灰字（正在联网查、网络较慢、在想）。传 nil 清掉。
     func setNote(_ text: String?) {
         guard let last = model.turns.indices.last else { return }
         guard model.turns[last].note != text else { return }
@@ -153,11 +180,13 @@ final class AnswerPanel {
         relayoutAfterStateChange()
     }
 
-    func fail(_ message: String) {
+    func fail(_ failure: AskFailure) {
         guard let last = model.turns.indices.last else { return }
-        model.turns[last].answer = message
+        model.turns[last].failure = failure
         model.turns[last].state = .failed
-        relayout()
+        // 报错卡比「在想」高得多：先让离屏测高按新内容重算，再核对两次，否则窗口停在旧高度、头尾被挤出去
+        relayoutAfterStateChange()
+        settleAfterFinish()
         if collapseWhenDone { collapseWhenDone = false; collapse() }
     }
 
@@ -271,7 +300,21 @@ final class AnswerPanel {
                    onClose: { [weak self] in self?.hide() },
                    onTogglePin: { [weak self] in self?.togglePin() },
                    onHoldStart: { [weak self] in self?.beginFollowUp() ?? false },
-                   onHoldEnd: { [weak self] cancelled in self?.endFollowUp(cancelled: cancelled) })
+                   onHoldEnd: { [weak self] cancelled in self?.endFollowUp(cancelled: cancelled) },
+                   onType: { [weak self] in self?.onType?() },
+                   onAction: { [weak self] action in self?.perform(action) },
+                   onGrantScreen: { [weak self] in self?.onGrantScreen?() })
+    }
+
+    private func perform(_ action: AskFailure.Action) {
+        switch action {
+        case .openModels:
+            onOpenModels?()
+        case .retry:
+            guard let last = model.turns.last, last.state == .failed else { return }
+            model.turns.removeLast()
+            onRetry?(last.question)
+        }
     }
 
     /// 内容整体换了（新问题、收起 / 展开）之后、量尺寸之前调。
@@ -296,7 +339,7 @@ final class AnswerPanel {
         effect.material = .popover
         effect.blendingMode = .behindWindow
         effect.state = .active
-        effect.maskImage = Self.roundedMask(radius: 22)
+        effect.maskImage = Self.roundedMask(radius: Self.cornerRadius)
         effect.addSubview(hosting)
 
         let p = KeyablePanel(contentRect: NSRect(origin: .zero, size: size),
@@ -316,31 +359,44 @@ final class AnswerPanel {
         p.onEscape = { [weak self] in self?.hide() }
         panel = p
         self.hosting = hosting
-        // 深浅跟「设置 → 外观」走（与主窗口一致）；内容全是系统色 + 固定蓝，深色时自动成深色磨砂
+        // 深浅跟「设置 → 外观」走（与主窗口一致）；内容用 Theme 的动态色
         MainWindowAppearance.observeSystemChanges()
         appearanceObserver = NotificationCenter.default.addObserver(
             forName: MainWindowAppearance.didChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in self?.applyAppearance() }
         applyAppearance()
-        // 底栏「再按 X 继续追问」跟着设置里的问 AI 快捷键走
+        // 底栏键帽跟着设置里的快捷键走
         hotkeyObserver = NotificationCenter.default.addObserver(
             forName: .askFreeHotkeyDidChange, object: nil, queue: .main
         ) { [weak self] _ in self?.refreshHotkeyHint() }
     }
 
-    /// 底栏的追问提示按实际生效的快捷键写：说话键（优先看屏幕问那套，一行放不下两个说话键）和双击打字键，
-    /// 没设或被撞掉的不提
+    /// 底栏键帽按实际生效的快捷键写：说话键（优先看屏幕问那套）和双击打字键，没设或被撞掉的不写。
+    /// 状态条「已答 · DeepSeek」的那一家也在弹出时取一次
     private func refreshHotkeyHint() {
-        let voice = [AskHotkey.screen, AskHotkey.plain].first(where: \.isActive)?.displayName
-        let typing = TypeAskHotkey.isActive() ? TypeAskHotkey.displayName() : nil
-        let hint: String
-        switch (voice, typing) {
-        case let (voice?, typing?): hint = "追问：按 \(voice) 或长按这里说话 · \(typing) 打字"
-        case let (voice?, nil): hint = "再按 \(voice) 或长按这里继续追问 · 点 ✕ 结束这个话题"
-        case let (nil, typing?): hint = "追问：长按这里说话 · \(typing) 打字"
-        case (nil, nil): hint = "长按这里继续追问 · 点 ✕ 结束这个话题"
+        let voice = [AskHotkey.screen, AskHotkey.plain].first(where: \.isActive)?.current.map(Self.keyCap)
+        let typing = TypeAskHotkey.isActive() ? TypeAskHotkey.current().map(\.symbol) : nil
+        if model.voiceKey != voice { model.voiceKey = voice }
+        if model.typeKey != typing { model.typeKey = typing }
+        let provider = Self.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
+        if model.providerName != provider { model.providerName = provider }
+    }
+
+    /// 键帽上的字：右⌥、⌘、自定义组合原样
+    private static func keyCap(_ shortcut: RecordingHotkeyShortcut) -> String {
+        switch shortcut {
+        case .modifier(let m): return m == .rightOption || m == .rightCommand ? "右\(m.symbol)" : m.symbol
+        case .custom(let c): return c.displayName
         }
-        if model.hotkeyHint != hint { model.hotkeyHint = hint }
+    }
+
+    static func providerName(_ id: String) -> String {
+        switch id {
+        case "deepseek": return "DeepSeek"
+        case "doubao": return "豆包"
+        case "zhipu": return "智谱"
+        default: return "千问"
+        }
     }
 
     private func applyAppearance() {
@@ -711,11 +767,18 @@ struct AnswerTurn: Identifiable {
     let question: String
     var answer = ""
     var state: State = .thinking
-    /// 这一轮的附注（没能带屏幕内容的原因、网络较慢提示），显示在回答上方的小灰字
+    /// 这一轮的小灰字（正在联网查、网络较慢、在想），显示在回答上方
     var note: String?
-    /// 联网回答附的图（回答下方一排小图，点开看大图）。不进历史
+    /// 这次没看屏幕的原因：回答上面一条橙底提示；needsPermission 时带「去授权」
+    var screenNote: String?
+    var screenNeedsPermission = false
+    /// 这一问转去联网查了（状态条写「联网」）
+    var searched = false
+    /// 没答成：报错卡
+    var failure: AskFailure?
+    /// 联网回答附的图（回答下方一排小图，点开看大图）
     var images: [AskImage] = []
-    /// 这一轮发给模型的截图（回答上方）。不进历史
+    /// 这一轮发给模型的截图（问题右边的缩略图）
     var screenshot: AskScreenshot?
 }
 
@@ -726,6 +789,70 @@ struct AskScreenshot {
     let overviewJPEG: Data
 }
 
+/// 卡片还开着时换了话题：旧话题折成卡顶一行「上个话题：… · 2 问」
+struct PreviousTopic {
+    let question: String
+    let turns: [AnswerTurn]
+}
+
+/// 没答成的几种情况：每种一句标题、一句怎么办、一两个按钮（design/panels A2）
+enum AskFailure: Equatable {
+    case noKey, invalidKey, quota, timeout, offline
+    case other(String)
+
+    enum Action { case openModels, retry }
+
+    var symbol: String {
+        switch self {
+        case .noKey, .invalidKey: return "key"
+        case .quota: return "creditcard"
+        case .timeout: return "clock"
+        case .offline: return "wifi.slash"
+        case .other: return "exclamationmark.bubble"
+        }
+    }
+
+    /// 橙 = 还差一步，红 = 出错了
+    var isError: Bool {
+        switch self {
+        case .noKey, .timeout, .offline: return false
+        case .invalidKey, .quota, .other: return true
+        }
+    }
+
+    func title(provider: String) -> String {
+        switch self {
+        case .noKey: return "还没填问答模型的 Key"
+        case .invalidKey: return "\(provider) 不认这个 Key"
+        case .quota: return "\(provider) 的额度用完了"
+        case .timeout: return "\(provider) 没有回应"
+        case .offline: return "连不上网络"
+        case .other: return "没答成"
+        }
+    }
+
+    func detail(provider: String) -> String {
+        switch self {
+        case .noKey: return "回答要用你自己的 AI Key。在「语音与模型」页填好 DeepSeek 或千问的 Key，就能接着问这一句。"
+        case .invalidKey: return "可能复制少了几位，或者在官网删掉了。到「语音与模型」页重新粘贴，点「验证」试一下。"
+        case .quota: return "账号欠费或免费额度用完了。到服务商控制台看看，或者在「语音与模型」页换一家。"
+        case .timeout: return "可能是网络不稳，也可能是它正忙。"
+        case .offline: return "检查一下网络，连上后再问一次。"
+        case .other(let reason): return reason
+        }
+    }
+
+    /// 第一个是黑色主按钮
+    var actions: [(title: String, action: Action)] {
+        switch self {
+        case .noKey: return [("去填 Key", .openModels), ("填好了，再问一次", .retry)]
+        case .invalidKey: return [("去换 Key", .openModels), ("重试", .retry)]
+        case .quota: return [("去换一家", .openModels), ("重试", .retry)]
+        case .timeout, .offline, .other: return [("再试一次", .retry)]
+        }
+    }
+}
+
 final class AnswerModel: ObservableObject {
     @Published var turns: [AnswerTurn] = []
     @Published var pinned = false
@@ -734,15 +861,43 @@ final class AnswerModel: ObservableObject {
     @Published var copied = false
     enum FooterState { case idle, listening, processing, noSpeech, cancelled }
     @Published var footer: FooterState = .idle
-    /// 底栏的追问提示，按生效中的快捷键写好（refreshHotkeyHint）
-    @Published var hotkeyHint = ""
+    /// 底栏键帽：生效中的说话键（右⌥）和双击打字键（⌃）；没设就不写
+    @Published var voiceKey: String?
+    @Published var typeKey: String?
+    /// 状态条「已答 · DeepSeek」的那一家
+    @Published var providerName = "AI"
+    @Published var previousTopic: PreviousTopic?
+    @Published var showPrevious = false
+    /// 旧的几轮默认压成两行，点开的记在这里
+    @Published var expandedTurns: Set<UUID> = []
     let wave = PanelWaveClock()
     @Published var maxContentHeight: CGFloat = 400
-    /// 标题栏显示第几轮的问题（跟着滚动走：哪一轮的问句块滚出顶部，标题就换成哪一轮）
+    /// 「复制」复制哪一轮（跟着滚动走：哪一轮的问句块滚到上半部分就是哪一轮）
     @Published var headerIndex = 0
-    /// 点外面后缩成只剩一行问题的小框
+    /// 点外面后缩成只剩一行状态条的小框
     @Published var collapsed = false
     @Published var contentHeight: CGFloat = 40
+
+    /// 状态条：粗体的状态 + 灰字的补充
+    var status: (title: String, detail: String) {
+        let answeredCount = turns.filter { $0.state == .answered }.count
+        if recording { return ("正在听", answeredCount > 0 ? "第 \(turns.count + 1) 问" : "") }
+        if footer == .processing { return ("识别中", "") }
+        guard let last = turns.last else { return ("", "") }
+        let nth = turns.count > 1 ? "第 \(turns.count) 问" : ""
+        switch last.state {
+        case .thinking:
+            if last.note?.contains("联网") == true { return ("正在联网查", nth) }
+            return ("在想", nth)
+        case .streaming:
+            return ("正在回答", nth)
+        case .answered:
+            let parts = [nth, providerName, last.searched ? "联网" : ""].filter { !$0.isEmpty }
+            return ("已答", parts.joined(separator: " · "))
+        case .failed:
+            return ("没答成", nth)
+        }
+    }
 }
 
 // MARK: - 视图
@@ -754,248 +909,247 @@ struct AnswerView: View {
     let onTogglePin: () -> Void
     let onHoldStart: () -> Bool
     let onHoldEnd: (_ cancelled: Bool) -> Void
-
-    @State private var pressStart: CGPoint?
-    @State private var holdTimer: Timer?
-    @State private var holdActive = false
-    @State private var dragCancel = false
-
-    private let accent = Color(red: 0.25, green: 0.52, blue: 1.0)   // 与提问模式的蓝色光环同色
-    private let cancelRed = Color(red: 1.0, green: 0.31, blue: 0.27)
+    let onType: () -> Void
+    let onAction: (AskFailure.Action) -> Void
+    let onGrantScreen: () -> Void
 
     var body: some View {
-        Group {
-            if model.collapsed { chip } else { full }
+        VStack(spacing: 0) {
+            statusBar
+            if !model.collapsed {
+                Hairline()
+                ScrollView(.vertical, showsIndicators: true) {
+                    TurnsView(model: model, width: AnswerPanel.contentWidth, onAction: onAction, onGrantScreen: onGrantScreen)
+                        .padding(.horizontal, AnswerPanel.contentInset)
+                        .padding(.top, AnswerPanel.bodyPadding.top)
+                        .padding(.bottom, AnswerPanel.bodyPadding.bottom)
+                }
+                .coordinateSpace(name: "answerScroll")
+                .onPreferenceChange(TurnTopKey.self) { tops in
+                    let threshold = min(model.contentHeight, model.maxContentHeight) * 0.5
+                    let idx = tops.filter { $0.value <= threshold }.keys.max() ?? 0
+                    if idx != model.headerIndex { model.headerIndex = idx }
+                }
+                // 高度由 AnswerPanel 离屏实测后写入 model，超过上限才滚动。窗口比内容高的那一瞬间
+                // （流式出字时窗口按整步长预留），多出来的空间给回答区：状态条钉在顶上、底栏贴在底下
+                .frame(minHeight: clampedContentHeight, idealHeight: clampedContentHeight, maxHeight: .infinity)
+                Hairline()
+                footer
+            }
         }
-        // 在毛玻璃上再垫一层半透明底色：复杂背景下文字依然清晰（通知中心同款思路）
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.55))
-        .contentShape(Rectangle())
-        .gesture(holdGesture)
-        // 续聊录音时的蓝光 / 待取消红光，与胶囊同款
+        .frame(width: model.collapsed ? AnswerPanel.collapsedWidth : AnswerPanel.width)
+        .frame(maxHeight: .infinity, alignment: .top)
+        // 近实心的面板色：复杂背景上字也清楚
+        .background(Theme.bg.opacity(0.94))
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(model.cancelArmed ? cancelRed : accent, lineWidth: 1.5)
-                .shadow(color: (model.cancelArmed ? cancelRed : accent).opacity(0.55), radius: 10)
+            // 正在听：描一圈墨黑边；拖开要取消时变红
+            RoundedRectangle(cornerRadius: AnswerPanel.cornerRadius, style: .continuous)
+                .strokeBorder(model.cancelArmed ? Theme.danger : Theme.ink, lineWidth: 1.5)
                 .opacity(model.recording ? 1 : 0)
                 .allowsHitTesting(false)
                 .animation(.easeOut(duration: 0.15), value: model.recording)
-                .animation(.easeOut(duration: 0.12), value: model.cancelArmed)
         )
     }
 
-    /// 小框：一行问题 + 图钉 + 关闭。按钮与展开后的标题栏按钮位置对齐（都靠右上角），
-    /// 鼠标停上去展开时按钮仍在指针下面，能直接点到
-    @ViewBuilder private var chip: some View {
-        HStack(spacing: 10) {
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(accent)
-                .frame(width: 4, height: 22)
-            Text(model.turns.last?.question ?? "")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 8)
-            HoverIconButton(systemName: model.pinned ? "pin.fill" : "pin", tint: model.pinned ? accent : nil, action: onTogglePin)
-                .help("固定面板")
-            HoverIconButton(systemName: "xmark", tint: nil, action: onClose)
-        }
-        .padding(.vertical, 15)
-        .padding(.horizontal, 18)
-        .frame(width: 320)
+    private var clampedContentHeight: CGFloat {
+        min(max(model.contentHeight, 24), model.maxContentHeight) + AnswerPanel.bodyPadding.top + AnswerPanel.bodyPadding.bottom
     }
 
-    @ViewBuilder private var full: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
-                .padding(.horizontal, AnswerPanel.contentInset)
-            ScrollView(.vertical, showsIndicators: true) {
-                TurnsView(model: model, width: AnswerPanel.contentWidth)
-                    .padding(.horizontal, AnswerPanel.contentInset)
+    // MARK: 状态条
+
+    /// 高度固定 40：换状态时卡片不跳
+    private var statusBar: some View {
+        let status = model.status
+        return HStack(spacing: 8) {
+            BrandGlyph().frame(width: 16, height: 16)
+            if model.previousTopic != nil, model.turns.count == 1 {
+                Text("新话题").font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.text)
+                    .padding(.horizontal, 6).frame(height: 18)
+                    .background(Theme.selected, in: RoundedRectangle(cornerRadius: 5))
             }
-            .coordinateSpace(name: "answerScroll")
-            .onPreferenceChange(TurnTopKey.self) { tops in
-                // 某一轮的问句块进入可视区上半部分 → 标题换成这一轮（此时它的内容已盖住上一轮）
-                let threshold = min(model.contentHeight, model.maxContentHeight) * 0.5
-                let idx = tops.filter { $0.value <= threshold }.keys.max() ?? 0
-                if idx != model.headerIndex { model.headerIndex = idx }
+            HStack(spacing: 0) {
+                Text(status.title).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text)
+                if !status.detail.isEmpty {
+                    Text(" · " + status.detail).font(.system(size: 12)).foregroundStyle(Theme.text2)
+                }
             }
-            // 高度由 AnswerPanel 离屏实测后写入 model，超过上限才滚动；滚到底由 AppKit 侧做（SwiftUI 的 scrollTo 在 macOS 上跟不上内容增长）
-            // 窗口比内容高的那一瞬间（流式出字时窗口按整步长预留、measure 慢半拍），多出来的空间全给回答区：
-            // 标题钉在顶上、底栏贴在底下、字从上往下填。以前只定了宽度，多出来的高度会让整块内容垂直居中，
-            // 窗口每长一步头尾就上下跳一下，看着像在抖。
-            .frame(minHeight: clampedContentHeight, idealHeight: clampedContentHeight, maxHeight: .infinity)
-            footer
-                .padding(.horizontal, AnswerPanel.contentInset)
-        }
-        .padding(.vertical, 18)
-        .frame(width: 420)
-        .frame(maxHeight: .infinity, alignment: .top)
-    }
-
-    private var clampedContentHeight: CGFloat { min(max(model.contentHeight, 24), model.maxContentHeight) }
-
-    // MARK: 头
-
-    private var headerTurn: Int { min(max(model.headerIndex, 0), max(model.turns.count - 1, 0)) }
-
-    @ViewBuilder private var header: some View {
-        HStack(alignment: .top, spacing: 10) {
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(accent)
-                .frame(width: 4, height: 30)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(model.recording ? "正在听…" : (model.turns.count > 1 ? "问 AI · 第 \(headerTurn + 1) 轮" : "问 AI"))
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(accent)
-                Text(model.turns.indices.contains(headerTurn) ? model.turns[headerTurn].question : "")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .layoutPriority(1)
-            HoverIconButton(systemName: model.pinned ? "pin.fill" : "pin", tint: model.pinned ? accent : nil, action: onTogglePin)
-                .help(model.pinned ? "已固定：下次说话时不会自动收起" : "固定面板")
-            HoverIconButton(systemName: "xmark", tint: nil, action: onClose)
+            PanelIconButton(symbol: model.pinned ? "pin.fill" : "pin", on: model.pinned,
+                            help: model.pinned ? "已钉住：点外面也不收起" : "钉住：点外面也不收起", action: onTogglePin)
+            if !model.collapsed {
+                PanelIconButton(symbol: model.copied ? "checkmark" : "doc.on.doc", on: false,
+                                help: "复制这一轮回答", action: onCopy)
+            }
+            PanelIconButton(symbol: "xmark", on: false, help: "关掉，结束这个话题（Esc）", action: onClose)
         }
+        .padding(.leading, 14)
+        .padding(.trailing, 6)
+        .frame(height: 40)
+        .background(model.collapsed ? Color.clear : Theme.surface.opacity(0.9))
     }
 
-    // MARK: 尾
+    // MARK: 底栏
 
     @ViewBuilder private var footer: some View {
-        ZStack {
-            // 录音：音浪居中，用面板的蓝（拖开待取消时随光环变红）；提示文字让位
-            if model.footer == .listening {
-                PanelWave(clock: model.wave, color: model.cancelArmed ? cancelRed : accent)
-            }
-            footerRow
-        }
-        .frame(height: 26)
-    }
-
-    @ViewBuilder private var footerRow: some View {
         HStack(spacing: 4) {
             switch model.footer {
-            case .idle:
-                Text(model.hotkeyHint)
-                    .font(.system(size: 11))
-                    .lineLimit(1)
-                    .foregroundStyle(.tertiary)
             case .listening:
-                Color.clear.frame(width: 1, height: 1)
+                PanelWave(clock: model.wave, color: model.cancelArmed ? Theme.danger : Theme.ink)
+                Text(model.cancelArmed ? "松开就取消" : "松开就问；拖开取消")
+                    .font(.system(size: 12)).foregroundStyle(Theme.text2)
+                    .padding(.leading, 6)
+                Spacer(minLength: 0)
             case .processing:
-                HStack(spacing: 6) {
-                    ProgressView().controlSize(.mini)
-                    Text("识别中").font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-            case .noSpeech:
-                Text("没听到问题").font(.system(size: 11)).foregroundStyle(.secondary)
-            case .cancelled:
-                Text("已取消").font(.system(size: 11)).foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 0)
-            if model.turns.contains(where: { $0.state == .answered }) {
-                GhostTextButton(title: model.copied ? "已复制" : "复制", action: onCopy)
+                ProgressView().controlSize(.mini)
+                Text("识别中").font(.system(size: 12)).foregroundStyle(Theme.text2).padding(.leading, 4)
+                Spacer(minLength: 0)
+            case .noSpeech, .cancelled:
+                Text(model.footer == .noSpeech ? "没听到问题" : "已取消").font(.system(size: 12)).foregroundStyle(Theme.text2)
+                    .padding(.leading, 6)
+                Spacer(minLength: 0)
+            case .idle:
+                HoldToAskButton(keyCap: model.voiceKey, onStart: onHoldStart, onEnd: onHoldEnd, model: model)
+                FooterButton(symbol: "keyboard", title: "打字", prefix: model.typeKey == nil ? nil : "双击", keyCap: model.typeKey, action: onType)
+                Spacer(minLength: 4)
+                Text("开头说「新话题」另起").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
+                    .padding(.trailing, 4)
             }
         }
-    }
-
-    // MARK: 长按续聊
-
-    private var holdGesture: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { value in
-                if model.collapsed { return }   // 小框上不续聊：先停留展开
-                if pressStart == nil {
-                    pressStart = value.startLocation
-                    dragCancel = false
-                    holdActive = false
-                    holdTimer?.invalidate()
-                    let timer = Timer(timeInterval: 0.45, repeats: false) { _ in
-                        DispatchQueue.main.async {
-                            guard pressStart != nil, !holdActive else { return }
-                            if onHoldStart() { holdActive = true }
-                        }
-                    }
-                    RunLoop.main.add(timer, forMode: .common)   // 按住期间的事件追踪模式下也要能到时
-                    holdTimer = timer
-                }
-                guard let start = pressStart else { return }
-                let d = hypot(value.location.x - start.x, value.location.y - start.y)
-                if !holdActive {
-                    if d > 6 { holdTimer?.invalidate(); pressStart = nil }   // 还没到时就动了：当拖动
-                } else {
-                    let armed = dragCancel ? d > 45 : d >= 70
-                    if armed != dragCancel { dragCancel = armed; model.cancelArmed = armed }
-                }
-            }
-            .onEnded { _ in
-                holdTimer?.invalidate()
-                holdTimer = nil
-                if holdActive { onHoldEnd(dragCancel) }
-                holdActive = false
-                dragCancel = false
-                pressStart = nil
-            }
+        .padding(.leading, 8)
+        .padding(.trailing, 8)
+        .frame(height: 44)
     }
 }
 
-/// 对话正文：首轮回答 + 之后每轮「问句块 + 回答」。同一份视图既显示也离屏测高。
+/// 对话正文：上个话题折叠行、编号连线的几轮问答。同一份视图既显示也离屏测高。
 struct TurnsView: View {
     @ObservedObject var model: AnswerModel
     /// 显示与离屏测高用同一个宽度，换行才一致
     let width: CGFloat
-    private let accent = Color(red: 0.25, green: 0.52, blue: 1.0)
+    var onAction: (AskFailure.Action) -> Void = { _ in }
+    var onGrantScreen: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
+            if let previous = model.previousTopic { previousTopic(previous) }
             ForEach(Array(model.turns.enumerated()), id: \.element.id) { index, turn in
-                let isLast = index == model.turns.count - 1
-                VStack(alignment: .leading, spacing: 12) {
-                if index > 0 {
-                    // 追问：灰底问句块，与回答一眼分开
-                    HStack(alignment: .top, spacing: 8) {
-                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                            .fill(accent.opacity(isLast ? 1 : 0.45))
-                            .frame(width: 3)
-                        Text(turn.question)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.06)))
-                    .padding(.top, 4)
-                }
-                answerBody(turn)
-                    .opacity(isLast ? 1 : 0.72)   // 旧的几轮压暗，视线落在最新一轮
-                    .id(turn.id)
-                }
-                .background(GeometryReader { g in
-                    Color.clear.preference(key: TurnTopKey.self, value: [index: g.frame(in: .named("answerScroll")).minY])
-                })
+                turnView(turn, index: index)
+                    .background(GeometryReader { g in
+                        Color.clear.preference(key: TurnTopKey.self, value: [index: g.frame(in: .named("answerScroll")).minY])
+                    })
             }
         }
         .frame(width: width, alignment: .leading)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder private func answerBody(_ turn: AnswerTurn) -> some View {
+    // MARK: 上个话题
+
+    @ViewBuilder private func previousTopic(_ previous: PreviousTopic) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button { model.showPrevious.toggle() } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath").font(.system(size: 12))
+                    Text("上个话题：\(previous.question) · \(previous.turns.count) 问").lineLimit(1)
+                    Spacer(minLength: 4)
+                    Image(systemName: model.showPrevious ? "chevron.up" : "chevron.down").font(.system(size: 10, weight: .semibold))
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.text2)
+                .padding(.horizontal, 10)
+                .frame(height: 30)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if model.showPrevious {
+                ForEach(previous.turns) { turn in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(turn.question).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text2)
+                        Text(AnswerPanel.plainText(fromMarkdown: turn.answer)).font(.system(size: 13)).foregroundStyle(Theme.text2)
+                            .lineLimit(3).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 10)
+                }
+            }
+            HStack(spacing: 8) {
+                Rectangle().fill(Theme.border).frame(height: 1)
+                Text("新话题").font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.text3).fixedSize()
+                Rectangle().fill(Theme.border).frame(height: 1)
+            }
+        }
+        .padding(.bottom, 14)
+    }
+
+    // MARK: 一轮
+
+    @ViewBuilder private func turnView(_ turn: AnswerTurn, index: Int) -> some View {
+        let multi = model.turns.count > 1
+        let isLast = index == model.turns.count - 1
+        let compact = multi && !isLast && !model.expandedTurns.contains(turn.id)
         VStack(alignment: .leading, spacing: 8) {
-            if let shot = turn.screenshot { AskScreenshotRow(shot: shot) }
-            if let note = turn.note, !note.isEmpty {
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 11))
-                    Text(note)
-                        .font(.system(size: 12))
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 1) {
+                    if multi && index > 0 {
+                        Text("追问").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
+                    }
+                    Text(turn.question)
+                        .font(.system(size: compact ? 13 : 15, weight: .semibold))
+                        .foregroundStyle(compact ? Theme.text2 : Theme.text)
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if let shot = turn.screenshot, !compact { ScreenThumb(shot: shot) }
+            }
+            if compact {
+                Text(AnswerPanel.plainText(fromMarkdown: turn.answer))
+                    .font(.system(size: 13)).foregroundStyle(Theme.text2)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .contentShape(Rectangle())
+                    .onTapGesture { model.expandedTurns.insert(turn.id) }
+                    .help("点一下看全文")
+            } else {
+                answerBody(turn, isLast: isLast)
+            }
+        }
+        .padding(.leading, multi ? 30 : 0)
+        .padding(.bottom, 14)
+        // 编号之间的竖线：从这一问的圆圈下面连到下一问
+        .background(alignment: .topLeading) {
+            if multi && !isLast {
+                Rectangle().fill(Theme.borderStrong).frame(width: 1.5)
+                    .frame(maxHeight: .infinity)
+                    .padding(.top, 22)
+                    .padding(.bottom, -17)   // 连到下一问的圆圈（它在「追问」小字下面）
+                    .padding(.leading, 9.25)
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            if multi {
+                Text("\(index + 1)")
+                    .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(isLast ? Theme.onInk : Theme.text2)
+                    .frame(width: 20, height: 20)
+                    .background(Circle().fill(isLast ? Theme.ink : Theme.elevated))
+                    .overlay(Circle().strokeBorder(isLast ? Theme.ink : Theme.borderStrong, lineWidth: 1.5))
+                    .padding(.top, index > 0 ? 17 : 1)
+            }
+        }
+    }
+
+    @ViewBuilder private func answerBody(_ turn: AnswerTurn, isLast: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // 「这次没看屏幕」只挂在当前这一问上，展开看旧的几轮时不重复
+            if isLast, let screenNote = turn.screenNote { screenBanner(screenNote, needsPermission: turn.screenNeedsPermission) }
+            if let note = turn.note, !note.isEmpty, turn.state != .failed {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "info.circle").font(.system(size: 11))
+                    Text(note).font(.system(size: 12)).fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(Theme.text3)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             answerContent(turn)
@@ -1003,52 +1157,105 @@ struct TurnsView: View {
         }
     }
 
+    /// 这次没看屏幕：橙底一条，没给权限时带「去授权」
+    private func screenBanner(_ text: String, needsPermission: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "display").font(.system(size: 13)).foregroundStyle(Theme.warn)
+            Text(text).font(.system(size: 12)).foregroundStyle(Theme.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if needsPermission {
+                Button("去授权", action: onGrantScreen).buttonStyle(PanelButtonStyle(solid: false, small: true))
+            }
+        }
+        .padding(.vertical, 7)
+        .padding(.leading, 10)
+        .padding(.trailing, 8)
+        .background(Theme.warn.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+    }
+
     @ViewBuilder private func answerContent(_ turn: AnswerTurn) -> some View {
         switch turn.state {
         case .thinking:
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text("正在思考…").font(.system(size: 13)).foregroundStyle(.secondary)
+                Text(turn.screenshot == nil ? "在想…" : "看着你指的地方，在想…").font(.system(size: 13)).foregroundStyle(Theme.text3)
             }
             .padding(.vertical, 4)
         case .streaming, .answered:
             AnswerText(text: turn.answer)
         case .failed:
-            Text(turn.answer)
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if let failure = turn.failure {
+                FailureCard(failure: failure, provider: model.providerName, onAction: onAction)
+            } else {
+                Text(turn.answer).font(.system(size: 14)).foregroundStyle(Theme.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }
 
-/// 回答上方的截图：左边是指针所在窗口的清晰图，右边是整屏，细红框框住的是发问时指针所在的地方。
-/// 高度固定，图到了不用重排浮窗；点一张用「预览」打开原图。
-struct AskScreenshotRow: View {
-    let shot: AskScreenshot
-    private static let height: CGFloat = 96
+/// 报错块：左边事物图标加橙 / 红角标，一句标题、一句怎么办、按钮
+private struct FailureCard: View {
+    let failure: AskFailure
+    let provider: String
+    let onAction: (AskFailure.Action) -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            thumb(shot.closeUp, jpeg: shot.closeUpJPEG, name: "closeup")
-            thumb(shot.overview, jpeg: shot.overviewJPEG, name: "screen")
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: failure.symbol).font(.system(size: 15)).foregroundStyle(Theme.text)
+                .frame(width: 36, height: 36)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.border, lineWidth: 1))
+                .overlay(alignment: .bottomTrailing) {
+                    Image(systemName: "exclamationmark").font(.system(size: 8, weight: .heavy)).foregroundStyle(.white)
+                        .frame(width: 16, height: 16)
+                        .background(Circle().fill(failure.isError ? Theme.danger : Theme.warn))
+                        .overlay(Circle().stroke(Theme.bg, lineWidth: 2))
+                        .offset(x: 4, y: 4)
+                }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(failure.title(provider: provider)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(failure.detail(provider: provider)).font(.system(size: 13)).foregroundStyle(Theme.text2)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    ForEach(Array(failure.actions.enumerated()), id: \.offset) { i, item in
+                        Button(item.title) { onAction(item.action) }
+                            .buttonStyle(PanelButtonStyle(solid: i == 0, small: false))
+                    }
+                }
+                .padding(.top, 9)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
     }
+}
 
-    private func thumb(_ image: NSImage, jpeg: Data, name: String) -> some View {
-        Image(nsImage: image)
+/// 问题右边的小缩略图：这次发给 AI 的画面（细红框框着指的地方）；点开看「指着的地方」和「整个屏幕」两张
+private struct ScreenThumb: View {
+    let shot: AskScreenshot
+    @State private var hovering = false
+
+    var body: some View {
+        Image(nsImage: shot.overview)
             .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(maxWidth: AnswerPanel.contentWidth * 0.6, maxHeight: Self.height)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12)))
-            .help("发给 AI 的画面，红框框住的是你指着的地方。点开看原图")
+            .aspectRatio(contentMode: .fill)
+            .frame(width: 58, height: 34)
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(hovering ? Theme.text2 : Theme.borderStrong, lineWidth: 1))
+            .onHover { hovering = $0 }
+            .help("发给 AI 的画面，红框是你指着的地方。点开看大图")
             .onTapGesture {
-                let url = FileManager.default.temporaryDirectory.appendingPathComponent("askfree-\(name).jpg")
+                let dir = FileManager.default.temporaryDirectory
                 do {
-                    try jpeg.write(to: url)
-                    NSWorkspace.shared.open(url)
+                    for (name, jpeg) in [("askfree-screen", shot.overviewJPEG), ("askfree-closeup", shot.closeUpJPEG)] {
+                        let url = dir.appendingPathComponent("\(name).jpg")
+                        try jpeg.write(to: url)
+                        NSWorkspace.shared.open(url)
+                    }
                 } catch {
                     AnswerPanel.log?("ASK screenshot open failed: \(error.localizedDescription)")
                 }
@@ -1074,13 +1281,13 @@ struct AskImagesRow: View {
                     case .success(let img):
                         img.resizable().aspectRatio(contentMode: .fill)
                             .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
-                    case .failure: Image(systemName: "photo").foregroundStyle(.tertiary)
+                    case .failure: Image(systemName: "photo").foregroundStyle(Theme.text3)
                     default: ProgressView().controlSize(.small)
                     }
                 }
                 .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(hovering == image.id ? 0.35 : 0.08)))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(hovering == image.id ? Theme.text2 : Theme.border))
                 .onHover { hovering = $0 ? image.id : nil }
                 .help(image.title.isEmpty ? image.pageURL : image.title)
                 .onTapGesture {
@@ -1092,10 +1299,10 @@ struct AskImagesRow: View {
     }
 }
 
-/// 回答正文：轻量 Markdown —— 空行分段、「### 」小标题、「- 」「1. 」条目（悬挂缩进）、**加粗**；正文 15 号、行距 6
+/// 回答正文：轻量 Markdown —— 空行分段、「### 」小标题、「- 」「1. 」条目（悬挂缩进）、**加粗**；正文 14 号
 struct AnswerText: View {
     let text: String
-    private let body15 = Font.system(size: 15)
+    private let body14 = Font.system(size: 14)
 
     private enum Block { case heading(String), paragraph(String), bullet(String), numbered(String, String) }
 
@@ -1142,66 +1349,189 @@ struct AnswerText: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
                 switch block {
                 case .heading(let s):
-                    inline(s).font(.system(size: 15, weight: .semibold))
+                    inline(s).font(.system(size: 14, weight: .semibold))
                         .padding(.top, index == 0 ? 0 : 6)
                         .fixedSize(horizontal: false, vertical: true)
                 case .paragraph(let s):
-                    inline(s).font(body15).lineSpacing(6)
+                    inline(s).font(body14).lineSpacing(5)
                         .fixedSize(horizontal: false, vertical: true)
                 case .bullet(let s):
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text("•").font(body15).foregroundStyle(.secondary)
-                        inline(s).font(body15).lineSpacing(6).fixedSize(horizontal: false, vertical: true)
+                        Circle().fill(Theme.text3).frame(width: 4, height: 4).alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
+                        inline(s).font(body14).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.leading, 4)
+                    .padding(.leading, 3)
                 case .numbered(let n, let s):
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(n).font(body15).foregroundStyle(.secondary).monospacedDigit()
+                        Text(n).font(body14).foregroundStyle(Theme.text2).monospacedDigit()
                             .frame(minWidth: 18, alignment: .trailing)
-                        inline(s).font(body15).lineSpacing(6).fixedSize(horizontal: false, vertical: true)
+                        inline(s).font(body14).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(Theme.text)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct HoverIconButton: View {
-    let systemName: String
-    let tint: Color?
+/// 状态条左边的小标志：Ask Free 的指针问号，跟字一个颜色
+private struct BrandGlyph: View {
+    var body: some View {
+        if let image = NSImage(named: "statusbar-icon") {
+            Image(nsImage: image).resizable().renderingMode(.template).foregroundStyle(Theme.text)
+        }
+    }
+}
+
+/// 状态条右边三个一样的图标钮：28×28、圆角 6、悬停加底
+private struct PanelIconButton: View {
+    let symbol: String
+    let on: Bool
+    let help: String
     let action: () -> Void
     @State private var hovering = false
+
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(tint ?? (hovering ? Color.primary : Color.secondary))
-                .frame(width: 24, height: 24)
-                .background(Circle().fill(Color.primary.opacity(hovering ? 0.10 : 0.055)))
-                .contentShape(Circle())
+            Image(systemName: symbol)
+                .font(.system(size: 13))
+                .foregroundStyle(on || hovering ? Theme.text : Theme.text2)
+                .frame(width: 28, height: 28)
+                .background(RoundedRectangle(cornerRadius: 6).fill(hovering ? Theme.hover : .clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(help)
+        .accessibilityLabel(help)
+    }
+}
+
+/// 面板里的按钮：实心墨黑主按钮一张面板最多一个，其余白底描边
+private struct PanelButtonStyle: ButtonStyle {
+    let solid: Bool
+    let small: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: small ? 12 : 13, weight: .medium))
+            .foregroundStyle(solid ? Theme.onInk : Theme.text)
+            .padding(.horizontal, small ? 9 : 12)
+            .frame(height: small ? 24 : 28)
+            .background(RoundedRectangle(cornerRadius: 6).fill(solid ? Theme.ink : Theme.elevated))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(solid ? Color.clear : Theme.borderStrong, lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.8 : 1)
+            .contentShape(Rectangle())
+    }
+}
+
+/// 底栏键帽：右⌥、⌃
+private struct PanelKeyCap: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(Theme.text)
+            .padding(.horizontal, 4)
+            .frame(minWidth: 18, minHeight: 18)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Theme.elevated))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Theme.borderStrong, lineWidth: 1))
+    }
+}
+
+/// 底栏的「打字」：图标 + 字 + 「双击 ⌃」
+private struct FooterButton: View {
+    let symbol: String
+    let title: String
+    let prefix: String?
+    let keyCap: String?
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: symbol).font(.system(size: 12))
+                Text(title)
+                if let prefix { Text(prefix).foregroundStyle(Theme.text3) }
+                if let keyCap { PanelKeyCap(text: keyCap) }
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(hovering ? Theme.text : Theme.text2)
+            .padding(.horizontal, 8)
+            .frame(height: 28)
+            .background(RoundedRectangle(cornerRadius: 6).fill(hovering ? Theme.hover : .clear))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
     }
 }
 
+/// 底栏的「按住追问」：按下就开始说，松开就问；按着拖开 70 点算取消（拖回来又不取消）
+private struct HoldToAskButton: View {
+    let keyCap: String?
+    let onStart: () -> Bool
+    let onEnd: (_ cancelled: Bool) -> Void
+    @ObservedObject var model: AnswerModel
+    @State private var pressStart: CGPoint?
+    @State private var active = false
+    @State private var dragCancel = false
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "mic").font(.system(size: 12))
+            Text("按住追问")
+            if let keyCap { PanelKeyCap(text: keyCap) }
+        }
+        .font(.system(size: 12))
+        .foregroundStyle(hovering || active ? Theme.text : Theme.text2)
+        .padding(.horizontal, 8)
+        .frame(height: 28)
+        .background(RoundedRectangle(cornerRadius: 6).fill(active ? Theme.selected : (hovering ? Theme.hover : .clear)))
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .gesture(
+            DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                .onChanged { value in
+                    if pressStart == nil {
+                        pressStart = value.startLocation
+                        dragCancel = false
+                        active = onStart()
+                    }
+                    guard active, let start = pressStart else { return }
+                    let d = hypot(value.location.x - start.x, value.location.y - start.y)
+                    let armed = dragCancel ? d > 45 : d >= 70
+                    if armed != dragCancel { dragCancel = armed; model.cancelArmed = armed }
+                }
+                .onEnded { _ in
+                    if active { onEnd(dragCancel) }
+                    active = false
+                    dragCancel = false
+                    pressStart = nil
+                }
+        )
+        .help("按住说话追问，松开就问")
+        .accessibilityLabel("按住追问")
+    }
+}
+
 /// 面板底栏音浪的时钟：60Hz、common 模式（按住鼠标时主线程在追踪模式，默认模式定时器和 TimelineView 都不走）。
 /// 算法与 SiriCapsuleView.tick 完全一样：快起慢落 + 目标值衰减 + 钟形包络 + 三个正弦叠加 + 抖动。
 final class PanelWaveClock: ObservableObject {
-    // 几何直接复用无按钮的录音胶囊（pillW 72）：9 根、条宽 (52−12)/9−1.5≈2.94、间距 1.5、最高 pillH−6=28、区域高 34
     static let bars = 9
     @Published var heights: [CGFloat] = Array(repeating: 3, count: PanelWaveClock.bars)
     var level: CGFloat = 0
     private var smooth: CGFloat = 0
     private var time: Double = 0
     private var timer: Timer?
-    let maxHeight: CGFloat = 28
+    let maxHeight: CGFloat = 24
 
     func start() {
         guard timer == nil else { return }
@@ -1236,47 +1566,27 @@ final class PanelWaveClock: ObservableObject {
     }
 }
 
-/// 面板底栏音浪：没有黑底，用面板的颜色画竖条
+/// 面板底栏音浪：墨黑竖条
 private struct PanelWave: View {
     @ObservedObject var clock: PanelWaveClock
     let color: Color
-    private let barW: CGFloat = (52 - 12) / 9 - 1.5
-    private let gap: CGFloat = 1.5
+    private let barW: CGFloat = 3
+    private let gap: CGFloat = 2.5
 
     var body: some View {
         Canvas { g, size in
             for (i, raw) in clock.heights.enumerated() {
                 let h = max(raw, 3)
                 let rect = CGRect(x: CGFloat(i) * (barW + gap), y: (size.height - h) / 2, width: barW, height: h)
-                // 与胶囊同款：越高越亮，短条也不发灰
-                g.fill(Path(roundedRect: rect, cornerRadius: barW / 2), with: .color(color.opacity(0.75 + 0.25 * (h / clock.maxHeight))))
+                g.fill(Path(roundedRect: rect, cornerRadius: barW / 2), with: .color(color))
             }
         }
-        .frame(width: CGFloat(PanelWaveClock.bars) * (barW + gap) - gap, height: 34)
+        .frame(width: CGFloat(PanelWaveClock.bars) * (barW + gap) - gap, height: 28)
+        .padding(.leading, 6)
     }
 }
 
-/// 小胶囊按钮：与右上角圆形图标按钮同一套灰底，悬停加深
-private struct GhostTextButton: View {
-    let title: String
-    let action: () -> Void
-    @State private var hovering = false
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(hovering ? Color.primary : Color.secondary)
-                .padding(.vertical, 5)
-                .padding(.horizontal, 11)
-                .background(Capsule().fill(Color.primary.opacity(hovering ? 0.10 : 0.055)))
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-    }
-}
-
-/// 每一轮在滚动区里的顶边 y（滚动坐标系），用来决定标题栏显示哪一轮
+/// 每一轮在滚动区里的顶边 y（滚动坐标系），用来决定「复制」复制哪一轮
 private struct TurnTopKey: PreferenceKey {
     static var defaultValue: [Int: CGFloat] = [:]
     static func reduce(value: inout [Int: CGFloat], nextValue: () -> [Int: CGFloat]) {

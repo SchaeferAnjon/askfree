@@ -100,20 +100,22 @@ extension AppDelegate {
                          screenNote: String?,
                          round: Int) {
         let thread = answerPanel.threadID
+        lastAskScreen = screen
         let draft = AskHistoryDraft()
         draft.via = Self.historyVia(trigger: askTiming.trigger)
         askInFlight = true
         // 问题已经发出，回答在面板里流式显示：放开录音，别让所有快捷键在回答的十几秒里都没反应
         finishAsk()
-        if let screenNote { answerPanel.setNote(screenNote) }
+        if let screenNote {
+            let needsPermission = screenNote == ScreenSnapshotError.noPermission.userMessage
+            answerPanel.setScreenNote(Self.screenBannerText(screenNote, needsPermission: needsPermission), needsPermission: needsPermission)
+        }
 
         // 首字迟迟不来就在面板里说一声，别让用户盯着「正在思考…」干等
         askSlowHintWork?.cancel()
         let slowHint = DispatchWorkItem { [weak self] in
             guard let self, self.askRound == round else { return }
-            // 已经有「没能带屏幕内容」的提示时接在后面，别把原因顶掉
-            let slow = "网络较慢，还在等模型回答…"
-            self.answerPanel.setNote(screenNote.map { $0 + " " + slow } ?? slow)
+            self.answerPanel.setNote("网络较慢，还在等模型回答…")
         }
         askSlowHintWork = slowHint
         DispatchQueue.main.asyncAfter(deadline: .now() + AskVision.slowHintAfter, execute: slowHint)
@@ -133,17 +135,17 @@ extension AppDelegate {
             guard let self, let screen, self.askRound == round else { return }
             self.answerPanel.setScreenshot(overviewJPEG: screen.overviewJPEG, closeUpJPEG: screen.closeUpJPEG)
         }, onRouteNote: { [weak self] note in
-            // 这一问转去联网了：「正在联网查…」→ 出字后换成「已联网查询」。
-            // 已经有「没能看屏幕」的说明时不盖掉它，那条对用户更要紧
+            // 这一问转去联网了：「正在联网查…」→ 出字后换成「已联网查询」；状态条答完写「联网」
             draft.searched = true
-            guard let self, screenNote == nil else { return }
+            guard let self else { return }
             DispatchQueue.main.async {
                 guard self.askRound == round else { return }
+                self.answerPanel.markSearched()
                 self.answerPanel.setNote(note)
             }
         }, onThinking: { [weak self] in
             // 模型真的开始吐思考内容（关思考没生效）会先沉默一阵：告诉用户它在想，不是卡住了
-            guard let self, screenNote == nil, self.askRound == round else { return }
+            guard let self, self.askRound == round else { return }
             self.answerPanel.setNote(AskVision.thinkingNotice)
         }, onStats: { [weak self] stats in
             guard let self, self.askRound == round else { return }
@@ -166,10 +168,46 @@ extension AppDelegate {
                 case .failure(let err):
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
                     self.debugLog("ASK failed: \(reason) \(self.askTiming.summary(totalMs: totalMs))")
-                    self.answerPanel.fail("回答失败：\(reason)")
+                    self.answerPanel.fail(Self.askFailure(from: err))
                 }
             }
         }
+    }
+
+    /// 报错卡「重试」：同一个话题里把这一句再问一遍，屏幕内容照上次的发
+    func retryAsk(_ question: String) {
+        guard !askInFlight else { return }
+        askTiming.reset(trigger: "retry", mode: "panel")
+        let history = answerPanel.history
+        askRound += 1
+        let round = askRound
+        answerPanel.appendQuestion(question)
+        sendAsk(question: question, history: history, screen: lastAskScreen, screenNote: nil, round: round)
+    }
+
+    /// 回答失败的原因分成几类，面板按类给标题、怎么办和按钮；认不出的原样写出来
+    static func askFailure(from err: Error) -> AskFailure {
+        if case AskAI.AskError.noAPIKey = err { return .noKey }
+        if case AskAI.AskError.quotaExhausted = err { return .quota }
+        if let url = err as? URLError {
+            switch url.code {
+            case .timedOut: return .timeout
+            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
+                return .offline
+            default: break
+            }
+        }
+        let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
+        if reason.hasPrefix("API Key 无效") { return .invalidKey }
+        if reason.hasPrefix("账号欠费") { return .quota }
+        return .other(reason)
+    }
+
+    /// 「这次没看屏幕：…」：去掉原因里「这次只按问题回答」那半句，面板上一行说完
+    static func screenBannerText(_ note: String, needsPermission: Bool) -> String {
+        if needsPermission { return "这次没看屏幕：还没给屏幕录制权限" }
+        let reason = note.components(separatedBy: "，这次只按问题回答").first ?? note
+        return "这次没看屏幕：" + reason.trimmingCharacters(in: CharacterSet(charactersIn: "。"))
     }
 
     /// 答完的一轮记进历史：文字、真发给模型的截图、已经到了的图；开着的历史页跟着刷新

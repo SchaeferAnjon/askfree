@@ -3,7 +3,8 @@ import AppKit
 import AskFreeCore
 #endif
 
-/// 打字问 AI 的输入框：和回答面板同一套磨砂圆角，贴在右上角（回答面板在屏上时贴在它下面）。
+/// 打字问 AI 的输入框（design/panels 方向 A）：和回答卡同宽、同圆角、同底色的一条，左边键盘图标，
+/// 贴在右上角（回答卡在屏上时贴在它下面）。
 /// 不激活 App：输入时原来的 App 还在前台，回车或 Esc 收起后键盘直接回到原来的窗口。
 final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
     var onSubmit: ((String) -> Void)?
@@ -12,10 +13,10 @@ final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
     private var panel: InputPanel?
     private let field = NSTextField()
     private let tint = NSView()
-    private static let width: CGFloat = 420
-    private static let height: CGFloat = 52
-    private static let margin: CGFloat = 14
-    private static let gap: CGFloat = 10
+    private static let width: CGFloat = AnswerPanel.width
+    private static let height: CGFloat = 48
+    private static let margin: CGFloat = 12
+    private static let gap: CGFloat = 8
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
@@ -27,7 +28,9 @@ final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         panel.appearance = appearance
         // 深浅跟「设置 → 外观」走：layer 的颜色不会自己跟着变，每次弹出按当前外观取一次
         appearance.performAsCurrentDrawingAppearance {
-            tint.layer?.backgroundColor = NSColor.windowBackgroundColor.withAlphaComponent(0.55).cgColor
+            let dark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            tint.layer?.backgroundColor = (dark ? NSColor(srgbRed: 22 / 255, green: 23 / 255, blue: 26 / 255, alpha: 0.94)
+                                                : NSColor(srgbRed: 250 / 255, green: 250 / 255, blue: 251 / 255, alpha: 0.94)).cgColor
         }
         field.stringValue = ""
         field.placeholderString = placeholder
@@ -93,23 +96,22 @@ final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         effect.material = .popover
         effect.blendingMode = .behindWindow
         effect.state = .active
-        effect.maskImage = Self.roundedMask(radius: 22)
+        effect.maskImage = Self.roundedMask(radius: AnswerPanel.cornerRadius)
 
-        // 和回答面板一样在磨砂上垫一层半透明底色，复杂背景下字也清楚
+        // 和回答卡一样在磨砂上垫一层近实心的底色（Theme.bg），复杂背景下字也清楚
         tint.frame = bounds
         tint.autoresizingMask = [.width, .height]
         tint.wantsLayer = true
         effect.addSubview(tint)
 
-        let bar = NSView()
-        bar.wantsLayer = true
-        bar.layer?.cornerRadius = 2
-        bar.layer?.backgroundColor = NSColor(red: 0.25, green: 0.52, blue: 1.0, alpha: 1).cgColor   // 回答面板的蓝
+        let bar = NSImageView(image: NSImage(systemSymbolName: "keyboard", accessibilityDescription: nil) ?? NSImage())
+        bar.symbolConfiguration = .init(pointSize: 15, weight: .regular)
+        bar.contentTintColor = .secondaryLabelColor
 
         field.isBordered = false
         field.drawsBackground = false
         field.focusRingType = .none
-        field.font = .systemFont(ofSize: 15)
+        field.font = .systemFont(ofSize: 14)
         field.usesSingleLineMode = true
         field.cell?.isScrollable = true
         field.cell?.wraps = false
@@ -117,7 +119,7 @@ final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         field.setAccessibilityLabel("打字问 AI")
 
         let hint = NSTextField(labelWithString: "↩ 发送 · esc 取消")
-        hint.font = .systemFont(ofSize: 11)
+        hint.font = .systemFont(ofSize: 12)
         hint.textColor = .tertiaryLabelColor
         hint.setContentCompressionResistancePriority(.required, for: .horizontal)
 
@@ -126,14 +128,12 @@ final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
             effect.addSubview(view)
         }
         NSLayoutConstraint.activate([
-            bar.leadingAnchor.constraint(equalTo: effect.leadingAnchor, constant: 18),
+            bar.leadingAnchor.constraint(equalTo: effect.leadingAnchor, constant: 16),
             bar.centerYAnchor.constraint(equalTo: effect.centerYAnchor),
-            bar.widthAnchor.constraint(equalToConstant: 4),
-            bar.heightAnchor.constraint(equalToConstant: 22),
             field.leadingAnchor.constraint(equalTo: bar.trailingAnchor, constant: 10),
             field.centerYAnchor.constraint(equalTo: effect.centerYAnchor),
             hint.leadingAnchor.constraint(equalTo: field.trailingAnchor, constant: 10),
-            hint.trailingAnchor.constraint(equalTo: effect.trailingAnchor, constant: -18),
+            hint.trailingAnchor.constraint(equalTo: effect.trailingAnchor, constant: -16),
             hint.centerYAnchor.constraint(equalTo: effect.centerYAnchor),
         ])
 

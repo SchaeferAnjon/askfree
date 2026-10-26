@@ -40,7 +40,7 @@ extension AppDelegate {
             self?.debugLog("TA: cancelled")
             self?.dropPendingAskScreen()
         }
-        let placeholder = continuesThread ? "接着问…" : (AskSettings.isScreenshotEnabled ? "问问屏幕上的内容…" : "输入问题…")
+        let placeholder = continuesThread ? "接着问…" : (AskSettings.isScreenshotEnabled ? "问点什么，AI 会看着屏幕回答" : "问点什么")
         typeAskPanel.show(placeholder: placeholder, below: answerPanel.isVisible ? answerPanel.frame : nil)
         // 打字那几秒里把 TLS 握手做掉
         DispatchQueue.global(qos: .utility).async { [weak self] in self?.askAI.warmUpConnection() }

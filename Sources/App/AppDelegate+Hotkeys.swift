@@ -47,7 +47,7 @@ extension AppDelegate {
         }
     }
 
-    /// 回答面板：在面板上按住说话就是接着这个话题追问
+    /// 回答面板：底栏「按住追问」说话就是接着这个话题追问；报错卡和「去授权」的按钮也接在这里
     func setupAnswerPanel() {
         AnswerPanel.log = { [weak self] in self?.debugLog($0) }
         answerPanel.onFollowUpStart = { [weak self] in
@@ -68,6 +68,12 @@ extension AppDelegate {
             guard let self else { return }
             self.answerPanel.setRecording(false)
             if cancelled { self.cancelRecording() } else { self.stopRecordingAndAsk() }
+        }
+        answerPanel.onType = { [weak self] in self?.toggleTypeAsk() }
+        answerPanel.onRetry = { [weak self] question in self?.retryAsk(question) }
+        answerPanel.onOpenModels = { [weak self] in self?.showModelSettings() }
+        answerPanel.onGrantScreen = {
+            MainActor.assumeIsolated { SetupStatus.shared.requestScreenRecording() }
         }
     }
 }

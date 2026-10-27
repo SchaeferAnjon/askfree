@@ -397,20 +397,21 @@ struct GeneralPage: View {
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var dock = DockIcon.isShown
     @State private var appearance = MainWindowAppearance.current
+    @State private var hideFromShare = AskSettings.isHiddenFromScreenShare
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             SettingsGroup {
                 SettingsRow(title: "开机时自动启动", detail: "登录后在后台打开，不用每次自己开。") {
-                    Toggle("", isOn: Binding(get: { launchAtLogin }, set: { on in
+                    Toggle("开机时自动启动", isOn: Binding(get: { launchAtLogin }, set: { on in
                         // 以系统真实状态回填：注册失败时开关弹回去，不给人错觉
                         _ = LaunchAtLogin.setEnabled(on)
                         launchAtLogin = LaunchAtLogin.isEnabled
-                    })).toggleStyle(.square).labelsHidden()
+                    })).toggleStyle(.square)
                 }
                 Hairline()
                 SettingsRow(title: "在 Dock 里显示", detail: "关掉后只在菜单栏，点顶上的图标打开。") {
-                    Toggle("", isOn: Binding(get: { dock }, set: { on in
+                    Toggle("在 Dock 里显示", isOn: Binding(get: { dock }, set: { on in
                         dock = on
                         DockIcon.setShown(on)
                         // 切激活策略时系统会把 App 挪到后台，把窗口拉回前面
@@ -418,7 +419,16 @@ struct GeneralPage: View {
                             NSApp.activate(ignoringOtherApps: true)
                             SettingsWindowController.shared?.window?.makeKeyAndOrderFront(nil)
                         }
-                    })).toggleStyle(.square).labelsHidden()
+                    })).toggleStyle(.square)
+                }
+            }
+            SettingsGroup(title: "隐私") {
+                SettingsRow(title: "共享屏幕时隐藏回答面板",
+                            detail: "开会共享屏幕、录屏或截图时，回答面板、打字框和录音浮窗不进画面，只有你自己看得见。") {
+                    Toggle("共享屏幕时隐藏回答面板", isOn: Binding(get: { hideFromShare }, set: { on in
+                        hideFromShare = on
+                        ScreenShareHiding.setEnabled(on)
+                    })).toggleStyle(.square)
                 }
             }
             VStack(alignment: .leading, spacing: 8) {

@@ -1,6 +1,9 @@
 import AppKit
 import QuartzCore
 import ObjectiveC
+#if canImport(AskFreeCore)
+import AskFreeCore
+#endif
 
 /// 配色「系统原生灰 · macOS 风」（2026-06 定稿）：浅色为正式配色，值不要动。
 /// 深色只给主窗口（设置窗）用，由「设置 → 外观」控制（见 MainWindowAppearance）；
@@ -154,6 +157,26 @@ enum MainWindowAppearance: String {
         case .dark: dark = true
         }
         return NSAppearance(named: dark ? .darkAqua : .aqua)!
+    }
+}
+
+/// 「共享屏幕时隐藏回答面板」：回答面板、打字框、录音胶囊和它的提示条设 sharingType = .none，
+/// 共享屏幕、录屏、截图时别人看不到用户问了什么、AI 答了什么。窗口建好时登记，开关一变全部重设。
+enum ScreenShareHiding {
+    private static let windows = NSHashTable<NSWindow>.weakObjects()
+
+    static func register(_ window: NSWindow) {
+        windows.add(window)
+        apply(to: window)
+    }
+
+    static func setEnabled(_ on: Bool) {
+        AskFreeConfig.shared.save(bool: on, forKey: AskSettings.hideFromScreenShareKey)
+        windows.allObjects.forEach(apply(to:))
+    }
+
+    private static func apply(to window: NSWindow) {
+        window.sharingType = AskSettings.isHiddenFromScreenShare ? .none : .readOnly
     }
 }
 

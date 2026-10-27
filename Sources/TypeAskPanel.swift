@@ -149,6 +149,7 @@ final class TypeAskPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         p.hidesOnDeactivate = false
         p.isReleasedWhenClosed = false
         p.delegate = self
+        ScreenShareHiding.register(p)
         panel = p
     }
 

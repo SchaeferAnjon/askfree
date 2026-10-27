@@ -362,6 +362,7 @@ final class AnswerPanel {
         p.isReleasedWhenClosed = false
         p.animationBehavior = .none
         p.onEscape = { [weak self] in self?.hide() }
+        ScreenShareHiding.register(p)
         panel = p
         self.hosting = hosting
         // 深浅跟「设置 → 外观」走（与主窗口一致）；内容用 Theme 的动态色

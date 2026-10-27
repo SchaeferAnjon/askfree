@@ -55,6 +55,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         if !status.allDone {
             menu.addItem(ClosureMenuItem("继续设置…") { OnboardingWindowController.show() })
         }
+        // 新版本后台下好了：点一下重启装上（不点也行，退出时装）
+        if let version = AppUpdater.shared.phase.readyVersion {
+            menu.addItem(ClosureMenuItem("重启并更新到 \(version)") { AppUpdater.shared.installAndRelaunch() })
+        }
         menu.addItem(.separator())
 
         let typeAsk = ClosureMenuItem("打字问 AI…") { [weak self] in self?.delegate?.toggleTypeAsk() }

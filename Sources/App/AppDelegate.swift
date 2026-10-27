@@ -40,6 +40,7 @@ enum AppLinks {
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效
 /// - `-pretendScreenGrantedLater`：当作屏幕录制是启动后才给的（权限页出「重新打开 Ask Free」），只在开发版生效
+/// - `-updateFeedURL <地址>`：查这个地址的 appcast.xml 而不是正式版的，开发版本来不更新、带了才更新，实测自动更新用
 /// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导六步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
 /// - `-selfTest`：启动自测，正式版也认（CI 用）：菜单栏图标和主窗口出来就退出，退出码 0；
 ///   配置和密钥换到临时目录（AppIdentity.usesTemporaryData），不读写你的设置、钥匙串，不弹授权框，不登记开机启动
@@ -61,6 +62,11 @@ enum DevLaunchOptions {
 
     static let askText: String? = {
         guard AppIdentity.isDevBuild, let i = arguments.firstIndex(of: "-askText"), i + 1 < arguments.count else { return nil }
+        return arguments[i + 1]
+    }()
+
+    static let updateFeedURL: String? = {
+        guard AppIdentity.isDevBuild, let i = arguments.firstIndex(of: "-updateFeedURL"), i + 1 < arguments.count else { return nil }
         return arguments[i + 1]
     }()
 
@@ -210,6 +216,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 启动末尾主动调一次，注册快捷键
         updateAccessibilityDependentFeatures()
+
+        // 后台查新版（开发版不查）
+        MainActor.assumeIsolated { AppUpdater.shared.start() }
 
         // 第一次打开出欢迎引导；看过引导但还没填 Key：打开主窗口的「开始」，不填用不了
         if let directory = DevLaunchOptions.snapshotPagesDirectory {

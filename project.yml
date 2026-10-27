@@ -7,6 +7,10 @@ options:
 packages:
   AskFreeCore:
     path: AskFreeCore
+  # 自动更新。版本写死，升级时改这里再 xcodegen generate
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
 targets:
   AskFree:
     type: application
@@ -16,6 +20,11 @@ targets:
       - path: Resources/AskFree.icns
     dependencies:
       - package: AskFreeCore
+      - package: Sparkle
+    postBuildScripts:
+      - name: 重签 Sparkle 的辅助程序
+        script: bash "$SRCROOT/scripts/sign_sparkle.sh"
+        basedOnDependencyAnalysis: false
     settings:
       base:
         PRODUCT_NAME: Ask Free

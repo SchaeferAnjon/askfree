@@ -431,6 +431,7 @@ struct GeneralPage: View {
                     })).toggleStyle(.square)
                 }
             }
+            UpdateSettingsGroup()
             VStack(alignment: .leading, spacing: 8) {
                 SectionTitle(text: "外观")
                 HStack(spacing: 10) {
@@ -548,7 +549,7 @@ struct AboutPage: View {
             }
 
             SettingsGroup(title: "发给谁、发什么",
-                          footer: "Ask Free 没有自己的服务器，不做使用统计：只在你提问时把内容直接发给上面这几家，用的是你自己的 Key。各家按自己的隐私政策处理收到的内容。") {
+                          footer: "Ask Free 没有自己的服务器，不做使用统计：只在你提问时把内容直接发给前三家，用的是你自己的 Key。各家按自己的隐私政策处理收到的内容。") {
                 SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音。", icon: "waveform")
                 Hairline(inset: 46)
                 SettingsRow(title: "回答问题：\(ModelSettings.askName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen"))",
@@ -558,6 +559,10 @@ struct AboutPage: View {
                 SettingsRow(title: "回答配图：DuckDuckGo 图片搜索",
                             detail: "一个找图用的搜索词，不含截图和录音。在「回答方式」关掉「联网的回答附上图」就不发。",
                             icon: "photo")
+                Hairline(inset: 46)
+                SettingsRow(title: "检查更新：GitHub",
+                            detail: "每 6 小时取一次新版本信息，有新版就下载安装包；不带你的问题、录音、截图和 Key。在「通用 → 更新」能关。",
+                            icon: "arrow.down.circle")
             }
 
             SettingsGroup(title: "存在这台 Mac 上") {

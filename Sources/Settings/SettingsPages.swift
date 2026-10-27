@@ -482,38 +482,130 @@ struct GeneralPage: View {
 // MARK: - 关于
 
 struct AboutPage: View {
+    @State private var copied: CopiedItem?
+    private let version = Bundle.main.appVersionInfo
+
+    private enum CopiedItem { case version, email }
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(alignment: .leading, spacing: 24) {
             VStack(spacing: 8) {
                 AppIconView(size: 72)
                 Text("Ask Free").font(.system(size: 20, weight: .semibold)).foregroundStyle(Theme.text)
                 Text("按一个键说出问题，AI 看着你的屏幕回答。").font(.system(size: 13)).foregroundStyle(Theme.text2)
                 HStack(spacing: 6) {
-                    Tag(text: "版本 \(Bundle.main.appVersionString)")
+                    Tag(text: version.displayLine)
                     Tag(text: "开源 · GPL-3.0")
                     Tag(text: "免费")
                 }
                 .padding(.top, 4)
+                Button { copy(version.copyText, as: .version) } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: copied == .version ? "checkmark" : "doc.on.doc").font(.system(size: 11))
+                            .accessibilityHidden(true)
+                        Text(copied == .version ? "已复制" : "复制版本信息")
+                    }
+                }
+                .buttonStyle(PlainTextButtonStyle())
+                .help("复制版本、构建号、芯片和 macOS 版本，写信报问题时贴上")
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
+
+            SettingsGroup(title: "联系我们") {
+                SettingsRow(title: Self.websiteHost, detail: "官网：下载新版本、看配置教程和隐私说明。", icon: "globe") {
+                    Button { AppLinks.safeOpen(AppLinks.websiteURL) } label: {
+                        HStack(spacing: 3) { Text("打开"); Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)) }
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+                Hairline(inset: 46)
+                SettingsRow(title: AppLinks.contactEmail, detail: "用得不顺手、想要什么功能，都可以写信告诉我们。", icon: "envelope") {
+                    HStack(spacing: 8) {
+                        Button("发邮件") { AppLinks.safeOpen("mailto:\(AppLinks.contactEmail)") }
+                            .buttonStyle(SecondaryButtonStyle())
+                        Button(copied == .email ? "已复制" : "复制") { copy(AppLinks.contactEmail, as: .email) }
+                            .buttonStyle(SecondaryButtonStyle())
+                            .accessibilityLabel(copied == .email ? "邮箱已复制" : "复制邮箱")
+                    }
+                }
+                Hairline(inset: 46)
+                SettingsRow(title: "日志",
+                            detail: "写信报问题时附上 \(AppIdentity.debugLogFileURL.lastPathComponent)，我们能更快找到原因。只记步骤、耗时和出错原因，不记你问的话、回答和截图。",
+                            icon: "doc.text") {
+                    HStack(spacing: 8) {
+                        Button("打开日志", action: openLog).buttonStyle(SecondaryButtonStyle())
+                        Button("在访达中显示") { NSWorkspace.shared.activateFileViewerSelecting([Self.logURL()]) }
+                            .buttonStyle(SecondaryButtonStyle())
+                    }
+                }
+            }
+
+            SettingsGroup(title: "发给谁、发什么",
+                          footer: "Ask Free 没有自己的服务器，不做使用统计：只在你提问时把内容直接发给上面这几家，用的是你自己的 Key。各家按自己的隐私政策处理收到的内容。") {
+                SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音。", icon: "waveform")
+                Hairline(inset: 46)
+                SettingsRow(title: "回答问题：\(ModelSettings.askName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen"))",
+                            detail: "识别出的文字；看屏幕问时加上这一刻的两张截图；追问时带上这个话题前几轮的问答。在「语音与模型」换服务商。",
+                            icon: "text.bubble")
+                Hairline(inset: 46)
+                SettingsRow(title: "回答配图：DuckDuckGo 图片搜索",
+                            detail: "一个找图用的搜索词，不含截图和录音。在「回答方式」关掉「联网的回答附上图」就不发。",
+                            icon: "photo")
+            }
+
+            SettingsGroup(title: "存在这台 Mac 上") {
+                SettingsRow(title: (AppIdentity.configDirectory.path as NSString).abbreviatingWithTildeInPath,
+                            detail: "设置、问答历史、发给 AI 的截图和找到的图都在这个文件夹里，「历史」页能看、能删。",
+                            icon: "folder") {
+                    Button("在访达中打开") { NSWorkspace.shared.open(AppIdentity.configDirectory) }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
+                Hairline(inset: 46)
+                SettingsRow(title: "API Key",
+                            detail: AppIdentity.isDevBuild
+                                ? "开发版存在上面文件夹的 dev_secrets.json 里（正式版在系统钥匙串），只发给对应的那一家。"
+                                : "存在系统钥匙串里，只发给对应的那一家。",
+                            icon: "key")
+            }
+
             SettingsGroup {
-                SettingsRow(title: "源码", detail: "在 GitHub 上，欢迎提问题和改进。") {
-                    Button {
-                        if let url = URL(string: AppLinks.sourceCodeURL) { NSWorkspace.shared.open(url) }
-                    } label: {
+                SettingsRow(title: "源码", detail: "在 GitHub 上，欢迎提问题和改进。", icon: "chevron.left.forwardslash.chevron.right") {
+                    Button { AppLinks.safeOpen(AppLinks.sourceCodeURL) } label: {
                         HStack(spacing: 3) { Text("查看源码"); Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)) }
                     }
                     .buttonStyle(SecondaryButtonStyle())
                 }
-                Hairline()
-                SettingsRow(title: "你的数据", detail: "Key 在系统钥匙串里；问答、截图和找到的图只存在这台 Mac 上。") {
-                    Button("在访达中打开") { NSWorkspace.shared.open(AppIdentity.configDirectory) }
-                        .buttonStyle(SecondaryButtonStyle())
-                }
-                Hairline()
-                SettingsRow(title: "致谢", detail: "从 Typefree（kdsz001）的「问 AI」改出来，同样用 GPL-3.0。")
+                Hairline(inset: 46)
+                SettingsRow(title: "致谢", detail: "从 Typefree（kdsz001）的「问 AI」改出来，同样用 GPL-3.0。", icon: "heart")
             }
         }
+    }
+
+    private static var websiteHost: String { URL(string: AppLinks.websiteURL)?.host ?? AppLinks.websiteURL }
+
+    private static var asrProviderName: String {
+        ModelSettings.asrName(CloudASRTranscriber().currentVersion().provider == .bailian ? .bailian : .volcano)
+    }
+
+    /// 日志文件；还没写过（刚清掉）就先建一个空的，免得「打开」「在访达中显示」什么都不做
+    private static func logURL() -> URL {
+        let url = AppIdentity.debugLogFileURL
+        if !FileManager.default.fileExists(atPath: url.path) {
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            FileManager.default.createFile(atPath: url.path, contents: Data(), attributes: [.posixPermissions: 0o600])
+        }
+        return url
+    }
+
+    private func openLog() {
+        NSWorkspace.shared.open(Self.logURL())
+    }
+
+    private func copy(_ text: String, as item: CopiedItem) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        copied = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { if copied == item { copied = nil } }
     }
 }

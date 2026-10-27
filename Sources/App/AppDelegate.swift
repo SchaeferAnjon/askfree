@@ -67,6 +67,17 @@ extension Bundle {
     var appVersionString: String {
         infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
+
+    /// 构建号（CFBundleVersion，project.yml 的 CURRENT_PROJECT_VERSION），取不到时为空串。
+    var appBuildString: String {
+        infoDictionary?["CFBundleVersion"] as? String ?? ""
+    }
+
+    /// 「关于」页那一行和「复制版本信息」用的
+    var appVersionInfo: AppVersionInfo {
+        AppVersionInfo(version: appVersionString, build: appBuildString, chip: AppVersionInfo.currentChip,
+                       macOSVersion: AppVersionInfo.macOSString(ProcessInfo.processInfo.operatingSystemVersion))
+    }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {

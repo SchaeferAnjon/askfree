@@ -1,5 +1,6 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ask Free：看着屏幕，张口就问</title>
 <meta name="description" content="按一个键说出问题，AI 看着你的屏幕回答。开源、免费、Mac 菜单栏应用。">
+<link rel="icon" type="image/png" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
 <style>:root {
   color-scheme: light;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Segoe UI", "Microsoft YaHei UI", "Noto Sans CJK SC", system-ui, sans-serif;
@@ -162,8 +163,7 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .foot h5 { margin: 0 0 14px; font-size: 13px; color: var(--text); font-weight: 600; }
 .foot a { display: block; text-decoration: none; margin-bottom: 9px; cursor: pointer; }
 .foot a:hover { color: var(--text); }
-.foot .brand { color: var(--text-2); margin-bottom: 14px; }
-.foot .fine { grid-column: 1 / -1; font-size: 12px; color: var(--text-3); margin-top: 10px; }
+.foot .brand { display: flex; color: var(--text-2); margin-bottom: 14px; }
 /* 下载小卡 */
 .scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.28); display: none; align-items: center; justify-content: center; padding: 20px; }
 .scrim.on { display: flex; }
@@ -199,7 +199,6 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .doc p.g, .doc .g { color: var(--text-2); }
 .doc ol, .doc ul { padding-left: 22px; }
 .doc li { margin: 6px 0; }
-.shot { border: 1.5px dashed var(--line-2); border-radius: 12px; height: 180px; display: grid; place-items: center; color: var(--text-3); font-size: 13px; margin: 14px 0 6px; background: var(--surface); }
 .callout { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; font-size: 14px; color: var(--text-2); margin: 16px 0; }
 .callout b { color: var(--text); font-weight: 500; }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 8px; padding: 3px; gap: 2px; }
@@ -240,8 +239,8 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .tbl { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 14px 0; background: var(--surface); }
 .tbl .tr { display: grid; grid-template-columns: 110px 1fr 1.6fr; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); font-size: 14px; }
 .tbl .tr:first-child { border-top: 0; }
-.tbl .th { font-size: 12px; color: var(--text-2); background: var(--surface-2); }
-@media (max-width: 600px) { .tbl .tr { grid-template-columns: 1fr; gap: 2px; } .tbl .th { display: none; } .tbl .tr span:first-child { font-weight: 600; } }
+.tbl .head { font-size: 12px; color: var(--text-2); background: var(--surface-2); }
+@media (max-width: 600px) { .tbl .tr { grid-template-columns: 1fr; gap: 2px; } .tbl .head { display: none; } .tbl .tr span:first-child { font-weight: 600; } }
 .term > div { overflow-wrap: anywhere; }
 b, strong, summary { font-weight: 500; }
 h3, h4 { font-weight: 600; }
@@ -416,6 +415,7 @@ h3, h4 { font-weight: 600; }
   .heroA .line { flex-wrap: wrap; height: auto; gap: 10px 14px; margin-bottom: 30px; align-items: center; }
   .heroA .big { font-size: 44px; line-height: 56px; order: -1; width: 100%; }
   .sq { font-size: 16px; margin-bottom: 26px; }
+  .heroA .line .sq { flex-basis: 100%; }   /* 一行一个问题：答案比问题宽，两个并排时会叠在一起 */
   .sq .g { font-size: 13px; }
   .hero-desc { font-size: 15px; }
   .tabs { grid-template-columns: 1fr; gap: 8px; }
@@ -588,7 +588,6 @@ h3, h4 { font-weight: 600; }
 .howto summary { cursor: pointer; font-size: 13px; font-weight: 500; }
 .howto ol { font-size: 13px; color: var(--text); padding-left: 20px; margin: 10px 0 0; }
 .howto li { margin: 4px 0; }
-.howto .shot { height: 120px; }
 .hk { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 .hk-r { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--line); }
 .hk-r:first-child { border-top: 0; }
@@ -642,7 +641,51 @@ h3, h4 { font-weight: 600; }
 .trouble { margin-top: 56px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .trouble h3 { margin: 0 0 6px; font-size: 17px; }
 .trouble p { margin: 0; color: var(--text-2); }
-
+/* 配置教程：各家控制台的示意图（地址栏 + 要点的地方画细红框）、看不懂的词、常见问题 */
+.howto { min-width: 0; }
+.howto h4 { margin: 14px 0 2px; font-size: 13px; font-weight: 600; }
+.howto h4:first-of-type { margin-top: 10px; }
+.howto .mock-n { margin: 10px 0 0; font-size: 12px; color: var(--text-3); }
+.shotmock { margin: 8px 0 4px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface); overflow: hidden; font-size: 12.5px; color: var(--text); }
+.shotmock .bb { height: 26px; display: flex; align-items: center; gap: 5px; padding: 0 10px; background: var(--surface-2); border-bottom: 1px solid var(--line); color: var(--text-2); font-size: 11.5px; white-space: nowrap; overflow: hidden; }
+.shotmock .bb i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); flex: none; }
+.shotmock .bb i:nth-of-type(3) { margin-right: 6px; }
+.shotmock .bd { padding: 12px 14px; display: flex; gap: 10px; align-items: center; min-height: 52px; white-space: nowrap; }
+.shotmock .sp { flex: 1; }
+.shotmock .mu { color: var(--text-2); font-size: 12px; }
+.shotmock .hl { outline: 1.5px solid var(--mark); outline-offset: 3px; }
+.shotmock .tg { transform: scale(.85); }
+.sbtn { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--surface); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.sbtn.solid { background: var(--btn); color: var(--btn-text); border-color: transparent; }
+.keybox { font-family: var(--mono); font-size: 12px; background: var(--surface-2); padding: 4px 8px; border-radius: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.setup-h { font-size: 20px; margin: 56px 0 14px; }
+.words { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.words > div { padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.words b { display: block; font-size: 15px; margin-bottom: 6px; }
+.words span { font-size: 13.5px; color: var(--text-2); }
+.setup-faq .faq { max-width: none; margin: 0; }
+@media (max-width: 760px) { .words { grid-template-columns: 1fr; } }
+/* 页脚：回总站的小条（谁做的、同系列的软件、全部软件）和版权版本行 */
+.xstrip { grid-column: 1 / -1; margin-top: 12px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.foot .xstrip a { margin: 0; }
+.foot .xstrip .by { display: inline; }
+.xstrip .by u { text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+.xstrip .by:hover u { text-decoration-color: currentColor; }
+.xstrip .sep { color: var(--text-3); }
+.xstrip .icons { display: flex; gap: 8px; }
+.foot .xstrip .icons a { position: relative; display: block; width: 22px; height: 22px; }
+.xstrip .icons img { display: block; width: 22px; height: 22px; border-radius: 5px; box-shadow: 0 0 0 1px var(--line); transition: transform .15s; }
+.xstrip .icons a:hover img { transform: translateY(-1px); }
+.xstrip .icons a.cur::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--text-3); }
+.xstrip .xtip { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); padding: 3px 8px; border-radius: 6px; background: var(--btn); color: var(--btn-text); font-size: 12px; line-height: 1.5; white-space: nowrap; pointer-events: none; display: none; }
+.xstrip .icons a:hover .xtip, .xstrip .icons a:focus-visible .xtip { display: block; }
+.xstrip .icons a:last-child .xtip { left: auto; right: 0; transform: none; }
+.foot .cp { grid-column: 1 / -1; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--text-3); }
+/* 系统开了「减少动态效果」：动画和过渡都去掉，脚本那边直接显示放完后的画面 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .flow .pipe .dot { display: none; }
+}
 </style>
 </head>
 <body>
@@ -668,7 +711,7 @@ h3, h4 { font-weight: 600; }
   <p class="hero-desc">按住你设的键说出问题，松开就问。AI 看着你此刻的屏幕回答，鼠标指着哪就重点看哪；回答出现在屏幕右上角，不打断你手上的事。</p>
   <div class="hero-cta"><button class="btn dark big" data-dl><svg class="ico" viewBox="0 0 16 16"><path d="M8 2v8M4.5 6.5L8 10l3.5-3.5M2.5 13.5h11"/></svg>免费下载 Mac 版</button><a class="btn light big" href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 16 16"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/></svg>在 GitHub 看源码</a></div>
   <div class="hero-meta"><b>不用注册，不用登录</b> · 开源 GPL-3.0 · macOS 14+ · Apple 芯片</div>
-  <div class="hero-meta2"><span data-ver-row>最新 <span data-ver>v1.0.1 · 10 月 19 日 · 0.8 MB</span> · </span><a data-go="privacy">你的录音和截图去了哪里</a></div>
+  <div class="hero-meta2"><span data-ver-row hidden>最新 <span data-ver>v1.1.0 · 1.5 MB</span> · </span><a data-go="privacy">你的录音和截图去了哪里</a></div>
 </div>
 
 <div class="wrap" data-part="演示舞台">
@@ -761,7 +804,7 @@ h3, h4 { font-weight: 600; }
     <div class="box"><h4><svg class="ico" viewBox="0 0 16 16"><path d="M8 1.5l1.6 4.2 4.4.3-3.4 2.8 1.1 4.3L8 10.7 4.3 13.1l1.1-4.3L2 6l4.4-.3z"/></svg>你自己选的服务商</h4><ul>
       <li><svg class="ico" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg><div>火山引擎（豆包）<small>把录音转成文字</small></div></li>
       <li><svg class="ico" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg><div>DeepSeek 或阿里百炼千问<small>看截图、回答；用的是你自己的 Key</small></div></li>
-      <li><svg class="ico" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg><div>回答要配图时<small>只把一个搜索词发给 DuckDuckGo，设置里能关</small></div></li>
+      <li><svg class="ico" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg><div>回答配图（默认开着）<small>只把一个找图的词发给 DuckDuckGo，不带截图和录音，设置里能关</small></div></li>
     </ul></div>
   </div>
   <div class="ink3">
@@ -776,8 +819,8 @@ h3, h4 { font-weight: 600; }
   <div>
     <div class="eyebrow">开源</div>
     <h2 class="h2">代码全公开，<br>自己编译也行。</h2>
-    <p>Ask Free 从 Typefree 的「问 AI」功能改出来，去掉了听写、润色、词库、会员和自动更新，只留语音提问。以 GPL-3.0 发布，和上游一致。</p>
-    <div class="links2"><a class="btn light" href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 16 16"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/></svg>在 GitHub 看源码</a><a class="btn light" href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">提问题</a></div>
+    <p>Ask Free 从 <a href="https://github.com/kdsz001/typefree" target="_blank" rel="noopener">Typefree</a> 的「问 AI」功能改出来，去掉了听写、润色、词库、会员和自动更新，只留语音提问。以 GPL-3.0 发布，和上游一致。</p>
+    <div class="links2"><a class="btn light" href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 16 16"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/></svg>在 GitHub 看源码</a><a class="btn light" href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">提问题</a></div>
   </div>
   <div class="term">
     <div class="row"><span class="c"># 下载源码</span><button class="copy">复制</button></div>
@@ -824,8 +867,8 @@ h3, h4 { font-weight: 600; }
       <div class="rail-n" id="railN">已完成 0 / 5</div>
     </aside>
     <div class="steps">
-      <div class="step" id="s1"><div class="st-t"><div class="st-n">1</div><h3>下载，拖进「应用程序」</h3><p>一个 0.8 MB 的压缩包。解压后把 Ask Free 拖进「应用程序」，它就住在右上角菜单栏里，图标是一个指针加问号。</p><p class="g">这一版还没经过苹果公证：第一次打开如果提示无法验证，到「系统设置 → 隐私与安全性」底部点「仍要打开」。</p></div>
-        <div class="st-w"><div class="filecard"><svg viewBox="80 80 864 864" aria-label="Ask Free"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="10"/><path d="M300,268 L300,690 L404,590 L470,744 L540,714 L474,562 L616,562 Z" fill="#111113" stroke="#111113" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="#111113"/><path d="M584,428 L560,482 L628,452 Z" fill="#111113"/><path d="M618,300 A42,42 0 1,1 680.0,336.9 C666,345 660,355 660,371 L660,379" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#fff"/></svg><div><b>AskFree.zip</b><span><span data-ver>v1.0.1 · 0.8 MB</span> · Apple 芯片 · macOS 14 或更新</span></div><button class="btn dark sm" data-dl>下载</button></div>
+      <div class="step" id="s1"><div class="st-t"><div class="st-n">1</div><h3>下载，拖进「应用程序」</h3><p>一个 <span data-size>1.5 MB</span> 的压缩包。解压后把 Ask Free 拖进「应用程序」，它就住在右上角菜单栏里，图标是一个指针加问号。</p><p class="g">这一版还没经过苹果公证：第一次打开如果提示无法验证，到「系统设置 → 隐私与安全性」底部点「仍要打开」。</p></div>
+        <div class="st-w"><div class="filecard"><svg viewBox="80 80 864 864" aria-label="Ask Free"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="10"/><path d="M300,268 L300,690 L404,590 L470,744 L540,714 L474,562 L616,562 Z" fill="#111113" stroke="#111113" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="#111113"/><path d="M584,428 L560,482 L628,452 Z" fill="#111113"/><path d="M618,300 A42,42 0 1,1 680.0,336.9 C666,345 660,355 660,371 L660,379" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#fff"/></svg><div><b data-fname>AskFree-1.1.0.zip</b><span><span data-ver>v1.1.0 · 1.5 MB</span> · Apple 芯片 · macOS 14 或更新</span></div><button class="btn dark sm" data-dl>下载</button></div>
           <div class="req"><span><i class="okd"></i>Apple 芯片（M1 及以后）</span><span><i class="okd"></i>macOS 14 或更新</span><span><i class="nod"></i>Intel 芯片用不了</span></div></div></div>
 
       <div class="step" id="s2"><div class="st-t"><div class="st-n">2</div><h3>给三项权限</h3><p>麦克风在系统弹框里点「允许」。辅助功能和屏幕录制不用在长长的列表里找：系统设置打开后，右边会浮出 Ask Free 的图标，把它拖进左边的列表就打开了。</p><p class="g">右边能真拖：按住图标，拖进列表。</p></div>
@@ -846,7 +889,7 @@ h3, h4 { font-weight: 600; }
           <label>回答问题 <span class="seg sm" id="provB"><button class="on" data-p="ds">DeepSeek</button><button data-p="bl">阿里百炼千问</button></span><a id="provLink" href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">去拿 Key ↗</a></label>
           <input id="k2" placeholder="粘贴 DeepSeek API Key" autocomplete="off">
           <div class="keys-act"><button class="btn light sm" id="testKeys">测试连接</button><span id="keyRes"></span></div>
-          <details class="howto"><summary>图文步骤：去哪拿 Key</summary><ol id="howtoList"></ol><div class="shot">截图位：服务商控制台创建 Key 的地方</div></details>
+          <details class="howto" id="howto"><summary>图文步骤：去哪拿 Key</summary><div id="howtoList"></div><p class="mock-n">示意图，红框是要点的地方。控制台改版后，按钮的位置可能不一样。</p></details>
         </div></div></div>
 
       <div class="step" id="s4"><div class="st-t"><div class="st-n">4</div><h3>设一个键</h3><p>Ask Free 装好后不设键：每台 Mac 的键盘不一样。选一个平时少用的，右 Option、右 Command 都行。</p><p class="g">在右边点一下，再按你想用的键。设好后，回到页面顶上按住它试试。</p></div>
@@ -868,59 +911,100 @@ h3, h4 { font-weight: 600; }
     </div>
   </div>
 
-  <div class="trouble"><h3>还是不行</h3><p>主窗口的「开始」页会列出哪一项还没好，点它就跳到要改的地方；菜单栏图标挂着橙点时，点开第一行也写着还差什么。还是不行，到 <a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">GitHub</a> 提问题，附上你的 macOS 版本。</p></div>
+  <h2 class="setup-h" id="words">看不懂的词</h2>
+  <div class="words">
+    <div><b>API Key</b><span>服务商发给你的一长串字母和数字，相当于你在那家的密码。Ask Free 拿它替你调用识别和 AI，用多少从你的账户扣多少；别发给别人。</span></div>
+    <div><b>录音文件识别</b><span>火山引擎把一段录音转成文字的服务。你松开键后，Ask Free 把这一句的录音整段发过去，拿回文字。要先在控制台点「开通」才能用。</span></div>
+    <div><b>Token</b><span>AI 服务计费的单位：文字被切成一小块一小块来算，中文大约一两个字一块，截图按大小折算。百炼送的「100 万 Token」就是按这个算的。</span></div>
+  </div>
+  <h2 class="setup-h">常见问题</h2>
+  <div class="setup-faq" id="setupFaq"></div>
+
+  <div class="trouble"><h3>还是不行</h3><p>主窗口的「开始」页会列出哪一项还没好，点它就跳到要改的地方；菜单栏图标挂着橙点时，点开第一行也写着还差什么。还是不行，到 <a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">GitHub</a> 提问题，或者写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，附上你的 macOS 版本。</p></div>
 </div></section>
 
 <section class="page" id="p-privacy" data-part="隐私说明页"><div class="wrap doc">
-  <nav><b>隐私说明</b><a data-to="pv-1" class="on">一句话</a><a data-to="pv-2">留在你电脑上的</a><a data-to="pv-3">什么时候发出去</a><a data-to="pv-4">发给谁、发什么</a><a data-to="pv-5">我们不做的</a><a data-to="pv-6">本网站</a><a data-to="pv-7">怎么删掉</a></nav>
+  <nav><b>隐私说明</b><a data-to="pv-1" class="on">一句话</a><a data-to="pv-who">我们是谁</a><a data-to="pv-2">留在你电脑上的</a><a data-to="pv-3">什么时候发出去</a><a data-to="pv-4">发给谁、发什么</a><a data-to="pv-5">我们不做的</a><a data-to="pv-6">本网站</a><a data-to="pv-7">怎么删掉</a><a data-to="pv-chg">政策变更</a></nav>
   <article>
     <h1 id="pv-1">隐私说明</h1>
-    <p class="sum">Ask Free 没有自己的服务器。只有你按下提问键、说完松开的那一刻，录音和截图才发出去，而且直接发给你自己选的服务商；问过的问题只存在你的 Mac 上。</p>
-    <div class="callout"><b>草稿</b>：按 v1.0.1 代码里真实的去向写成，还没经过法律审核。</div>
+    <p class="g">更新于 2026 年 10 月 27 日，按 Ask Free 1.1.0 的代码逐条核对。</p>
+    <p class="sum">Ask Free 没有自己的服务器。只有你按下提问键的时候，录音和截图才发出去，而且直接发给你自己选的服务商；问过的问题和当时的截图只存在你的 Mac 上。</p>
+    <h2 id="pv-who">我们是谁</h2>
+    <p>Ask Free 是 SchaeferAnjon 个人做的开源软件，基于 kdsz001 的 <a href="https://github.com/kdsz001/typefree" target="_blank" rel="noopener">Typefree</a> 修改而来，以 GPL-3.0 发布，源码在 <a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GitHub</a>。软件本身不连我们的任何服务器。</p>
+    <p>对这份说明有疑问，写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，或者在 GitHub <a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">提问题</a>。</p>
     <h2 id="pv-2">留在你电脑上的</h2>
     <ul>
       <li><b>API Key</b>：存在 macOS 钥匙串里，不写进普通文件。</li>
-      <li><b>设置</b>：在 <span class="pathlink">~/.config/askfree/</span>，只有你的账户能读。</li>
-      <li><b>问答历史</b>：文字在 <span class="pathlink">history.jsonl</span>，发给模型的截图、回答里找到的图的缩略图在 <span class="pathlink">history-images/</span>，都在同一个文件夹里，在应用的「历史」页能看、能删。</li>
+      <li><b>设置</b>：在 <span class="pathlink">~/.config/askfree/</span>，这个文件夹只有你的账户能打开。</li>
+      <li><b>问答历史</b>：每一轮的问题、回答和时间在 <span class="pathlink">history.jsonl</span>；这一轮真发给模型的两张截图（整屏的缩小图和指针附近的放大图），以及回答里找到的图的缩略图，在 <span class="pathlink">history-images/</span>。都在上面那个文件夹里，在「历史」页能看、能删。历史每一问都会记，1.1.0 还没有关掉它的开关。</li>
+      <li><b>录音</b>：不存。松开键后临时转一次格式，转完的临时文件马上删掉，再发给识别服务。</li>
+      <li><b>运行日志</b>：<span class="pathlink">~/Library/Logs/AskFree.log</span>，只记步骤和耗时（比如这一问有几个字、花了多少毫秒），不记问题、回答和截图。</li>
     </ul>
     <h2 id="pv-3">什么时候发出去</h2>
-    <p>只在你按住（或轻点）自己设的提问键、说完的时候。平时不录音、不截屏，菜单栏图标也不会一直监听。</p>
-    <p>用「只提问，不看屏幕」那个键时不截屏，只发语音转出来的文字。</p>
+    <p>只在你按住（或轻点）自己设的提问键说完的时候，或者用打字键提问的时候。平时不录音、不截屏，菜单栏图标也不会一直听着。</p>
+    <p>「看屏幕问」和「打字问」在按键那一刻截屏；「只提问，不看屏幕」那个键不截屏，只发语音转出来的文字。在主窗口「回答方式」页关掉「让 AI 看屏幕」，哪种问法都不截屏。</p>
     <h2 id="pv-4">发给谁、发什么</h2>
     <div class="tbl">
-      <div class="tr th"><span>用途</span><span>发给</span><span>发什么</span></div>
-      <div class="tr"><span>语音识别</span><span>火山引擎（豆包）</span><span>这一次的录音</span></div>
-      <div class="tr"><span>回答问题</span><span>DeepSeek 或阿里百炼千问，你在「语音与模型」页选的那家</span><span>识别出的文字；看屏幕问时加上这一刻的截图；追问时带上这个话题前几轮的问答</span></div>
-      <div class="tr"><span>回答配图</span><span>DuckDuckGo 图片搜索</span><span>一个找图用的搜索词，不含截图和录音。设置里关掉「联网回答附图」就不发</span></div>
+      <div class="tr head"><span>用途</span><span>发给</span><span>发什么</span></div>
+      <div class="tr"><span>语音识别</span><span>火山引擎（豆包）；改用阿里百炼识别时发给百炼</span><span>这一句的录音</span></div>
+      <div class="tr"><span>回答问题</span><span>你在「语音与模型」页选的那家：DeepSeek 或阿里百炼千问（手动改配置还能用豆包、智谱）</span><span>识别出的文字或你打的字；看屏幕问、打字问时加上按键那一刻的两张截图；追问时带上这个话题前几轮的问答文字</span></div>
+      <div class="tr"><span>联网查</span><span>还是同一家：DeepSeek 用它自己的搜索接口，千问用自带的联网搜索。选了豆包或智谱、又填了百炼 Key 时，转给千问</span><span>一个搜索词，说「搜一下」时就是你这句话。转给千问的那一问只带文字，不带截图</span></div>
+      <div class="tr"><span>回答配图</span><span>DuckDuckGo 图片搜索，和图片所在的服务器</span><span>默认开着。模型想给你看图、或这一问要联网时，把一个找图的词发给 DuckDuckGo（模型写的搜索词，说「搜一下」时就是你这句话），不含截图和录音；再从图片服务器下载 3 张缩略图，这些服务器能看到你的 IP 地址。在「回答方式」页关掉「联网的回答附上图」就都不发</span></div>
     </div>
-    <p class="g">用的是你自己的 Key，这些服务商按各自的隐私政策处理收到的内容。</p>
+    <p class="g">用的是你自己的 Key，这些服务商按各自的隐私政策处理收到的内容，比如存多久、会不会拿来改进模型。</p>
     <h2 id="pv-5">我们不做的</h2>
-    <ul><li>不需要注册账号，也没有登录。</li><li>没有使用统计、没有崩溃上报。</li><li>没有中间服务器：语音和问题不经过我们。</li><li>没有自动更新：新版本在网站和 GitHub 上下载。</li></ul>
+    <ul><li>不需要注册账号，也没有登录。</li><li>没有使用统计、没有崩溃上报、没有广告追踪。</li><li>没有中间服务器：录音、问题和截图不经过我们。</li><li>不检查更新，也没有自动更新：新版本在网站和 GitHub 上下载。</li><li>不卖、不分享任何数据：我们本来就收不到。</li></ul>
     <h2 id="pv-6">本网站</h2>
-    <p>不用 Cookie，不做访问统计。下载文件放在 GitHub，点下载时由 GitHub 提供文件。</p>
+    <p>askfree.us-cloud.uk 是静态网页，放在 GitHub Pages 上，经 Cloudflare 和我们的服务器转发。网页不用 Cookie，不做访问统计。打开网页时，你的浏览器会向 GitHub 的接口（api.github.com）查一次最新版本号和文件大小；点下载时，文件由 GitHub 提供。这些服务照惯例会记访问日志（IP 地址、时间、浏览器），我们不拿它做统计。</p>
     <h2 id="pv-7">怎么删掉</h2>
-    <ol><li>「历史」页右键一条删除，或者全部清空。</li><li>退出 Ask Free，删掉 <span class="pathlink">~/.config/askfree/</span> 文件夹。</li><li>打开「钥匙串访问」，搜索 askfree，删掉里面的 Key。</li></ol>
+    <ol><li>「历史」页右键一条删除，或者全部清空，当时的截图和找到的图一起删掉。</li><li>退出 Ask Free，删掉 <span class="pathlink">~/.config/askfree/</span> 文件夹和 <span class="pathlink">~/Library/Logs/AskFree.log</span>。</li><li>打开「钥匙串访问」，搜索 askfree，删掉里面的 Key。</li><li>已经发给服务商的内容，按那一家的规定在它的控制台或客服那里处理。我们手上没有你的数据，不用找我们删。</li></ol>
+    <h2 id="pv-chg">政策变更</h2>
+    <p>这份说明跟着 Ask Free 的版本走。哪一版改了数据的去向（比如加了一家服务商），会改这一页和上面的日期，并写进那一版的更新说明。</p>
+  </article>
+</div></section>
+
+<section class="page" id="p-terms" data-part="服务条款页"><div class="wrap doc">
+  <nav><b>服务条款</b><a data-to="tm-1" class="on">软件</a><a data-to="tm-2">Key 和费用</a><a data-to="tm-3">服务商的规则</a><a data-to="tm-4">AI 的回答</a><a data-to="tm-5">能不能用</a><a data-to="tm-6">联系</a><a data-to="tm-7">变更</a></nav>
+  <article>
+    <h1>服务条款</h1>
+    <p class="g">更新于 2026 年 10 月 27 日</p>
+    <p class="sum">Ask Free 免费、开源，按现状提供。识别和回答用的是你自己的 Key，钱由你和服务商直接结算；AI 的回答可能有错，重要的事请自己核对。</p>
+    <h2 id="tm-1">软件</h2>
+    <p>Ask Free 以 <a href="https://github.com/SchaeferAnjon/askfree/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a> 开源发布，可以免费下载、使用、修改和再分发，按 GPL-3.0 的条款执行。软件按现状提供，不保证没有错误，也不保证适合某个特定用途；在法律允许的范围内，作者不对使用它造成的损失负责（GPL-3.0 第 15、16 条）。</p>
+    <h2 id="tm-2">Key 和费用</h2>
+    <p>识别语音和回答问题，用的是你自己在服务商（火山引擎、DeepSeek、阿里百炼等）开的 Key。产生的费用由你和服务商直接结算，按服务商当时的价格从你的账户扣；Ask Free 不收钱、不经手、不加价。免费额度、价格和用量上限以服务商的页面为准，DeepSeek 的联网搜索按次另算。建议在服务商后台设好用量提醒，或者打开「免费额度用完即停」。</p>
+    <h2 id="tm-3">服务商的规则</h2>
+    <p>用哪一家服务商，也要遵守那一家的用户协议和使用规范；你发给它的录音、文字和截图，由它按自己的隐私政策处理。截图里有别人的信息（聊天记录、文件）时，先确认能发给服务商再问。</p>
+    <h2 id="tm-4">AI 的回答</h2>
+    <p>识别出的文字、AI 的回答、联网查到的内容和配图，是机器生成或从网上找来的，可能有错、可能过时。涉及健康、法律、钱和安全的事，请自己核对，不要只凭回答做决定。配图的版权归原作者，点开原图时请遵守原网站的规定。</p>
+    <h2 id="tm-5">能不能用</h2>
+    <p>Ask Free 没有自己的服务器，能不能用取决于你的网络和服务商。服务商改接口、停服务或者拦下请求时，可能要等新版本才能恢复。</p>
+    <h2 id="tm-6">联系</h2>
+    <p>写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，或者在 GitHub <a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">提问题</a>。</p>
+    <h2 id="tm-7">变更</h2>
+    <p>条款变更会更新在这一页，并改上面的日期。</p>
   </article>
 </div></section>
 
 <footer class="foot" data-part="页脚"><div class="wrap">
   <div><a class="brand" data-go="home"><svg viewBox="80 80 864 864" aria-label="Ask Free"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="10"/><path d="M300,268 L300,690 L404,590 L470,744 L540,714 L474,562 L616,562 Z" fill="#111113" stroke="#111113" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="#111113"/><path d="M584,428 L560,482 L628,452 Z" fill="#111113"/><path d="M618,300 A42,42 0 1,1 680.0,336.9 C666,345 660,355 660,371 L660,379" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#fff"/></svg>Ask Free</a><div>按一个键说出问题，AI 看着你的屏幕回答。开源免费，自带 Key。</div></div>
-  <div><h5>产品</h5><a data-go="home#how">怎么用</a><a data-dl>下载</a><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">更新记录</a></div>
-  <div><h5>帮助</h5><a data-go="setup">配置教程</a><a data-go="home#faq">常见问题</a><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">提问题</a></div>
-  <div><h5>开源</h5><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GitHub 源码</a><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GPL-3.0</a><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">上游 Typefree</a></div>
-  <div><h5>条款</h5><a data-go="privacy">隐私说明</a></div>
-  <div class="fine">Ask Free 基于 kdsz001 的 Typefree 修改而来，以 GPL-3.0 发布。</div>
+  <div><h5>产品</h5><a data-go="home#how">怎么用</a><a data-dl>下载</a><a href="https://github.com/SchaeferAnjon/askfree/releases" target="_blank" rel="noopener">更新记录</a></div>
+  <div><h5>帮助</h5><a data-go="setup">配置教程</a><a data-go="home#faq">常见问题</a><a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">提问题</a><a href="mailto:infoschaeferanjon@gmail.com">联系我们</a></div>
+  <div><h5>开源</h5><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GitHub 源码</a><a href="https://github.com/SchaeferAnjon/askfree/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a><a href="https://github.com/kdsz001/typefree" target="_blank" rel="noopener">上游 Typefree</a></div>
+  <div><h5>条款</h5><a data-go="privacy">隐私说明</a><a data-go="terms">服务条款</a></div>
+  <div class="xstrip"><a class="by" href="https://apps.us-cloud.uk"><span>SchaeferAnjon 出品</span> <span class="sep">·</span> <u>全部软件</u></a><span class="icons"><a class="cur" href="./" data-go="home" aria-label="Ask Free"><img src="askfree.png" alt=""><span class="xtip">Ask Free · 你在这里</span></a><a href="https://meetcaption.us-cloud.uk" aria-label="MeetCaption"><img src="meetcaption.png" alt=""><span class="xtip">MeetCaption · 会议字幕</span></a><a href="https://apps.us-cloud.uk/#app-gnw" aria-label="GetNewWord"><img src="getnewword.png" alt=""><span class="xtip">GetNewWord · 查词</span></a></span></div>
+  <div class="cp"><span>© 2026 Ask Free · 基于 kdsz001 的 Typefree 修改而来，以 GPL-3.0 发布</span><span>macOS 14+ · Apple 芯片 · <span data-tag>v1.1.0</span></span></div>
 </div></footer>
 
 <div class="scrim" id="dl" data-part="下载小卡"><div class="dl" role="dialog" aria-label="下载 Ask Free">
   <button class="x" data-close aria-label="关闭"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
-  <div class="file"><svg viewBox="80 80 864 864" aria-label="Ask Free"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="10"/><path d="M300,268 L300,690 L404,590 L470,744 L540,714 L474,562 L616,562 Z" fill="#111113" stroke="#111113" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="#111113"/><path d="M584,428 L560,482 L628,452 Z" fill="#111113"/><path d="M618,300 A42,42 0 1,1 680.0,336.9 C666,345 660,355 660,371 L660,379" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#fff"/></svg><div><b>AskFree.zip</b><span><span data-ver>v1.0.1 · 0.8 MB</span> · Apple 芯片 · macOS 14 或更新</span></div></div>
+  <div class="file"><svg viewBox="80 80 864 864" aria-label="Ask Free"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="10"/><path d="M300,268 L300,690 L404,590 L470,744 L540,714 L474,562 L616,562 Z" fill="#111113" stroke="#111113" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="#111113"/><path d="M584,428 L560,482 L628,452 Z" fill="#111113"/><path d="M618,300 A42,42 0 1,1 680.0,336.9 C666,345 660,355 660,371 L660,379" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#fff"/></svg><div><b data-fname>AskFree-1.1.0.zip</b><span><span data-ver>v1.1.0 · 1.5 MB</span> · Apple 芯片 · macOS 14 或更新</span></div></div>
   <ol>
     <li><div><b>解压，把 Ask Free 拖进「应用程序」</b><br>它住在屏幕右上角的菜单栏，图标是一个指针加问号。</div></li>
     <li><div><b>第一次打开如果提示无法验证</b><br>这一版还没经过苹果公证：到「系统设置 → 隐私与安全性」底部点「仍要打开」。</div></li>
     <li><div><b>给三项权限、填两个 Key、设一个键</b><br>辅助功能和屏幕录制把图标拖进列表就行，Key 去哪拿看配置教程。</div></li>
   </ol>
-  <div class="acts"><a class="btn dark" data-start id="dlGo" href="https://github.com/SchaeferAnjon/askfree/releases/latest">开始下载</a><button class="btn light" data-go="setup" data-close>配置教程</button></div>
+  <div class="acts"><a class="btn dark" data-start id="dlGo" href="https://github.com/SchaeferAnjon/askfree/releases/latest/download/AskFree.zip">开始下载</a><button class="btn light" data-go="setup" data-close>配置教程</button></div>
   <div class="note"></div>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -938,17 +1022,30 @@ const GLYPH = '<svg viewBox="247 190 580 580" style="width:15px;height:15px"><ma
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+/* 系统开了「减少动态效果」：首屏、舞台、拖图标都直接摆出放完后的样子，不自动播 */
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let toastTimer;
 function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("on"), 2200); }
 
-/* 页面切换：data-go="home#how" */
+/* 页面切换：data-go="home#how"。首页以外的页写进地址栏（#page=setup），刷新、收藏、分享都回到这一页 */
+const TITLES = { home: document.title, setup: "配置教程 · Ask Free", privacy: "隐私说明 · Ask Free", terms: "服务条款 · Ask Free" };
 function go(target) {
-  const [page, anchor] = target.split("#");
+  let [page, anchor] = target.split("#");
+  if (!(page in TITLES)) { page = "home"; anchor = ""; }
   $$(".page").forEach(p => p.classList.toggle("on", p.id === "p-" + page));
   $$(".nav .links a").forEach(a => a.classList.toggle("on", a.dataset.go === target || (!anchor && a.dataset.go === page)));
+  document.title = TITLES[page];
+  history.replaceState(null, "", location.pathname + location.search + (page === "home" ? "" : "#page=" + page));
   if (anchor) { const el = document.getElementById(anchor); if (el) { el.scrollIntoView({ block: "start" }); return; } }
   scrollTo(0, 0);
 }
+/* #page=privacy；旧写法 #p-privacy；跳转页 privacy.html 直接被打开时按文件名认 */
+function pageFromUrl() {
+  const m = location.hash.match(/^#(?:page=|p-)(\w+)/);
+  if (m) return m[1];
+  return { "setup.html": "setup", "privacy.html": "privacy", "terms.html": "terms" }[location.pathname.split("/").pop()];
+}
+addEventListener("hashchange", () => { const p = pageFromUrl(); if (p) go(p); });
 document.addEventListener("click", e => {
   const g = e.target.closest("[data-go]");
   if (g) { e.preventDefault(); closeDl(); go(g.dataset.go); return; }
@@ -956,7 +1053,14 @@ document.addEventListener("click", e => {
   if (e.target.closest("[data-close]") || e.target.id === "dl") { closeDl(); return; }
   if (e.target.closest("[data-start]")) { $("#dl .note").textContent = "开始下载了。下载好后解压，把 Ask Free 拖进「应用程序」。"; if (window.onDownloaded) window.onDownloaded(); return; }
   const c = e.target.closest(".copy");
-  if (c) { const code = c.parentElement.querySelector("code"); if (code && navigator.clipboard) navigator.clipboard.writeText(code.textContent).catch(() => {}); c.textContent = "已复制"; setTimeout(() => c.textContent = "复制", 1400); return; }
+  if (c) {
+    // 复制 $ 后面的几行命令，不带提示符和注释
+    const cmds = $$("div", c.closest(".term")).filter(d => d.querySelector(".p")).map(d => d.textContent.replace(/^\s*\$\s*/, "").trim()).join("\n");
+    const say = t => { c.textContent = t; setTimeout(() => c.textContent = "复制", 1400); };
+    (navigator.clipboard ? navigator.clipboard.writeText(cmds) : Promise.reject())
+      .then(() => say("已复制"), () => { say("没复制上"); toast("浏览器没让复制，请手动选中上面的命令"); });
+    return;
+  }
   const t = e.target.closest(".doc nav a[data-to]");
   if (t) { document.getElementById(t.dataset.to).scrollIntoView({ block: "start" }); }
 });
@@ -1081,7 +1185,7 @@ function makeStage(fit, opts) {
   // 音浪：录音时随机跳
   let waveOn = false;
   function wave() {
-    if (!waveOn) return;
+    if (!waveOn || REDUCE) return;
     st.querySelectorAll(".rec .bars i, .cap.rec .bars i").forEach((b, i) => b.style.height = (4 + Math.abs(Math.sin(Date.now() / 140 + i * 1.3)) * 14 + Math.random() * 4) + "px");
     requestAnimationFrame(wave);
   }
@@ -1140,7 +1244,8 @@ function makeStage(fit, opts) {
     setStatus(`<b>正在回答</b>${nth()}`);
     turnEl.insertAdjacentHTML("beforeend", `<div class="ans">${T.a.map(p => `<p>${charsHTML(p)}</p>`).join("")}</div>`);
     const cs = [...turnEl.querySelectorAll(".ans .c")];
-    for (let k = 0; k < cs.length; k += 2) { cs[k].classList.add("v"); if (cs[k + 1]) cs[k + 1].classList.add("v"); await wait(34, r); }
+    if (REDUCE) cs.forEach(c => c.classList.add("v"));
+    else for (let k = 0; k < cs.length; k += 2) { cs[k].classList.add("v"); if (cs[k + 1]) cs[k + 1].classList.add("v"); await wait(34, r); }
     setStatus(doneStatus());
   }
 
@@ -1167,6 +1272,19 @@ function makeStage(fit, opts) {
       }
       if (opts.onEnd) opts.onEnd(i);
     } catch (e) { if (e !== "stop") throw e; }
+  }
+  // 不播动画时直接摆出一个场景问完的样子：每一轮问答都在，字一次出全
+  function snap(i) {
+    scene(i);
+    const S = SCENES[i];
+    movePtr(...S.target);
+    turn = S.turns.length - 1;
+    body.innerHTML = `<div class="thread${turn > 0 ? " multi" : ""}">` + S.turns.map((T, t) =>
+      `<div class="turn ${t === turn ? "cur" : "old"}${t ? " fu" : ""}"><span class="node">${t + 1}</span><div class="qrow"><div class="q">${t ? '<span class="qlab">追问</span>' : ""}${T.q}</div>${t ? "" : shotHTML()}</div><div class="ans">${T.a.map(p => `<p>${charsHTML(p)}</p>`).join("")}</div></div>`).join("") + "</div>";
+    attachClone();
+    body.querySelectorAll(".ans .c").forEach(c => c.classList.add("v"));
+    ap.classList.add("on");
+    setStatus(doneStatus());
   }
   function planned(i) {
     return SCENES[i].turns.reduce((s, T) => s + 1700 + 600 + 650 + T.a.join("").length * 17 + 1500, 1400) + 1300;
@@ -1208,7 +1326,7 @@ function makeStage(fit, opts) {
     st.addEventListener("pointermove", e => { const [x, y] = toStage(e); movePtr(Math.max(0, Math.min(W - 16, x)), Math.max(28, Math.min(H - 24, y))); });
     st.addEventListener("pointerdown", e => { const [x, y] = toStage(e); movePtr(x, y); });
   }
-  return { el: st, play, scene, planned, hold, release, movePtr, get cur() { return cur; }, get turn() { return turn; }, stop() { run++; waveOn = false; } };
+  return { el: st, play, scene, snap, planned, hold, release, movePtr, get cur() { return cur; }, get turn() { return turn; }, stop() { run++; waveOn = false; } };
 }
 
 
@@ -1250,9 +1368,13 @@ function makeStage(fit, opts) {
       loop();
     } catch (e) { if (e !== "stop") throw e; }
   }
-  hero.addEventListener("mouseenter", () => { run++; waving = false; cap.classList.remove("on"); paused = true; sqs.forEach(s => { s.style.transform = ""; s.className = "sq on ans"; $$(".ch", s).forEach(c => c.classList.add("on")); }); });
-  hero.addEventListener("mouseleave", () => { paused = false; loop(); });
-  loop();
+  const showAll = () => sqs.forEach(s => { s.style.transform = ""; s.className = "sq on ans"; $$(".ch", s).forEach(c => c.classList.add("on")); });
+  if (REDUCE) showAll();
+  else {
+    hero.addEventListener("mouseenter", () => { run++; waving = false; cap.classList.remove("on"); paused = true; showAll(); });
+    hero.addEventListener("mouseleave", () => { paused = false; loop(); });
+    loop();
+  }
 
   /* 舞台：三个场景轮播，标签能点 */
   const tabs = $("#tabsA");
@@ -1265,8 +1387,8 @@ function makeStage(fit, opts) {
     const pg = $(`button[data-i="${i}"] .pg`, tabs);
     requestAnimationFrame(() => requestAnimationFrame(() => { pg.style.transition = `width ${stage.planned(i)}ms linear`; pg.style.width = "100%"; }));
   }
-  tabs.addEventListener("click", e => { const b = e.target.closest("button"); if (b) start(+b.dataset.i); });
-  start(0);
+  tabs.addEventListener("click", e => { const b = e.target.closest("button"); if (b) REDUCE ? stage.snap(+b.dataset.i) : start(+b.dataset.i); });
+  if (REDUCE) stage.snap(0); else start(0);
 
   /* 需要准备：拖图标授权的小动画 */
   const pd = $("#permA");
@@ -1291,7 +1413,8 @@ function makeStage(fit, opts) {
         perm();
       } catch (e) { if (e !== "stop") throw e; }
     }
-    new IntersectionObserver(es => { if (es[0].isIntersecting) perm(); else r2++; }).observe(pd);
+    if (REDUCE) { list.classList.add("got"); tgNew.classList.add("on"); }
+    else new IntersectionObserver(es => { if (es[0].isIntersecting) perm(); else r2++; }).observe(pd);
   }
 })();
 
@@ -1326,7 +1449,7 @@ function makeStage(fit, opts) {
   addEventListener("keyup", e => { if (keyCode && e.code === keyCode && !recording) stage.release(); });
 
   /* 左边的步骤栏 */
-  $("#rail").addEventListener("click", e => { const a = e.target.closest("a[data-s]"); if (a) document.getElementById(a.dataset.s).scrollIntoView({ block: "start", behavior: "smooth" }); });
+  $("#rail").addEventListener("click", e => { const a = e.target.closest("a[data-s]"); if (a) document.getElementById(a.dataset.s).scrollIntoView({ block: "start", behavior: REDUCE ? "auto" : "smooth" }); });
   addEventListener("scroll", () => {
     let on = null;
     ["s1", "s2", "s3", "s4", "s5"].forEach(s => { const el = document.getElementById(s); if (el.getBoundingClientRect().top < innerHeight * 0.45) on = s; });
@@ -1379,17 +1502,37 @@ function makeStage(fit, opts) {
   });
   renderPerm();
 
-  /* 第 3 步：两个 Key */
-  const PROV = {
-    ds: { ph: "粘贴 DeepSeek API Key", link: "DeepSeek 开放平台 platform.deepseek.com/api_keys", steps: ["打开 platform.deepseek.com/api_keys，注册登录。", "点「创建 API Key」，起个名字，复制下来，这个 Key 只显示一次。", "按用量从余额扣费，先充一点。"] },
-    bl: { ph: "粘贴 DashScope API Key", link: "阿里云百炼控制台 bailian.console.aliyun.com", steps: ["打开 bailian.console.aliyun.com，用阿里云账号登录并开通百炼。", "在 API Key 页面创建一个 Key，复制下来。", "建议打开「免费额度用完即停」，Ask Free 才能发现额度用完、自动换模型。"] }
+  /* 第 3 步：两个 Key。去拿 Key 的链接和 App「语音与模型」页一致；图文步骤里每一步配一张控制台示意图 */
+  const MOCK = (url, body) => `<div class="shotmock">${url ? `<div class="bb"><i></i><i></i><i></i>${url}</div>` : ""}<div class="bd">${body}</div></div>`;
+  const HOWTO = {
+    volc: { name: "识别语音 · 火山引擎（豆包）", steps: [
+      ["打开 console.volcengine.com/speech/app，注册登录，按提示做实名认证。"],
+      ["在「语音识别」里找到「录音文件识别」，点「开通」。每个识别版本送 20 小时。",
+        MOCK("console.volcengine.com/speech/app", `<span class="mu">语音识别</span><b>录音文件识别</b><span class="sp"></span><span class="sbtn solid hl">开通</span>`)],
+      ["新建一个应用，复制它的「API Key」。",
+        MOCK("", `<span class="mu">API Key</span><span class="keybox">7c1e9a42-••••-••••-3f0d</span><span class="sp"></span><span class="sbtn hl">复制</span>`)]
+    ] },
+    ds: { name: "回答问题 · DeepSeek", ph: "粘贴 DeepSeek API Key", url: "https://platform.deepseek.com/api_keys", steps: [
+      ["打开 platform.deepseek.com，用手机号登录，第一次登录会自动注册。"],
+      ["左边的「充值」先充一点，之后按用量从余额扣。"],
+      ["左边的「API keys」，点「创建 API key」，名字随便写，比如 Ask Free。",
+        MOCK("platform.deepseek.com/api_keys", `<b>API keys</b><span class="sp"></span><span class="sbtn solid hl">创建 API key</span>`)],
+      ["复制 Key，以 sk- 开头，只显示这一次。",
+        MOCK("", `<span class="keybox">sk-3f9a••••••••••••c21e</span><span class="sp"></span><span class="sbtn hl">复制</span>`)]
+    ] },
+    bl: { name: "回答问题 · 阿里百炼千问", ph: "粘贴 DashScope API Key", url: "https://bailian.console.aliyun.com/", steps: [
+      ["打开 bailian.console.aliyun.com，用阿里云账号登录，按提示开通百炼。"],
+      ["在「API-KEY」页面点「创建 API-KEY」，复制下来，以 sk- 开头。",
+        MOCK("bailian.console.aliyun.com", `<b>API-KEY</b><span class="sp"></span><span class="sbtn solid hl">创建 API-KEY</span>`)],
+      ["建议打开「免费额度用完即停」：额度用完时 Ask Free 才知道，会自动换下一个模型。",
+        MOCK("bailian.console.aliyun.com", `<span>免费额度用完即停</span><span class="sp"></span><span class="tg on hl"></span>`)]
+    ] }
   };
-  const VOLC = ["火山引擎：打开 console.volcengine.com/speech/app，注册登录并实名认证，开通「录音文件识别」，创建 API Key。"];
   let prov = "ds";
   function renderProv() {
-    const P = PROV[prov];
-    $("#k2").placeholder = P.ph; $("#provLink").dataset.ext = P.link;
-    $("#howtoList").innerHTML = VOLC.concat(P.steps.map(s => (prov === "ds" ? "DeepSeek：" : "百炼：") + s)).map(s => `<li>${s}</li>`).join("");
+    const P = HOWTO[prov];
+    $("#k2").placeholder = P.ph; $("#provLink").href = P.url;
+    $("#howtoList").innerHTML = [HOWTO.volc, P].map(g => `<h4>${g.name}</h4><ol>${g.steps.map(([t, m]) => `<li>${t}${m || ""}</li>`).join("")}</ol>`).join("");
   }
   $("#provB").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; e.preventDefault(); prov = b.dataset.p; $$("#provB button").forEach(x => x.classList.toggle("on", x === b)); renderProv(); });
   renderProv();
@@ -1420,21 +1563,31 @@ function makeStage(fit, opts) {
 
 
 
-/* 版本号、大小和下载地址：读 GitHub 最新一版，读不到就不显示这一行，按钮照样打开发布页 */
+/* 版本号、大小、文件名和下载地址：读 GitHub 最新一版。读不到时页面上留着写死的 v1.1.0，
+   下载按钮退回 releases/latest/download 下不带版本号的 AskFree.zip（发版时每版都传一份），首屏「最新」那行不显示 */
 (function () {
   const ctl = new AbortController();
   setTimeout(() => ctl.abort(), 6000);
   fetch("https://api.github.com/repos/SchaeferAnjon/askfree/releases/latest", { signal: ctl.signal })
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(rel => {
-      const zip = (rel.assets || []).find(a => /\.zip$/i.test(a.name));
+      const zips = (rel.assets || []).filter(a => /\.zip$/i.test(a.name));
+      const zip = zips.find(a => /\d/.test(a.name)) || zips[0];   // 带版本号的那份（AskFree-1.1.0.zip）优先
       if (!zip) return;
-      const mb = (zip.size / 1048576).toFixed(1) + " MB";
+      const mb = (zip.size / 1e6).toFixed(1) + " MB";
       const d = new Date(rel.published_at);
-      const date = `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
-      $$("#dlGo").forEach(a => a.href = zip.browser_download_url);
-      $$("[data-ver]").forEach(el => el.textContent = `${rel.tag_name} · ${date} · ${mb}`);
+      $("#dlGo").href = zip.browser_download_url;
+      $$("[data-ver]").forEach(el => el.textContent = `${rel.tag_name} · ${d.getMonth() + 1} 月 ${d.getDate()} 日 · ${mb}`);
+      $$("[data-size]").forEach(el => el.textContent = mb);
+      $$("[data-fname]").forEach(el => el.textContent = zip.name);
+      $$("[data-tag]").forEach(el => el.textContent = rel.tag_name);
+      $$("[data-ver-row]").forEach(el => el.hidden = false);
     })
-    .catch(() => $$("[data-ver-row]").forEach(el => el.hidden = true));
+    .catch(() => {});
 })();
+
+/* 配置教程页底下的常见问题就是首页那一份 */
+$("#setupFaq").append($("#faq .faq").cloneNode(true));
+
+{ const p = pageFromUrl(); if (p) go(p); }
 </script></body></html>

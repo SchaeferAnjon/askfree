@@ -272,12 +272,16 @@ struct PermissionRows: View {
             switch kind {
             case .mic: return ("麦克风", status.mic == .denied ? "拒绝过了：到系统设置里把 Ask Free 的开关打开。" : "录下你说的问题。系统会弹框问一次。", "mic")
             case .accessibility: return ("辅助功能", "按提问键时 Ask Free 才收得到；没开时按键没反应。", "hand.raised")
-            case .screen: return ("屏幕录制", "看屏幕问时才看得到屏幕，只在提问那一刻截一张；开完要重新打开 Ask Free。", "rectangle.dashed")
+            case .screen:
+                return ("屏幕录制", status.screenNeedsRelaunch
+                        ? "已经允许了，重新打开 Ask Free 后才截得到屏幕。"
+                        : "看屏幕问时截一张，存进本机历史；开完要重新打开 Ask Free。", "rectangle.dashed")
             }
         }()
         let content = HStack(spacing: 12) {
             if !compact {
                 Image(systemName: icon).font(.system(size: 13)).foregroundStyle(Theme.text2).frame(width: 18)
+                    .accessibilityHidden(true)
             }
             if compact {
                 Text(title).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
@@ -289,7 +293,9 @@ struct PermissionRows: View {
                 }
             }
             Spacer(minLength: 8)
-            if done(kind) {
+            if kind == .screen && status.screenNeedsRelaunch {
+                Button("重新打开 Ask Free") { AppRelaunch.relaunch() }.buttonStyle(SecondaryButtonStyle())
+            } else if done(kind) {
                 StatusText(text: "已允许")
             } else {
                 let title = kind == .mic && status.mic == .notDetermined ? "允许" : "打开系统设置"

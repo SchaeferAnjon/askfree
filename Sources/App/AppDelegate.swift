@@ -39,6 +39,7 @@ enum AppLinks {
 ///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导），正式版也认
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效
+/// - `-pretendScreenGrantedLater`：当作屏幕录制是启动后才给的（权限页出「重新打开 Ask Free」），只在开发版生效
 enum DevLaunchOptions {
     private static let arguments = ProcessInfo.processInfo.arguments
 
@@ -52,6 +53,8 @@ enum DevLaunchOptions {
     static let openOnboarding: Bool = openPageArgument == "onboarding"
 
     static let skipPermissionPrompts: Bool = AppIdentity.isDevBuild && arguments.contains("-skipPermissionPrompts")
+
+    static let pretendScreenGrantedLater: Bool = AppIdentity.isDevBuild && arguments.contains("-pretendScreenGrantedLater")
 
     static let askText: String? = {
         guard AppIdentity.isDevBuild, let i = arguments.firstIndex(of: "-askText"), i + 1 < arguments.count else { return nil }
@@ -114,6 +117,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         // 用户关了「在 Dock 中显示」：在 Dock 图标出现前就切走，免得启动时闪一下
         DockIcon.apply()
+        // 记下启动这一刻有没有屏幕录制权限：之后才给的要重开一次才截得到（权限页和回答面板给「重新打开」按钮）
+        ScreenSnapshotCapturer.noteLaunchPermission()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

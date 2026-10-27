@@ -9,6 +9,31 @@ extension Notification.Name {
     static let askFreeAccessibilityGranted = Notification.Name("AskFreeAccessibilityGranted")
 }
 
+/// 重新打开自己：屏幕录制在启动后才打开时，要换一个新进程截屏才生效。
+/// 起一个小 shell 等这个进程退出（最多 10 秒），再 `open -n` 拉起同一个 App，然后自己退出。
+enum AppRelaunch {
+    static func relaunch() {
+        let app = NSApp.delegate as? AppDelegate
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", "i=0; while /bin/kill -0 \"$0\" 2>/dev/null && [ $i -lt 100 ]; do /bin/sleep 0.1; i=$((i+1)); done; /usr/bin/open -n \"$1\"",
+                          String(pid), Bundle.main.bundleURL.path]
+        do {
+            try task.run()
+        } catch {
+            app?.debugLog("Relaunch failed to start helper: \(error.localizedDescription)")
+            let alert = NSAlert()
+            alert.messageText = "没能重新打开 Ask Free"
+            alert.informativeText = "请从菜单栏图标里点「退出 Ask Free」，再从「应用程序」里打开它。"
+            alert.runModal()
+            return
+        }
+        app?.debugLog("Relaunching to pick up screen recording permission")
+        NSApp.terminate(nil)
+    }
+}
+
 extension AppDelegate {
     func requestMicrophonePermissionIfUndetermined() {
         if AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {

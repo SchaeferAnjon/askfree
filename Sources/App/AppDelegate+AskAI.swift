@@ -108,7 +108,13 @@ extension AppDelegate {
         finishAsk()
         if let screenNote {
             let needsPermission = screenNote == ScreenSnapshotError.noPermission.userMessage
-            answerPanel.setScreenNote(Self.screenBannerText(screenNote, needsPermission: needsPermission), needsPermission: needsPermission)
+            if !needsPermission && ScreenSnapshotCapturer.needsRelaunch {
+                // 权限是启动后才给的：截屏要换个新进程才生效，说清楚并给「重新打开」
+                answerPanel.setScreenNote("这次没看屏幕：屏幕录制刚打开，重新打开 Ask Free 后生效", action: .relaunch)
+            } else {
+                answerPanel.setScreenNote(Self.screenBannerText(screenNote, needsPermission: needsPermission),
+                                          action: needsPermission ? .grant : nil)
+            }
         }
 
         // 首字迟迟不来就在面板里说一声，别让用户盯着「正在思考…」干等

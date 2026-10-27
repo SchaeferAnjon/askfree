@@ -24,6 +24,8 @@ final class SetupStatus: ObservableObject {
     @Published private(set) var mic: AVAuthorizationStatus = .notDetermined
     @Published private(set) var accessibility = false
     @Published private(set) var screenRecording = false
+    /// 屏幕录制是启动后才打开的，这次运行还截不到：要重新打开 Ask Free
+    @Published private(set) var screenNeedsRelaunch = false
     @Published private(set) var asrReady = false
     @Published private(set) var askReady = false
     @Published private(set) var screenHotkeySet = false
@@ -95,6 +97,7 @@ final class SetupStatus: ObservableObject {
         set(\.mic, AVCaptureDevice.authorizationStatus(for: .audio))
         set(\.accessibility, AXIsProcessTrusted())
         set(\.screenRecording, ScreenSnapshotCapturer.hasPermission)
+        set(\.screenNeedsRelaunch, ScreenSnapshotCapturer.needsRelaunch)
         set(\.asrReady, CloudASRTranscriber().isConfigured())
         set(\.askReady, AskAI().isConfigured())
         set(\.screenHotkeySet, AskHotkey.screen.current(in: config) != nil)

@@ -55,6 +55,18 @@ enum ScreenSnapshotCapturer {
 
     static var hasPermission: Bool { CGPreflightScreenCaptureAccess() }
 
+    /// 启动那一刻有没有屏幕录制权限（noteLaunchPermission 在启动时记下）
+    private(set) static var grantedAtLaunch = true
+    /// 这次运行里截成功过：说明权限已经生效，不用重开
+    private(set) static var capturedSinceLaunch = false
+
+    static func noteLaunchPermission() {
+        grantedAtLaunch = hasPermission && !DevLaunchOptions.pretendScreenGrantedLater
+    }
+
+    /// 启动后才在系统设置里打开屏幕录制、这次运行还没截成功过：要重新打开 Ask Free 截屏才生效
+    static var needsRelaunch: Bool { !grantedAtLaunch && hasPermission && !capturedSinceLaunch }
+
     /// 弹一次系统的屏幕录制授权请求（只在第一次触发、且确实没权限时调）
     @discardableResult
     static func requestPermission() -> Bool { CGRequestScreenCaptureAccess() }
@@ -123,6 +135,7 @@ enum ScreenSnapshotCapturer {
                             return
                         }
                         let encodeMs = Int((ProcessInfo.processInfo.systemUptime - encodeStarted) * 1000)
+                        DispatchQueue.main.async { capturedSinceLaunch = true }
                         finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp,
                                                        captureMs: captureMs, encodeMs: encodeMs)))
                     }

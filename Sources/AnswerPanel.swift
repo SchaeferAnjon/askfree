@@ -142,11 +142,11 @@ final class AnswerPanel {
         if collapseWhenDone { collapseWhenDone = false; collapse() }
     }
 
-    /// 这次没看屏幕：回答上面一条橙底提示；没给屏幕录制权限时带「去授权」
-    func setScreenNote(_ text: String, needsPermission: Bool) {
+    /// 这次没看屏幕：回答上面一条橙底提示；没给屏幕录制权限时带「去授权」，刚给了还没生效时带「重新打开」
+    func setScreenNote(_ text: String, action: ScreenNoteAction?) {
         guard let last = model.turns.indices.last else { return }
         model.turns[last].screenNote = text
-        model.turns[last].screenNeedsPermission = needsPermission
+        model.turns[last].screenAction = action
         relayoutAfterStateChange()
     }
 
@@ -774,9 +774,9 @@ struct AnswerTurn: Identifiable {
     var state: State = .thinking
     /// 这一轮的小灰字（正在联网查、网络较慢、在想），显示在回答上方
     var note: String?
-    /// 这次没看屏幕的原因：回答上面一条橙底提示；needsPermission 时带「去授权」
+    /// 这次没看屏幕的原因：回答上面一条橙底提示，screenAction 是它右边的按钮
     var screenNote: String?
-    var screenNeedsPermission = false
+    var screenAction: ScreenNoteAction?
     /// 这一问转去联网查了（状态条写「联网」）
     var searched = false
     /// 没答成：报错卡
@@ -785,6 +785,14 @@ struct AnswerTurn: Identifiable {
     var images: [AskImage] = []
     /// 这一轮发给模型的截图（问题右边的缩略图）
     var screenshot: AskScreenshot?
+}
+
+/// 「这次没看屏幕」那条右边的按钮
+enum ScreenNoteAction {
+    /// 还没给屏幕录制权限：去授权
+    case grant
+    /// 启动后才给的权限，这次运行还截不到：重新打开 Ask Free
+    case relaunch
 }
 
 struct AskScreenshot {
@@ -1153,7 +1161,7 @@ struct TurnsView: View {
     @ViewBuilder private func answerBody(_ turn: AnswerTurn, isLast: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             // 「这次没看屏幕」只挂在当前这一问上，展开看旧的几轮时不重复
-            if isLast, let screenNote = turn.screenNote { screenBanner(screenNote, needsPermission: turn.screenNeedsPermission) }
+            if isLast, let screenNote = turn.screenNote { screenBanner(screenNote, action: turn.screenAction) }
             if let note = turn.note, !note.isEmpty, turn.state != .failed {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "info.circle").font(.system(size: 11))
@@ -1167,15 +1175,21 @@ struct TurnsView: View {
         }
     }
 
-    /// 这次没看屏幕：橙底一条，没给权限时带「去授权」
-    private func screenBanner(_ text: String, needsPermission: Bool) -> some View {
+    /// 这次没看屏幕：橙底一条，没给权限时带「去授权」，刚给了还没生效时带「重新打开」
+    private func screenBanner(_ text: String, action: ScreenNoteAction?) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "display").font(.system(size: 13)).foregroundStyle(Theme.warn)
             Text(text).font(.system(size: 12)).foregroundStyle(Theme.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            if needsPermission {
+            switch action {
+            case .grant:
                 Button("去授权", action: onGrantScreen).buttonStyle(PanelButtonStyle(solid: false, small: true))
+            case .relaunch:
+                Button("重新打开") { AppRelaunch.relaunch() }.buttonStyle(PanelButtonStyle(solid: false, small: true))
+                    .help("退出并重新打开 Ask Free，屏幕录制权限就生效了")
+            case nil:
+                EmptyView()
             }
         }
         .padding(.vertical, 7)

@@ -14,6 +14,14 @@ public enum AskSettings {
         AskFreeConfig.shared.bool(forKey: screenshotEnabledKey, defaultValue: screenshotDefaultEnabled)
     }
 
+    /// 共享屏幕、录屏、截图时藏起回答面板、打字框和录音浮窗（和 MeetCaption 的 hideFromScreenShare 一样默认打开）
+    public static let hideFromScreenShareKey = "hide_from_screen_share"
+    public static let hideFromScreenShareDefault = true
+
+    public static var isHiddenFromScreenShare: Bool {
+        AskFreeConfig.shared.bool(forKey: hideFromScreenShareKey, defaultValue: hideFromScreenShareDefault)
+    }
+
     public static var visionModelOverride: String? {
         let raw = AskFreeConfig.shared.string(forKey: visionModelKey)?
             .trimmingCharacters(in: .whitespacesAndNewlines)

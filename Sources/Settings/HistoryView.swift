@@ -100,11 +100,15 @@ struct HistoryView: View {
         case all = "全部", screen = "看屏幕", plain = "只提问", type = "打字", web = "联网"
     }
 
+    /// 打开时把键盘焦点给列表（上下键换一条）；从侧栏用 ↑↓ 走过来时为 false，焦点留在侧栏
+    var focusListOnAppear = true
+
     @State private var threads: [AskHistoryThread] = AskHistoryStore.shared.threads()
     @State private var query = ""
     @State private var filter: Filter = .all
     @State private var selectedID: String?
     @FocusState private var listFocused: Bool
+    @FocusState private var searchFocused: Bool
 
     private var visible: [AskHistoryThread] {
         let q = query.trimmingCharacters(in: .whitespaces)
@@ -150,7 +154,15 @@ struct HistoryView: View {
         }
         .onAppear {
             if let pending = HistorySelection.pending { selectedID = pending; HistorySelection.pending = nil }
-            listFocused = true
+            if focusListOnAppear { listFocused = true }
+        }
+        // ⌘F：光标进搜索框
+        .background {
+            Button("搜索历史") { searchFocused = true }
+                .keyboardShortcut("f", modifiers: .command)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
         }
         .onReceive(NotificationCenter.default.publisher(for: .askFreeHistoryDidChange)) { _ in
             threads = AskHistoryStore.shared.threads()
@@ -167,11 +179,17 @@ struct HistoryView: View {
                     TextField("搜问题和回答", text: $query)
                         .textFieldStyle(.plain)
                         .font(.system(size: 13))
+                        .focused($searchFocused)
+                        .accessibilityLabel("搜索历史")
+                        .help("搜问题和回答（⌘F）")
+                        // 搜索框里按 ↓ 回到列表，接着用上下键换一条
+                        .onKeyPress(.downArrow) { listFocused = true; return .handled }
                     if !query.isEmpty {
                         Button { query = "" } label: {
                             Image(systemName: "xmark.circle.fill").font(.system(size: 12)).foregroundStyle(Theme.text3)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("清空搜索")
                     }
                 }
                 .padding(.horizontal, 10)

@@ -440,6 +440,12 @@ struct GeneralPage: View {
                 }
                 Text("主窗口和回答面板一起换。").font(.system(size: 12)).foregroundStyle(Theme.text3).padding(.leading, 2)
             }
+            SettingsGroup(title: "首次引导") {
+                SettingsRow(title: "欢迎引导", detail: "授权、填 Key、选提问键、试问一次，从第一步重看；已经填好的不会清掉。") {
+                    Button("再走一遍引导") { OnboardingWindowController.restart() }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
+            }
         }
     }
 

@@ -23,6 +23,13 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    /// 「通用 → 再走一遍引导」：从欢迎页重新开始。引导已经开着就先关掉，新开的一份从第一步起
+    static func restart() {
+        shared?.close()
+        OnboardingProgress.step = 0
+        show()
+    }
+
     private init() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 900, height: 640),

@@ -3,8 +3,8 @@ import Foundation
 /// 自动更新走到哪一步（App 里的 AppUpdater 按 Sparkle 的回调换这里的值，「通用 → 更新」那一行照它写）。
 /// 和 MeetCaption 的 main/updater.js 同一套：后台查、后台下，下好了点「重启更新」才重启；不点也行，退出时装上。
 public enum UpdatePhase: Equatable {
-    /// 这个包不更新（开发版）
-    case off
+    /// 这个包不更新
+    case off(UpdateOffReason)
     case idle
     case checking
     /// percent 为 nil：服务器没说多大
@@ -31,7 +31,8 @@ public enum UpdatePhase: Equatable {
     /// 「通用 → 更新」开关下面那一行
     public func line(currentVersion: String, now: Date = Date(), calendar: Calendar = .current) -> String {
         switch self {
-        case .off: return "开发版不自动更新。"
+        case .off(.devBuild): return "开发版不自动更新。"
+        case .off(.selfBuilt): return "自己编译的版本（临时签名）不自动更新：到官网下载正式版，就能自动收到新版本。"
         case .idle: return "当前版本 \(currentVersion)"
         case .checking: return "正在检查…"
         case .downloading(let version, let percent):
@@ -61,6 +62,14 @@ public enum UpdatePhase: Equatable {
         guard expected > 0 else { return nil }
         return Int(min(100, Double(received) / Double(expected) * 100))
     }
+}
+
+/// 哪些包不自动更新
+public enum UpdateOffReason: Equatable {
+    /// 开发版：feed 是正式版的，装上会把开发版换成正式版
+    case devBuild
+    /// 自己从源码编的临时签名（ad hoc）包：正式版是 Developer ID 签的，Sparkle 验签时对不上，下了也装不上
+    case selfBuilt
 }
 
 public enum UpdateLocation {

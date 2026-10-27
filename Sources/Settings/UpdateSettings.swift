@@ -17,7 +17,7 @@ struct UpdateSettingsGroup: View {
         SettingsGroup(title: "更新") {
             SettingsRow(title: "自动检查并下载新版本",
                         detail: "有新版本时在后台下载，下好后提示你重启。不点重启也行，下次退出时自动装上。") {
-                // 开发版不更新：开关画成关着的、点不了
+                // 开发版和自己编的包不更新：开关画成关着的、点不了
                 Toggle("自动检查并下载新版本", isOn: Binding(get: { updater.isSupported && updater.automaticallyChecks },
                                                      set: { updater.setAutomaticallyChecks($0) }))
                     .toggleStyle(.square)

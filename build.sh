@@ -26,6 +26,10 @@ if [ -n "$DEVELOPER_ID_IDENTITY" ] && security find-identity -v -p codesigning 2
 else
     SIGN_IDENTITY="-"
 fi
+# 临时签名（ad hoc）的包不开 hardened runtime：开了的话系统的库校验要求 App 和 Sparkle.framework 是同一个团队签的，
+# 临时签名没有团队号，App 一启动就因为加载不了 Sparkle 退出。Developer ID 签的包照常开
+HARDENED_RUNTIME=YES
+[ "$SIGN_IDENTITY" = "-" ] && HARDENED_RUNTIME=NO
 
 echo "Building Ask Free (Release, signing: $SIGN_IDENTITY)..."
 xcodebuild \
@@ -36,6 +40,7 @@ xcodebuild \
     ARCHS=arm64 \
     ONLY_ACTIVE_ARCH=YES \
     CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
+    ENABLE_HARDENED_RUNTIME="$HARDENED_RUNTIME" \
     -quiet \
     build
 

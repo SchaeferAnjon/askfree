@@ -30,7 +30,7 @@ extension AppDelegate {
     func runSelfTest() {
         // 卡住不能让 CI 一直等
         DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
-            Self.finishSelfTest(failures: ["60 秒内没走完"])
+            MainActor.assumeIsolated { Self.finishSelfTest(failures: ["60 秒内没走完"]) }
         }
         Task { @MainActor in
             for page in MainPage.allCases {
@@ -50,10 +50,12 @@ extension AppDelegate {
         }
     }
 
-    private static func finishSelfTest(failures: [String]) {
+    @MainActor private static func finishSelfTest(failures: [String]) {
         let info = Bundle.main.appVersionInfo
         if failures.isEmpty {
             print("Ask Free self-test ok: \(info.version) (\(info.build)), 菜单栏图标、主窗口 \(MainPage.allCases.count) 页、欢迎引导都出来了")
+            // 这个包会不会自动更新（自测里不查更新，只看签名够不够格）
+            print("自动更新：\(AppUpdater.shared.phase.line(currentVersion: info.version))")
             removeTemporaryData()
         } else {
             print("Ask Free self-test FAILED: \(info.version) (\(info.build)): \(failures.joined(separator: "；"))")

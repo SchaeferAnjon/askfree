@@ -14,7 +14,9 @@ final class UpdateStatusTests: XCTestCase {
 
     func testLines() {
         let now = date(2026, 10, 28, 9, 5)
-        XCTAssertEqual(UpdatePhase.off.line(currentVersion: "1.1.0"), "开发版不自动更新。")
+        XCTAssertEqual(UpdatePhase.off(.devBuild).line(currentVersion: "1.1.0"), "开发版不自动更新。")
+        XCTAssertEqual(UpdatePhase.off(.selfBuilt).line(currentVersion: "1.1.0"),
+                       "自己编译的版本（临时签名）不自动更新：到官网下载正式版，就能自动收到新版本。")
         XCTAssertEqual(UpdatePhase.idle.line(currentVersion: "1.1.0"), "当前版本 1.1.0")
         XCTAssertEqual(UpdatePhase.checking.line(currentVersion: "1.1.0"), "正在检查…")
         XCTAssertEqual(UpdatePhase.downloading(version: "1.2.0", percent: 35).line(currentVersion: "1.1.0"), "正在下载新版本 1.2.0，35%")
@@ -32,8 +34,8 @@ final class UpdateStatusTests: XCTestCase {
 
     func testCheckButtonOnlyWhenIdle() {
         XCTAssertEqual([UpdatePhase.idle, .latest(checkedAt: Date()), .error("x")].map(\.canCheck), [true, true, true])
-        XCTAssertEqual([UpdatePhase.off, .checking, .downloading(version: "1", percent: 1), .preparing(version: "1"), .ready(version: "1")].map(\.canCheck),
-                       [false, false, false, false, false])
+        XCTAssertEqual([UpdatePhase.off(.devBuild), .off(.selfBuilt), .checking, .downloading(version: "1", percent: 1), .preparing(version: "1"), .ready(version: "1")].map(\.canCheck),
+                       [false, false, false, false, false, false])
         XCTAssertEqual(UpdatePhase.ready(version: "1.2.0").readyVersion, "1.2.0")
         XCTAssertNil(UpdatePhase.downloading(version: "1.2.0", percent: 100).readyVersion)
     }

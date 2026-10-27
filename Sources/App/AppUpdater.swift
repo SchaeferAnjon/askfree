@@ -5,9 +5,11 @@
 // 有新版就在后台下载、核对 EdDSA 签名，下好后在「通用 → 更新」和菜单栏里给「重启更新」，点了才重启；
 // 不点也行，下次退出时 Sparkle 自己装上。不弹 Sparkle 自带的窗口：状态写在设置那一行里（和 MeetCaption 一样）。
 // 开发版不更新（feed 是正式版的）；开发版带 -updateFeedURL <地址> 启动时查那个地址，用来实测整条流程。
+// 自己从源码编的临时签名包也不更新：正式版是 Developer ID 签的，Sparkle 验签对不上，下了也装不上。
 
 import AppKit
 import Combine
+import Security
 import Sparkle
 #if canImport(AskFreeCore)
 import AskFreeCore
@@ -29,16 +31,34 @@ final class AppUpdater: NSObject, ObservableObject {
     private var expectedBytes: UInt64 = 0
     private var receivedBytes: UInt64 = 0
 
-    /// 开发版不更新，除非带了 -updateFeedURL（实测用）
-    var isSupported: Bool { !AppIdentity.isDevBuild || DevLaunchOptions.updateFeedURL != nil }
+    /// 不更新的原因；nil = 这个包会自动更新。开发版带了 -updateFeedURL（实测用）也更新
+    let offReason: UpdateOffReason? = {
+        if AppIdentity.isDevBuild { return DevLaunchOptions.updateFeedURL == nil ? .devBuild : nil }
+        return AppUpdater.signingTeamID() == nil ? .selfBuilt : nil
+    }()
+
+    var isSupported: Bool { offReason == nil }
 
     var isInApplications: Bool {
         UpdateLocation.isInApplications(bundlePath: Bundle.main.bundlePath, home: NSHomeDirectory())
     }
 
     private override init() {
-        phase = .off
+        phase = .idle
         super.init()
+        if let offReason { phase = .off(offReason) }
+    }
+
+    /// 这个 App 的签名里的团队号；临时签名（ad hoc）没有
+    private static func signingTeamID() -> String? {
+        var code: SecCode?
+        var staticCode: SecStaticCode?
+        var info: CFDictionary?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code,
+              SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
+              SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
+              let dict = info as? [String: Any] else { return nil }
+        return dict[kSecCodeInfoTeamIdentifier as String] as? String
     }
 
     /// 启动时调一次

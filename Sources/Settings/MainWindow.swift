@@ -11,53 +11,6 @@ import AppKit
 import AskFreeCore
 #endif
 
-enum MainPage: String, CaseIterable, Identifiable {
-    case start, history, hotkeys, models, answer, recording, permissions, general, about
-    var id: String { rawValue }
-
-    static let settings: [MainPage] = [.hotkeys, .models, .answer, .recording, .permissions, .general, .about]
-
-    var title: String {
-        switch self {
-        case .start: return "开始"
-        case .history: return "历史"
-        case .hotkeys: return "快捷键"
-        case .models: return "语音与模型"
-        case .answer: return "回答方式"
-        case .recording: return "录音"
-        case .permissions: return "权限"
-        case .general: return "通用"
-        case .about: return "关于"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .start: return "flag"
-        case .history: return "clock"
-        case .hotkeys: return "keyboard"
-        case .models: return "waveform"
-        case .answer: return "text.bubble"
-        case .recording: return "mic"
-        case .permissions: return "lock"
-        case .general: return "gearshape"
-        case .about: return "info.circle"
-        }
-    }
-
-    /// 启动参数 -openPage 和菜单栏用的名字
-    init?(argument: String) {
-        switch argument.lowercased() {
-        case "home", "start": self = .start
-        case "model", "models": self = .models
-        case "settings", "general": self = .general
-        default:
-            guard let page = MainPage(rawValue: argument.lowercased()) else { return nil }
-            self = page
-        }
-    }
-}
-
 @MainActor
 final class MainWindowModel: ObservableObject {
     /// 换页一律清掉 arrivedByArrowKey；只有侧栏 ↑↓ 在换完之后把它设回 true
@@ -166,14 +119,14 @@ struct MainWindowView: View {
         }
     }
 
-    private var startTitle: String { status.allDone ? "首页" : "开始" }
+    private var startTitle: String { MainPage.start.title(setupDone: status.allDone) }
 
     // MARK: 侧栏
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 2) {
             Color.clear.frame(height: 40)   // 让过红绿灯
-            sidebarRow(.start, title: startTitle, symbol: status.allDone ? "house" : "flag")
+            sidebarRow(.start, title: startTitle, symbol: MainPage.start.symbol(setupDone: status.allDone))
             sidebarRow(.history, trailing: historyCount > 0 ? "\(historyCount)" : nil)
             Text("设置").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
                 .padding(.leading, 10).padding(.top, 14).padding(.bottom, 4)
@@ -199,9 +152,7 @@ struct MainWindowView: View {
     /// 侧栏 ↑↓：按侧栏顺序换到上一页 / 下一页，到头不绕回
     private func step(_ delta: Int) {
         keyboardNavigating = true
-        let pages = MainPage.allCases
-        guard let i = pages.firstIndex(of: model.page) else { return }
-        model.page = pages[max(0, min(pages.count - 1, i + delta))]
+        model.page = model.page.stepped(by: delta)
         model.arrivedByArrowKey = true
     }
 
@@ -233,15 +184,7 @@ struct MainWindowView: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private func needsAttention(_ page: MainPage) -> Bool {
-        switch page {
-        case .start: return !status.allDone
-        case .hotkeys: return !status.screenHotkeySet
-        case .models: return !status.keysReady
-        case .permissions: return !status.permissionsReady
-        default: return false
-        }
-    }
+    private func needsAttention(_ page: MainPage) -> Bool { status.checklist.needsAttention(page) }
 
     /// 还差几步 / 一切就绪：和「开始」三步、菜单栏第一行说同一件事
     private var statusCard: some View {
@@ -249,10 +192,10 @@ struct MainWindowView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
                     Circle().fill(status.allDone ? Theme.ok : Theme.warn).frame(width: 7, height: 7)
-                    Text(status.allDone ? "一切就绪" : "还差 \(status.missing.count) 步")
+                    Text(status.checklist.statusTitle)
                         .font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.text)
                 }
-                Text(status.allDone ? status.providerSummary : status.missing.map(\.shortTitle).joined(separator: "、"))
+                Text(status.allDone ? status.providerSummary : status.checklist.missingSummary)
                     .font(.system(size: 11.5)).foregroundStyle(Theme.text2)
                     .lineLimit(2)
             }

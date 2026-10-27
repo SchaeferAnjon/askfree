@@ -47,36 +47,23 @@ final class SetupStatus: ObservableObject {
         }
     }
 
-    // MARK: 分组
+    // MARK: 分组（怎么算在 AskFreeCore 的 SetupChecklist，这里只读值）
 
-    enum Item: CaseIterable {
-        case keys, permissions, hotkey
-        var shortTitle: String {
-            switch self {
-            case .keys: return "填 Key"
-            case .permissions: return "允许权限"
-            case .hotkey: return "选提问键"
-            }
-        }
+    typealias Item = SetupItem
+
+    var checklist: SetupChecklist {
+        SetupChecklist(micAuthorized: mic == .authorized, accessibility: accessibility, screenRecording: screenRecording,
+                       screenshotEnabled: screenshotEnabled, asrReady: asrReady, askReady: askReady,
+                       screenHotkeySet: screenHotkeySet)
     }
 
     var micReady: Bool { mic == .authorized }
-    var keysReady: Bool { asrReady && askReady }
-    var permissionsReady: Bool { micReady && accessibility && (screenRecording || !screenshotEnabled) }
-    var missingPermissions: Int {
-        [micReady, accessibility, screenRecording || !screenshotEnabled].filter { !$0 }.count
-    }
-
-    func isDone(_ item: Item) -> Bool {
-        switch item {
-        case .keys: return keysReady
-        case .permissions: return permissionsReady
-        case .hotkey: return screenHotkeySet
-        }
-    }
-
-    var missing: [Item] { Item.allCases.filter { !isDone($0) } }
-    var allDone: Bool { missing.isEmpty }
+    var keysReady: Bool { checklist.keysReady }
+    var permissionsReady: Bool { checklist.permissionsReady }
+    var missingPermissions: Int { checklist.missingPermissions }
+    func isDone(_ item: Item) -> Bool { checklist.isDone(item) }
+    var missing: [Item] { checklist.missing }
+    var allDone: Bool { checklist.allDone }
 
     /// 「火山引擎听，DeepSeek 答」
     var providerSummary: String {

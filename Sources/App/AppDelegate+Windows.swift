@@ -1,4 +1,7 @@
 import Cocoa
+#if canImport(AskFreeCore)
+import AskFreeCore
+#endif
 
 extension AppDelegate: NSMenuDelegate {
     /// 建立标准主菜单（App 菜单 + 编辑菜单）。
@@ -42,9 +45,9 @@ extension AppDelegate: NSMenuDelegate {
         let viewMenu = NSMenu(title: "显示")
         viewMenu.delegate = self
         viewItem.submenu = viewMenu
-        for (i, page) in MainPage.allCases.enumerated() {
+        for page in MainPage.allCases {
             let item = ClosureMenuItem(page.title) { MainActor.assumeIsolated { SettingsWindowController.show(page: page) } }
-            item.keyEquivalent = i < 9 ? "\(i + 1)" : ""
+            item.keyEquivalent = page.menuKeyEquivalent
             item.representedObject = page.rawValue
             viewMenu.addItem(item)
         }
@@ -65,7 +68,7 @@ extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         guard menu.title == "显示" else { return }
         let allDone = MainActor.assumeIsolated { SetupStatus.shared.allDone }
-        menu.items.first { $0.representedObject as? String == MainPage.start.rawValue }?.title = allDone ? "首页" : MainPage.start.title
+        menu.items.first { $0.representedObject as? String == MainPage.start.rawValue }?.title = MainPage.start.title(setupDone: allDone)
     }
 
     func showSettingsCenter() {

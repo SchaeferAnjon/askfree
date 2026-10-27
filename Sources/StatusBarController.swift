@@ -83,13 +83,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         item.isEnabled = false
         let dotColor: NSColor = status.allDone ? .systemGreen : .systemOrange
         let title = status.allDone ? "可以提问" : "还不能提问"
-        let detail: String
-        if status.allDone {
-            let hotkeys = SettingsStore.shared.hotkeys
-            detail = "按住 \(hotkeys.screenTitle) 看着屏幕问"
-        } else {
-            detail = "还差 \(status.missing.count) 项：" + status.missing.map(\.shortTitle).joined(separator: "、")
-        }
+        let detail = status.checklist.menuDetail(screenHotkeyTitle: SettingsStore.shared.hotkeys.screenTitle)
         let text = NSMutableAttributedString()
         text.append(NSAttributedString(string: "● ", attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 10)]))
         text.append(NSAttributedString(string: title + "\n", attributes: [.foregroundColor: NSColor.labelColor,

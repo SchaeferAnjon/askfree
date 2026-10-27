@@ -21,34 +21,6 @@ struct ScreenSnapshot {
     }
 }
 
-enum ScreenSnapshotError: Error {
-    /// 没给屏幕录制权限
-    case noPermission
-    case noDisplay
-    case captureFailed(String)
-    case encodeFailed
-
-    /// 给用户看的一句话，要能照着办
-    var userMessage: String {
-        switch self {
-        case .noPermission: return "还没给屏幕录制权限，这次只按问题回答。去「系统设置 → 隐私与安全性 → 屏幕录制」勾上 Ask Free，然后退出并重新打开 Ask Free。"
-        case .noDisplay: return "没找到指针所在的屏幕，这次只按问题回答。"
-        case .captureFailed(let reason): return "截屏失败（\(reason)），这次只按问题回答。"
-        case .encodeFailed: return "截屏编码失败，这次只按问题回答。"
-        }
-    }
-
-    /// 日志用的短名（不含任何屏幕内容）
-    var debugName: String {
-        switch self {
-        case .noPermission: return "noPermission"
-        case .noDisplay: return "noDisplay"
-        case .captureFailed(let reason): return "captureFailed(\(reason))"
-        case .encodeFailed: return "encodeFailed"
-        }
-    }
-}
-
 enum ScreenSnapshotCapturer {
     /// 画标记、缩放、JPEG 编码都在这条队列上，主线程一点不占
     private static let renderQueue = DispatchQueue(label: "io.github.schaeferanjon.askfree.screen-snapshot", qos: .userInitiated)

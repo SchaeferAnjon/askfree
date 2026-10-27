@@ -107,14 +107,8 @@ extension AppDelegate {
         // 问题已经发出，回答在面板里流式显示：放开录音，别让所有快捷键在回答的十几秒里都没反应
         finishAsk()
         if let screenNote {
-            let needsPermission = screenNote == ScreenSnapshotError.noPermission.userMessage
-            if !needsPermission && ScreenSnapshotCapturer.needsRelaunch {
-                // 权限是启动后才给的：截屏要换个新进程才生效，说清楚并给「重新打开」
-                answerPanel.setScreenNote("这次没看屏幕：屏幕录制刚打开，重新打开 Ask Free 后生效", action: .relaunch)
-            } else {
-                answerPanel.setScreenNote(Self.screenBannerText(screenNote, needsPermission: needsPermission),
-                                          action: needsPermission ? .grant : nil)
-            }
+            let banner = AskScreenNote.banner(for: screenNote, needsRelaunch: ScreenSnapshotCapturer.needsRelaunch)
+            answerPanel.setScreenNote(banner.text, action: banner.action)
         }
 
         // 首字迟迟不来就在面板里说一声，别让用户盯着「正在思考…」干等
@@ -174,7 +168,7 @@ extension AppDelegate {
                 case .failure(let err):
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
                     self.debugLog("ASK failed: \(reason) \(self.askTiming.summary(totalMs: totalMs))")
-                    self.answerPanel.fail(Self.askFailure(from: err))
+                    self.answerPanel.fail(AskFailure(error: err))
                 }
             }
         }
@@ -189,31 +183,6 @@ extension AppDelegate {
         let round = askRound
         answerPanel.appendQuestion(question)
         sendAsk(question: question, history: history, screen: lastAskScreen, screenNote: nil, round: round)
-    }
-
-    /// 回答失败的原因分成几类，面板按类给标题、怎么办和按钮；认不出的原样写出来
-    static func askFailure(from err: Error) -> AskFailure {
-        if case AskAI.AskError.noAPIKey = err { return .noKey }
-        if case AskAI.AskError.quotaExhausted = err { return .quota }
-        if let url = err as? URLError {
-            switch url.code {
-            case .timedOut: return .timeout
-            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
-                return .offline
-            default: break
-            }
-        }
-        let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
-        if reason.hasPrefix("API Key 无效") { return .invalidKey }
-        if reason.hasPrefix("账号欠费") { return .quota }
-        return .other(reason)
-    }
-
-    /// 「这次没看屏幕：…」：去掉原因里「这次只按问题回答」那半句，面板上一行说完
-    static func screenBannerText(_ note: String, needsPermission: Bool) -> String {
-        if needsPermission { return "这次没看屏幕：还没给屏幕录制权限" }
-        let reason = note.components(separatedBy: "，这次只按问题回答").first ?? note
-        return "这次没看屏幕：" + reason.trimmingCharacters(in: CharacterSet(charactersIn: "。"))
     }
 
     /// 答完的一轮记进历史：文字、真发给模型的截图、已经到了的图；开着的历史页跟着刷新
@@ -363,7 +332,7 @@ extension AppDelegate {
             case nil:
                 self.askTiming.fallback = "slowCapture"
                 self.debugLog("AC: screenshot not ready in time → text only")
-                callback(nil, "截屏没赶上，这次只按问题回答。")
+                callback(nil, AskScreenNote.slowCapture)
             }
         }
     }

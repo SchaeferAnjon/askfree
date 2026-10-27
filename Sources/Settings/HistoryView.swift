@@ -188,6 +188,7 @@ struct HistoryView: View {
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityAddTraits(filter == f ? .isSelected : [])
                     }
                 }
             }
@@ -249,6 +250,7 @@ struct HistoryView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .contextMenu {
             Button("复制问答") { copy(thread) }
             Divider()
@@ -453,6 +455,8 @@ struct HistoryDetail: View {
                 }
                 .buttonStyle(.plain)
                 .help(image.title.isEmpty ? image.pageURL : image.title)
+                .accessibilityLabel(image.title.isEmpty ? "找到的第 \(i + 1) 张图" : "第 \(i + 1) 张图：\(image.title)")
+                .accessibilityHint("用浏览器打开原图")
             }
         }
     }

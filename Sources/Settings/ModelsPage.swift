@@ -76,6 +76,7 @@ struct ModelsPage: View {
                     if done {
                         Image(systemName: "checkmark.circle.fill").font(.system(size: 14)).foregroundStyle(Theme.ok)
                             .background(Circle().fill(Theme.surface)).offset(x: 5, y: -5)
+                            .accessibilityLabel("已填好")
                     }
                 }
             Text(title).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text)
@@ -205,6 +206,7 @@ struct ModelsPage: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func fieldRow<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {

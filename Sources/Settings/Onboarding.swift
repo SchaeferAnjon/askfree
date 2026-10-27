@@ -174,6 +174,7 @@ struct OnboardingView: View {
                     }
                 }
                 .frame(width: 20, height: 20)
+                .accessibilityHidden(true)   // 勾的图标旁白会读成「已选中」；做没做完写在 accessibilityValue 里
                 VStack(alignment: .leading, spacing: 1) {
                     Text(steps[i].title).font(.system(size: 13, weight: current ? .medium : .regular))
                         .foregroundStyle(current ? Theme.text : Theme.text2)
@@ -192,6 +193,9 @@ struct OnboardingView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("第 \(i + 1) 步，\(steps[i].title)，\(steps[i].note)")
+        .accessibilityValue(done ? "已完成" : "")
+        .accessibilityAddTraits(current ? .isSelected : [])
     }
 
     // MARK: 底栏
@@ -271,7 +275,7 @@ struct OnboardingView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {
-                Image(systemName: "lock").font(.system(size: 12)).foregroundStyle(Theme.text3)
+                Image(systemName: "lock").font(.system(size: 12)).foregroundStyle(Theme.text3).accessibilityHidden(true)
                 Text("语音和截图直接发给你选的服务商，不经过任何中间服务器。").font(.system(size: 12)).foregroundStyle(Theme.text2)
             }
         }
@@ -280,7 +284,7 @@ struct OnboardingView: View {
     private func introCard(_ icon: String, _ title: String, _ detail: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 7) {
-                Image(systemName: icon).font(.system(size: 12)).foregroundStyle(Theme.text2)
+                Image(systemName: icon).font(.system(size: 12)).foregroundStyle(Theme.text2).accessibilityHidden(true)
                 Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text)
             }
             Text(detail).font(.system(size: 12)).foregroundStyle(Theme.text2).fixedSize(horizontal: false, vertical: true)
@@ -442,6 +446,7 @@ struct OnboardingView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(customTitle != nil ? .isSelected : [])
                 }
                 Text(hotkeyStatus).font(.system(size: 12)).foregroundStyle(store.hotkeys.screen == nil ? Theme.text3 : Theme.text2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -486,6 +491,7 @@ struct OnboardingView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -617,6 +623,9 @@ struct TryAskStep: View {
                 .foregroundStyle(done ? Theme.ok : Theme.borderStrong)
             Text(title).font(.system(size: 12.5)).foregroundStyle(done ? Theme.text : Theme.text3)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(done ? "通了" : "还没有")
     }
 
     /// 这一步打开后答完的第一题：问题有字就是听到了，存了截图就是截到了，回答有字就是答了

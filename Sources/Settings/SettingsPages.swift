@@ -115,7 +115,7 @@ struct AnswerPage: View {
 
     private func toggleRow(_ title: String, _ detail: String, isOn: Binding<Bool>) -> some View {
         SettingsRow(title: title, detail: detail) {
-            Toggle("", isOn: isOn).toggleStyle(.square).labelsHidden()
+            Toggle(title, isOn: isOn).toggleStyle(.square)
         }
     }
 
@@ -180,11 +180,11 @@ struct RecordingPage: View {
                 }
                 SettingsGroup {
                     SettingsRow(title: "两边显示取消和完成", detail: "点 ✕ 不问了，点 ✓ 说完就问；关掉就是一整条声波。下次录音生效。") {
-                        Toggle("", isOn: Binding(get: { buttons }, set: { on in
+                        Toggle("两边显示取消和完成", isOn: Binding(get: { buttons }, set: { on in
                             buttons = on
                             UserDefaults.standard.set((on ? OverlayControlsMode.buttons : .classic).rawValue,
                                                       forKey: OverlayControlsMode.userDefaultsKey)
-                        })).toggleStyle(.square).labelsHidden()
+                        })).toggleStyle(.square)
                     }
                 }
             }
@@ -318,11 +318,13 @@ struct PermissionRows: View {
     }
 }
 
-/// 系统设置示意：右边浮出 Ask Free 图标，往左拖进列表
+/// 系统设置示意：右边浮出 Ask Free 图标，往左拖进列表。「减少动态效果」打开时停在拖之前那一帧
 struct DragToGrantIllustration: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 4)
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { context in
+            let t = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 4)
             let k = t < 0.8 ? 0 : min(1, (t - 0.8) / 1.4)
             let drag = k * k * (3 - 2 * k)
             let landed = t > 2.3
@@ -354,6 +356,9 @@ struct DragToGrantIllustration: View {
                 Text("把图标往左拖进列表").font(.system(size: 11.5)).foregroundStyle(Theme.text2).padding(.leading, 4)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("示意：系统设置打开后，把右边浮出的 Ask Free 图标往左拖进列表")
+        .accessibilityAddTraits(.isImage)
     }
 
     private func listRow(color: Color, name: String, on: Bool, icon: Bool = false) -> some View {

@@ -227,12 +227,14 @@ final class AnswerPanel {
         model.recording = false
         let screen = panel.screen ?? Self.screenUnderMouse()
         var out = panel.frame
-        out.origin.x = screen.frame.maxX + 12
+        // 「减少动态效果」打开时原地淡出，不往右滑
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if !reduceMotion { out.origin.x = screen.frame.maxX + 12 }
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.3
+            ctx.duration = reduceMotion ? 0.15 : 0.3
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().setFrame(out, display: true)
-            panel.animator().alphaValue = 0.2
+            panel.animator().alphaValue = reduceMotion ? 0 : 0.2
         }, completionHandler: { [weak self, weak panel] in
             // 滑出途中又弹出了新回答：这次收起作废，别把新面板藏掉
             guard let self, self.hideGeneration == generation, self.isHiding else { return }
@@ -273,8 +275,10 @@ final class AnswerPanel {
             relayoutAfterStateChange(animated: false)
             return
         }
-        let start = NSRect(x: screen.frame.maxX + 12, y: final.origin.y, width: size.width, height: size.height)
-        panel.alphaValue = 1
+        // 「减少动态效果」打开时原地淡入，不从屏幕右缘滑进来
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let start = reduceMotion ? final : NSRect(x: screen.frame.maxX + 12, y: final.origin.y, width: size.width, height: size.height)
+        panel.alphaValue = reduceMotion ? 0 : 1
         // 先定窗口尺寸，再把内容视图铺满：内容视图带自动缩放，若先设它再改窗口，会随窗口尺寸差被二次缩放，
         // 上次面板高、这次内容短时内容就被挤到底部、顶上露一块空底
         panel.setFrame(start, display: false)
@@ -282,9 +286,10 @@ final class AnswerPanel {
         panel.orderFrontRegardless()
         panel.invalidateShadow()
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.45
+            ctx.duration = reduceMotion ? 0.15 : 0.45
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.19, 1.0, 0.22, 1.0)
             panel.animator().setFrame(final, display: true)
+            if reduceMotion { panel.animator().alphaValue = 1 }
         }, completionHandler: { [weak self] in
             panel.invalidateShadow()
             self?.relayoutAfterStateChange()
@@ -1104,13 +1109,18 @@ struct TurnsView: View {
                 if let shot = turn.screenshot, !compact { ScreenThumb(shot: shot) }
             }
             if compact {
-                Text(AnswerPanel.plainText(fromMarkdown: turn.answer))
-                    .font(.system(size: 13)).foregroundStyle(Theme.text2)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .contentShape(Rectangle())
-                    .onTapGesture { model.expandedTurns.insert(turn.id) }
-                    .help("点一下看全文")
+                Button { model.expandedTurns.insert(turn.id) } label: {
+                    Text(AnswerPanel.plainText(fromMarkdown: turn.answer))
+                        .font(.system(size: 13)).foregroundStyle(Theme.text2)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("点一下看全文")
+                .accessibilityHint("展开这一轮的全文")
             } else {
                 answerBody(turn, isLast: isLast)
             }
@@ -1240,26 +1250,34 @@ private struct ScreenThumb: View {
     @State private var hovering = false
 
     var body: some View {
-        Image(nsImage: shot.overview)
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: 58, height: 34)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(hovering ? Theme.text2 : Theme.borderStrong, lineWidth: 1))
-            .onHover { hovering = $0 }
-            .help("发给 AI 的画面，红框是你指着的地方。点开看大图")
-            .onTapGesture {
-                let dir = FileManager.default.temporaryDirectory
-                do {
-                    for (name, jpeg) in [("askfree-screen", shot.overviewJPEG), ("askfree-closeup", shot.closeUpJPEG)] {
-                        let url = dir.appendingPathComponent("\(name).jpg")
-                        try jpeg.write(to: url)
-                        NSWorkspace.shared.open(url)
-                    }
-                } catch {
-                    AnswerPanel.log?("ASK screenshot open failed: \(error.localizedDescription)")
-                }
+        Button(action: open) {
+            Image(nsImage: shot.overview)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 58, height: 34)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(hovering ? Theme.text2 : Theme.borderStrong, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("发给 AI 的画面，红框是你指着的地方。点开看大图")
+        .accessibilityLabel("发给 AI 的截图")
+        .accessibilityHint("用「预览」打开指着的地方和整个屏幕两张图")
+    }
+
+    /// 两张图写进临时文件夹，用「预览」打开（本机文件，不走外部链接）
+    private func open() {
+        let dir = FileManager.default.temporaryDirectory
+        do {
+            for (name, jpeg) in [("askfree-screen", shot.overviewJPEG), ("askfree-closeup", shot.closeUpJPEG)] {
+                let url = dir.appendingPathComponent("\(name).jpg")
+                try jpeg.write(to: url)
+                NSWorkspace.shared.open(url)
             }
+        } catch {
+            AnswerPanel.log?("ASK screenshot open failed: \(error.localizedDescription)")
+        }
     }
 }
 

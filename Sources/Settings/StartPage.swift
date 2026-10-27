@@ -83,6 +83,8 @@ struct StartPage: View {
                     }
                 }
                 .frame(width: 22, height: 22)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(done ? "第 \(n) 步，已完成" : "第 \(n) 步")
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title).font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(done ? Theme.text2 : Theme.text)

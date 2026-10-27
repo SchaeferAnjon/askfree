@@ -41,6 +41,7 @@ struct SettingsRow<Trailing: View>: View {
         HStack(spacing: 12) {
             if let icon {
                 Image(systemName: icon).font(.system(size: 13)).foregroundStyle(Theme.text2).frame(width: 18)
+                    .accessibilityHidden(true)   // 只是装饰，旁白读名字就够了
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.text)
@@ -91,27 +92,33 @@ struct Stage<Content: View>: View {
     }
 }
 
-/// 方角开关（轨道 5、滑块 3），开着是墨黑
+/// 方角开关（轨道 5、滑块 3），开着是墨黑。
+/// 只画轨道：名字写在设置行左边，Toggle 的 label 只给旁白读（「让 AI 看屏幕，开关，开」）
 struct SquareToggleStyle: ToggleStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func makeBody(configuration: Configuration) -> some View {
         Button { configuration.isOn.toggle() } label: {
-            HStack {
-                configuration.label
-                ZStack(alignment: configuration.isOn ? .trailing : .leading) {
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(configuration.isOn ? Theme.ink : Theme.borderStrong)
-                        .frame(width: 32, height: 18)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(configuration.isOn ? Theme.onInk : .white)
-                        .frame(width: 14, height: 14)
-                        .shadow(color: .black.opacity(0.15), radius: 1, y: 0.5)
-                        .padding(2)
-                }
-                .animation(.easeOut(duration: 0.15), value: configuration.isOn)
+            ZStack(alignment: configuration.isOn ? .trailing : .leading) {
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(configuration.isOn ? Theme.ink : Theme.borderStrong)
+                    .frame(width: 32, height: 18)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(configuration.isOn ? Theme.onInk : .white)
+                    .frame(width: 14, height: 14)
+                    .shadow(color: .black.opacity(0.15), radius: 1, y: 0.5)
+                    .padding(2)
             }
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: configuration.isOn)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // 旁白看到的是一个真开关：名字、开 / 关、「开关」角色都对，按 VO-空格就能切
+        .accessibilityRepresentation {
+            Toggle(isOn: configuration.$isOn) { configuration.label }
+                .toggleStyle(.switch)
+                .labelsHidden()
+        }
     }
 }
 
@@ -209,10 +216,11 @@ struct ChoiceCard<Content: View>: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
-/// 单选圆点
+/// 单选圆点。只是样子：选没选中由外面那张卡片（ChoiceCard）告诉旁白
 struct RadioDot: View {
     let on: Bool
     var body: some View {
@@ -220,6 +228,7 @@ struct RadioDot: View {
             Circle().stroke(on ? Theme.ink : Theme.borderStrong, lineWidth: on ? 5 : 1).frame(width: 15, height: 15)
         }
         .frame(width: 16, height: 16)
+        .accessibilityHidden(true)
     }
 }
 
@@ -246,8 +255,10 @@ struct MiniSegmented<Value: Hashable>: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
+        .accessibilityElement(children: .contain)
         .padding(2)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 6))
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.border, lineWidth: 0.5))
@@ -263,12 +274,15 @@ struct StatusText: View {
     var kind: Kind = .ok
     var body: some View {
         HStack(spacing: 4) {
-            switch kind {
-            case .ok: Image(systemName: "checkmark").font(.system(size: 10, weight: .semibold))
-            case .warn: Circle().frame(width: 6, height: 6)
-            case .danger: Image(systemName: "xmark").font(.system(size: 10, weight: .semibold))
-            case .neutral: EmptyView()
+            Group {
+                switch kind {
+                case .ok: Image(systemName: "checkmark").font(.system(size: 10, weight: .semibold))
+                case .warn: Circle().frame(width: 6, height: 6)
+                case .danger: Image(systemName: "xmark").font(.system(size: 10, weight: .semibold))
+                case .neutral: EmptyView()
+                }
             }
+            .accessibilityHidden(true)   // 旁白读字就够，勾和叉不另读成「Selected」
             Text(text).font(.system(size: 12))
         }
         .foregroundStyle(color)
@@ -330,5 +344,6 @@ struct AppIconView: View {
     var size: CGFloat = 40
     var body: some View {
         Image(nsImage: NSApp.applicationIconImage).resizable().interpolation(.high).frame(width: size, height: size)
+            .accessibilityHidden(true)
     }
 }

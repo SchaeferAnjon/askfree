@@ -297,13 +297,18 @@ struct StatusText: View {
     }
 }
 
+extension OpenURLAction {
+    /// 回答里模型写出的 Markdown 链接：只放行 https / mailto（AppLinks.safeOpen），别的点了不开
+    static let safe = OpenURLAction { url in AppLinks.safeOpen(url) ? .handled : .discarded }
+}
+
 /// 点开就去网页的链接（去 xxx 拿 Key ↗）
 struct LinkText: View {
     let title: String
     let url: String
     var body: some View {
         Button {
-            if let u = URL(string: url) { NSWorkspace.shared.open(u) }
+            AppLinks.safeOpen(url)
         } label: {
             HStack(spacing: 2) {
                 Text(title).underline(true, color: Theme.borderStrong)

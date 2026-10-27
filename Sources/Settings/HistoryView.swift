@@ -438,7 +438,7 @@ struct HistoryDetail: View {
                 let image = turn.images[i]
                 let local = AskHistoryStore.shared.imageThumbURL(turnID: turn.id, index: i)
                 Button {
-                    if let url = URL(string: image.full) { NSWorkspace.shared.open(url) }
+                    AppLinks.safeOpen(image.full)
                 } label: {
                     Group {
                         if let nsImage = NSImage(contentsOf: local) {
@@ -539,6 +539,7 @@ struct HistoryAnswerText: View {
         .lineSpacing(3)
         .textSelection(.enabled)
         .fixedSize(horizontal: false, vertical: true)
+        .environment(\.openURL, .safe)
     }
 
     private enum Line { case heading(String), bullet(String, String), paragraph(String) }

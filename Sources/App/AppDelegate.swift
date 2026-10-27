@@ -8,6 +8,30 @@ import AskFreeCore
 enum AppLinks {
     /// 开源代码仓库
     static let sourceCodeURL = "https://github.com/SchaeferAnjon/askfree"
+    /// 官网
+    static let websiteURL = "https://askfree.us-cloud.uk"
+    /// 联系邮箱（和 MeetCaption 同一个）
+    static let contactEmail = "infoschaeferanjon@gmail.com"
+
+    /// 交给系统打开外部地址：只放行 https 和不带参数的 mailto（ExternalLink），别的协议一律不开。
+    /// 返回 false = 没开（日志里记一笔协议名，不记地址）
+    @discardableResult
+    static func safeOpen(_ url: URL) -> Bool {
+        guard ExternalLink.isAllowed(url) else {
+            (NSApp.delegate as? AppDelegate)?.debugLog("Blocked external link scheme=\(url.scheme ?? "none")")
+            return false
+        }
+        return NSWorkspace.shared.open(url)
+    }
+
+    @discardableResult
+    static func safeOpen(_ string: String) -> Bool {
+        guard let url = URL(string: string.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+            (NSApp.delegate as? AppDelegate)?.debugLog("Blocked external link: not a URL")
+            return false
+        }
+        return safeOpen(url)
+    }
 }
 
 /// 启动参数（scripts/dev_run.sh 透传）：

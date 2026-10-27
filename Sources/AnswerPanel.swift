@@ -1292,25 +1292,28 @@ struct AskImagesRow: View {
 
     var body: some View {
         HStack(spacing: Self.spacing) {
-            ForEach(images) { image in
-                AsyncImage(url: URL(string: image.thumb)) { phase in
-                    switch phase {
-                    // 填满格子、从顶上裁：人像的脸一般在上半部
-                    case .success(let img):
-                        img.resizable().aspectRatio(contentMode: .fill)
-                            .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
-                    case .failure: Image(systemName: "photo").foregroundStyle(Theme.text3)
-                    default: ProgressView().controlSize(.small)
+            ForEach(Array(images.enumerated()), id: \.element.id) { index, image in
+                Button { AppLinks.safeOpen(image.full) } label: {
+                    AsyncImage(url: URL(string: image.thumb)) { phase in
+                        switch phase {
+                        // 填满格子、从顶上裁：人像的脸一般在上半部
+                        case .success(let img):
+                            img.resizable().aspectRatio(contentMode: .fill)
+                                .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
+                        case .failure: Image(systemName: "photo").foregroundStyle(Theme.text3)
+                        default: ProgressView().controlSize(.small)
+                        }
                     }
+                    .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(hovering == image.id ? Theme.text2 : Theme.border))
+                    .contentShape(Rectangle())
                 }
-                .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(hovering == image.id ? Theme.text2 : Theme.border))
+                .buttonStyle(.plain)
                 .onHover { hovering = $0 ? image.id : nil }
                 .help(image.title.isEmpty ? image.pageURL : image.title)
-                .onTapGesture {
-                    if let url = URL(string: image.full) { NSWorkspace.shared.open(url) }
-                }
+                .accessibilityLabel(image.title.isEmpty ? "找到的第 \(index + 1) 张图" : "第 \(index + 1) 张图：\(image.title)")
+                .accessibilityHint("用浏览器打开原图")
             }
         }
         .padding(.top, 2)
@@ -1394,6 +1397,7 @@ struct AnswerText: View {
         }
         .foregroundStyle(Theme.text)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .environment(\.openURL, .safe)
     }
 }
 

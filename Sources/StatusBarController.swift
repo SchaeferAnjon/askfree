@@ -35,6 +35,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         refreshIcon()
     }
 
+    /// 启动自测用：图标真的挂上菜单栏了
+    var isShowing: Bool { statusItem.isVisible && statusItem.button?.image != nil }
+
     // MARK: 菜单
 
     /// 每次点开都按此刻的状态重排

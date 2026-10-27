@@ -13,21 +13,36 @@ public enum AppIdentity {
     /// 当前进程是不是开发版。单元测试（xctest）里为 false，行为与正式版一致。
     public static let isDevBuild: Bool = Bundle.main.bundleIdentifier == devBundleID
 
+    /// 带 -selfTest 启动的启动自测（CI 在正式包上跑）
+    public static let isSelfTest: Bool = ProcessInfo.processInfo.arguments.contains("-selfTest")
+
+    /// 启动自测和开发版的 -snapshotPages：配置、历史、日志、密钥都换到一个空的临时目录，
+    /// 不碰这台 Mac 上的设置和钥匙串，每台机器上画出来的都是同一个「刚装好」的样子
+    public static let usesTemporaryData: Bool = isSelfTest
+        || (isDevBuild && ProcessInfo.processInfo.arguments.contains("-snapshotPages"))
+
+    /// 上面那个临时目录，退出时由 App 删掉
+    public static let temporaryDataDirectory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("AskFree-selftest-\(ProcessInfo.processInfo.processIdentifier)", isDirectory: true)
+
     /// 配置目录：正式版 ~/.config/askfree，开发版 ~/.config/askfree-dev
     public static var configDirectory: URL {
-        FileManager.default.homeDirectoryForCurrentUser
+        if usesTemporaryData { return temporaryDataDirectory.appendingPathComponent("config", isDirectory: true) }
+        return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(isDevBuild ? ".config/askfree-dev" : ".config/askfree", isDirectory: true)
     }
 
     /// 调试日志：正式版 ~/Library/Logs/AskFree.log，开发版 AskFree-dev.log
     public static var debugLogFileURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser
+        if usesTemporaryData { return temporaryDataDirectory.appendingPathComponent("AskFree-selftest.log") }
+        return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(isDevBuild ? "Library/Logs/AskFree-dev.log" : "Library/Logs/AskFree.log")
     }
 
     /// 默认密钥存储：正式版用系统钥匙串；开发版用配置目录下的文件，避免 ad hoc 签名每次重编都弹钥匙串授权框。
+    /// 启动自测也用文件（在临时目录里，是空的）
     public static func defaultSecretStore() -> SecretStoring {
-        if isDevBuild {
+        if isDevBuild || usesTemporaryData {
             return FileSecretStore(fileURL: configDirectory.appendingPathComponent("dev_secrets.json"))
         }
         return KeychainSecretStore.shared

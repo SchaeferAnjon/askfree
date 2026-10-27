@@ -65,14 +65,14 @@ struct AnswerPage: View {
         VStack(alignment: .leading, spacing: 24) {
             Stage(height: 190) { preview }
             SettingsGroup(title: "回答前") {
-                toggleRow("让 AI 看屏幕", "提问时把指针附近那块屏幕一起发过去；关掉就只发你说的话。",
+                toggleRow("让 AI 看屏幕", "提问时把指针附近那块屏幕一起发给 AI，也存进本机历史；关掉就只发你说的话。",
                           isOn: Binding(get: { screenshot }, set: { on in
                               screenshot = on
                               AskFreeConfig.shared.save(bool: on, forKey: AskSettings.screenshotEnabledKey)
                               SetupStatus.shared.refresh()
                           }))
                 Hairline()
-                toggleRow("联网的回答附上图", "要联网查的问题，回答下面附 3 张相关的图，点一张看原图。",
+                toggleRow("联网的回答附上图", "要联网查的问题，回答下面附 3 张相关的图，点一张看原图。找图时只把一个搜索词发给 DuckDuckGo，不发截图和录音。",
                           isOn: Binding(get: { store.askImagesEnabled }, set: { store.setAskImagesEnabled($0) }))
                 Hairline()
                 toggleRow("先想一想再答", "看图推理、要计算的难题答得更准，每问多等 1 到 3 秒。联网查的那一问不受影响。",

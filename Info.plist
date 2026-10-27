@@ -34,6 +34,6 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Ask Free 需要麦克风权限，把你说的问题录下来交给语音识别。</string>
 	<key>NSScreenCaptureUsageDescription</key>
-	<string>Ask Free 需要屏幕录制权限，才能在你提问时把指针所在的那块屏幕交给 AI 看。截图只用于当次提问，不保存。</string>
+	<string>Ask Free 需要屏幕录制权限，才能在你提问时把指针所在的那块屏幕交给 AI 看。只在提问的那一刻截图；截图会和这一问一起存进这台 Mac 上的历史，在「历史」页能删。</string>
 </dict>
 </plist>

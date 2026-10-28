@@ -704,20 +704,9 @@ final class AnswerPanel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in self?.model.copied = false }
     }
 
-    /// 复制到别处用纯文本：小标题去掉 #、加粗去掉 **、条目统一成「• 」/「1. 」、多余空行合并
+    /// 复制到别处、折起来的上一轮、历史摘要用纯文本（规则在 AskFreeCore 的 AnswerMarkdown，有单测）
     static func plainText(fromMarkdown md: String) -> String {
-        var lines: [String] = []
-        for raw in md.components(separatedBy: "\n") {
-            var line = raw.trimmingCharacters(in: .whitespaces)
-            if line.hasPrefix("#") { line = line.drop(while: { $0 == "#" }).trimmingCharacters(in: .whitespaces) }
-            line = line.replacingOccurrences(of: "**", with: "")
-            line = line.replacingOccurrences(of: #"^[-•·*]\s+"#, with: "• ", options: .regularExpression)
-            line = line.replacingOccurrences(of: #"^(\d+)[.、)）]\s+"#, with: "$1. ", options: .regularExpression)
-            if line.isEmpty, lines.last?.isEmpty ?? true { continue }   // 合并连续空行、去掉开头空行
-            lines.append(line)
-        }
-        while lines.last?.isEmpty == true { lines.removeLast() }
-        return lines.joined(separator: "\n")
+        AnswerMarkdown.plainText(md)
     }
 
     private func installEscMonitor() {

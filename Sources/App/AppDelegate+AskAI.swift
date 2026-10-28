@@ -111,11 +111,9 @@ extension AppDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                 self.askTiming.reset(trigger: "hotkey-screen", mode: "dev")
                 self.startAskScreenCapture(at: CGEvent(source: nil)?.location ?? .zero)
-                // 和第一句一样先让截图做完再发：真实使用时这段是用户说话的那几秒
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    self.submitQuestion(question, continuesThread: true)
-                    self.devAskFollowUps(Array(questions.dropFirst()), afterAnswers: answered + 1)
-                }
+                // 截图刚开始就发问：截图还没好时发问要等它好了再发（resolveAskScreen），这条路每次追问都走一遍
+                self.submitQuestion(question, continuesThread: true)
+                self.devAskFollowUps(Array(questions.dropFirst()), afterAnswers: answered + 1)
             }
         }
     }
@@ -324,8 +322,10 @@ extension AppDelegate {
         pendingAskScreenNote = nil
         let pending = PendingAskScreen()
         pendingAskScreen = pending
-        ScreenSnapshotCapturer.capture(at: point) { [weak self, weak pending] result in
-            pending?.complete(result)
+        // pending 要强持有：发问时 resolveAskScreen 把 pendingAskScreen 置空、只在 pending 里挂一个等待，
+        // 截图这时还没好的话，别处就没人持有它了。弱引用会让它当场释放，图好了也送不到，白等 2.5 秒退回纯文本
+        ScreenSnapshotCapturer.capture(at: point) { [weak self] result in
+            pending.complete(result)
             switch result {
             case .success(let snapshot):
                 self?.debugLog("AC: captured in \(snapshot.captureMs)+\(snapshot.encodeMs)ms (\(snapshot.sizeSummary))")

@@ -4,7 +4,7 @@
 
 <p align="center"><b>按一个键说出问题，AI 看着你的屏幕回答。</b></p>
 
-<p align="center"><a href="https://github.com/SchaeferAnjon/askfree/releases/latest"><b>下载 Mac 版（Apple 芯片）</b></a></p>
+<p align="center"><a href="https://github.com/SchaeferAnjon/askfree/releases/latest/download/AskFree.dmg"><b>下载 Mac 版（Apple 芯片和 Intel 通用）</b></a></p>
 
 <p align="center"><a href="https://askfree.us-cloud.uk/"><img src="docs/readme/zh/website.svg" width="236" height="36" alt="官网：askfree.us-cloud.uk"></a></p>
 
@@ -12,14 +12,12 @@
 <a href="https://github.com/SchaeferAnjon/askfree/releases/latest"><img src="https://img.shields.io/github/v/release/SchaeferAnjon/askfree?label=%E6%9C%80%E6%96%B0%E7%89%88&color=111113" alt="最新版"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-111113" alt="GPL-3.0"></a>
 <img src="https://img.shields.io/badge/macOS-14%2B-111113" alt="macOS 14+">
-<img src="https://img.shields.io/badge/%E8%8A%AF%E7%89%87-Apple%20%E8%8A%AF%E7%89%87-111113" alt="Apple 芯片">
+<img src="https://img.shields.io/badge/%E8%8A%AF%E7%89%87-Apple%20%E8%8A%AF%E7%89%87%20%2B%20Intel-111113" alt="Apple 芯片和 Intel">
 </p>
 
 <p align="center"><sub><a href="README.md">English</a> · <b>简体中文</b></sub></p>
 
-<!-- 首屏动图（README 第 30 条）放这里，840 宽的 WebP，例如：
-<p align="center"><img src="docs/readme/zh/ask.webp" width="840" alt="指着屏幕上的内容按住提问键问一句，右上角的回答卡给出回答"></p>
--->
+<p align="center"><img src="docs/readme/zh/ask.webp" width="840" alt="在终端里指着报错那一行，按住右 ⌥ 问『这个报错是什么意思？怎么弄好？』，松开后右上角回答卡给出要运行的命令"></p>
 
 ## 它做什么
 
@@ -38,16 +36,14 @@
 
 - **说话问**：火山引擎[录音文件识别文档](https://www.volcengine.com/docs/6561/1354868)写着，不指定语种时（Ask Free 不指定）能认中文普通话和英语，以及粤语、上海话、闽南语、四川话、陕西话。日语、韩语等其他语种要在请求里指定语种才认，Ask Free 目前不指定。文档没单独写中英混说。这一条是按文档写的（2026 年 10 月 27 日查），没有实测。
 - **打字问**：不经过语音识别，DeepSeek 和千问读得懂的语言都能问。
-- **回答**跟着提问的语言走：用英文问就用英文答。
+- **回答**跟着提问的语言走：用英文问就用英文答。1.2.0 起问题不是中文时，提示词最后会点名用哪种语言答（2026 年 10 月 28 日用 DeepSeek 实测 5 个英文问题，都用英文答）。
 - 软件界面只有中文。
 
 </details>
 
 ## 怎么用
 
-<!-- 功能小节动图（README 第 30 条）放这里，例如追问和联网：
-<p align="center"><img src="docs/readme/zh/followup.webp" width="840" alt="回答还在时再按提问键追问，追问一条条编上号"></p>
--->
+<p align="center"><img src="docs/readme/zh/followup.webp" width="840" alt="指着照片问『这是哪座山？』，回答还在时再按一次键追问『从苏黎世怎么过去？』，追问编上号接在下面"></p>
 
 快捷键默认不设，每台键盘不一样：第一次打开时在欢迎引导里选一个（右 Option、右 Command、fn、Control，或者自己录一个键），之后在主窗口「快捷键」页改。
 
@@ -66,23 +62,24 @@
 
 **历史**：主窗口「历史」页（或菜单栏「历史记录」）按天列出问过的话题，点开看每一轮问答和当时的截图，可搜索、复制、右键删除、清空。
 
-<!-- 真机截图（README 第 31 条）放这里，照 MeetCaption README 的「真机截图」表：
 ## 真机截图
 
 <table>
 <tr>
-<td colspan="2" align="center"><img src="docs/readme/shots/answer.jpg" width="800" alt="看屏幕回答，指针处有红框"><br><sub>看屏幕回答</sub></td>
+<td colspan="2" align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/zh/answer-dark.jpg"><img src="docs/readme/zh/answer-light.jpg" width="800" alt="看屏幕回答：在终端里指着报错问，右上角回答卡写出原因和修法，问题旁的小图是发给 AI 的截图，红框是指着的地方"></picture><br><sub>看屏幕回答</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="docs/readme/shots/followup.jpg" width="380" alt="追问编号线"><br><sub>追问</sub></td>
-<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/shots/history-dark.jpg"><img src="docs/readme/shots/history-light.jpg" width="420" alt="主窗口的历史页"></picture><br><sub>历史</sub></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/zh/followup-dark.jpg"><img src="docs/readme/zh/followup-light.jpg" width="340" alt="追问：第 1 问折成两行，第 2 问『装完要重启终端吗？』用编号线接在下面"></picture><br><sub>追问</sub></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/zh/history-dark.jpg"><img src="docs/readme/zh/history-light.jpg" width="460" alt="主窗口历史页：按天列出 4 个话题，右边是发给 AI 的两张截图（红框是指着的地方）、回答和追问"></picture><br><sub>历史</sub></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme/zh/home-dark.jpg"><img src="docs/readme/zh/home-light.jpg" width="800" alt="主窗口首页：三种问法和各自的键、说话时还能这样、最近问过的问题，左下写着一切就绪"></picture><br><sub>主窗口首页</sub></td>
 </tr>
 </table>
--->
 
 ## 需要准备
 
-1. 一台 Apple 芯片的 Mac，macOS 14 或更新。
+1. 一台 Mac，Apple 芯片和 Intel 芯片都行，macOS 14 或更新。
 2. 两个 API Key，在欢迎引导或主窗口「语音与模型」页填。去哪拿、怎么填，[官网配置教程](https://askfree.us-cloud.uk/#page=setup)一步步讲。
    - **语音识别**：火山引擎（豆包）录音文件识别，[控制台](https://console.volcengine.com/speech/app)。每个识别版本送 20 小时免费额度，半年有效。
    - **问答模型**：DeepSeek（出字最快，需要时自己联网，[控制台](https://platform.deepseek.com/api_keys)）或阿里百炼千问（自带联网搜索，[控制台](https://bailian.console.aliyun.com/)，每个模型送 100 万 Token，开通后 90 天内有效）。
@@ -110,17 +107,20 @@
 
 | | 下载 | 系统 |
 |---|---|---|
-| **Apple 芯片的 Mac**（M1 及以后） | [Releases 页面](https://github.com/SchaeferAnjon/askfree/releases/latest)里的 `AskFree-<版本号>.zip` | macOS 14 或更新 |
+| **Mac**（Apple 芯片和 Intel 芯片通用） | [AskFree.dmg](https://github.com/SchaeferAnjon/askfree/releases/latest/download/AskFree.dmg)（最新版） | macOS 14 或更新 |
 
-Intel 芯片的 Mac 用不了。下载后解压，把 `Ask Free.app` 拖进「应用程序」，再从「应用程序」里打开；直接在「下载」文件夹里打开，macOS 会从一个临时的只读位置运行它。
+打开下载好的 `AskFree.dmg`，把 **Ask Free** 拖到旁边的「应用程序」文件夹，再从「应用程序」里打开。别在 dmg 窗口或「下载」文件夹里直接打开：那样 macOS 会从一个临时的只读位置运行它，给过的权限下次就不认了。
 
-旧版本也在 [Releases 页面](https://github.com/SchaeferAnjon/askfree/releases)。Ask Free 目前不会自动更新，新版本发在同一个页面。
+**自动更新**：从 1.2.0 起，Ask Free 每 6 小时到 GitHub 查一次新版本，有新版就在后台下好、核对签名，在菜单栏和主窗口「通用 → 更新」里给「重启更新」；不点的话，下次退出时装上。在「通用 → 更新」能关掉。1.1.0 和更早的版本没有自动更新，要手动下载一次 1.2.0。旧版本和每一版的更新说明在 [Releases 页面](https://github.com/SchaeferAnjon/askfree/releases)。
 
 <details>
 <summary>第一次打开</summary>
 
-- **提示无法验证开发者**：这一版有 Developer ID 签名，还没经过苹果公证。打开 **系统设置** 里的 **隐私与安全性**，拉到最下面点 **仍要打开**。
-- **欢迎引导**一共六步：欢迎、授权、语音识别、问答模型、提问键，最后真问一句，确认都通了，大约 3 分钟。
+- **提示无法验证开发者**：Ask Free 有 Developer ID 签名，没有经过苹果公证。打开 **系统设置** 里的 **隐私与安全性**，拉到最下面点 **仍要打开**。
+- **欢迎引导**一共七步：欢迎、授权、语音识别、问答模型、提问键、匿名统计（同意或不用了），最后真问一句，确认都通了，大约 3 分钟。
+
+<p align="center"><img src="docs/readme/shots/onboarding-welcome.jpg" width="420" alt="欢迎引导第 1 步：七步设置，先授权、再填 Key、再选提问键"> <img src="docs/readme/shots/onboarding-permissions.jpg" width="420" alt="欢迎引导第 2 步：麦克风、辅助功能、屏幕录制都已允许，上面是拖图标授权的示意"></p>
+
 - **授权**：麦克风在系统弹框里点 **允许**；辅助功能和屏幕录制点 **打开系统设置**，系统设置旁边会浮出 Ask Free 的图标，往左拖进列表就打开了。屏幕录制拖进去以后，系统会请你退出并重新打开 Ask Free，重开后引导回到这一步。
 - **从 1.0.1 升级**：系统可能要你重新给辅助功能和屏幕录制权限。在主窗口 **权限** 页点 **打开系统设置**，把图标拖进列表。
 
@@ -128,13 +128,17 @@ Intel 芯片的 Mac 用不了。下载后解压，把 `Ask Free.app` 拖进「�
 
 ## 隐私
 
-- 不用注册，没有账号，也没有我们自己的服务器：Ask Free 只直连你选的服务商。
+- 不用注册，没有账号。你的问题、录音和截图只直连你选的服务商，不经过我们。
 - 你说的话：录音直接发给火山引擎识别成文字，录音不保存。
 - 问题和截图：发给你选的问答模型，DeepSeek 或阿里百炼。
 - 只在你按下提问键（或双击打字键）那一刻截屏，截整个屏幕的缩小图和指针所在窗口的清晰图。「只提问」键不截；在「回答方式」页关掉「让 AI 看屏幕」也不截。
 - 要联网时，搜索词发给同一家：DeepSeek 的搜索接口，或千问自带的联网搜索。
 - 「联网的回答附上图」默认开着：要配图时，把一个找图用的搜索词（没有就用你的问题）发给 DuckDuckGo，不含截图和录音。在「回答方式」页能关。
+- 检查更新：每 6 小时向 GitHub 取一次新版本信息，有新版就下载安装包，不带你的问题、录音、截图和 Key。在「通用 → 更新」能关。
+- 匿名使用统计：我们会给前 100 位用户免费额度，所以需要统计有多少人在用。统计是匿名的。第一次打开时问你，**你同意了才发**，每天一次，发给我们的服务器（api.us-cloud.uk）：一个装软件时随机生成的编号（跟名字、邮箱、电脑硬件都没关系）、版本号、系统和芯片类型、用会员还是自带 Key、界面语言。不发你问的话、回答、录音、截图和 Key。在主窗口「通用 → 匿名使用统计」随时能改。
 - Key 存在系统钥匙串里。问答历史和截图只存在本机 `~/.config/askfree/`，只有你的账户能读：文字在 `history.jsonl`，发给模型的截图和找到的图的缩略图在 `history-images/`，在「历史」页能删单条或清空。
+
+完整的说明在官网的[隐私说明](https://askfree.us-cloud.uk/#page=privacy)。
 
 ## 从源码编译
 
@@ -165,6 +169,6 @@ scripts/        安装与开发脚本
 
 ## 致谢与许可
 
-Ask Free 基于 [Typefree](https://github.com/kdsz001/typefree)（作者 kdsz001）的「问 AI」功能修改而来，去掉了听写、润色、词库、会员与自动更新等部分，只保留语音提问。
+Ask Free 基于 [Typefree](https://github.com/kdsz001/typefree)（作者 kdsz001）的「问 AI」功能修改而来，去掉了听写、润色、词库和会员等部分，只保留语音提问；自动更新是另外用 [Sparkle](https://sparkle-project.org) 做的。
 
 以 [GPL-3.0](LICENSE) 发布，与上游一致。

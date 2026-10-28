@@ -10,3 +10,4 @@ xcuserdata/
 *.log
 *.swp
 local.build.env
+release/

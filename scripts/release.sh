@@ -2,13 +2,16 @@
 # 发一个新版本到 GitHub Release，分核对和发布两步：
 #   1. 改 project.yml 的 MARKETING_VERSION 和 CURRENT_PROJECT_VERSION（构建号要比上一版大），xcodegen generate，
 #      提交推到 main，打 tag v<版本> 推上去
-#   2. bash scripts/release.sh：核对代码和 tag 对得上，用 RELEASE=1 bash build.sh 编出 Developer ID 签名的通用包，
-#      打出 dmg 和 zip（带版本号的一份 + 固定名 AskFree.dmg / AskFree.zip 一份），逐个核对签名，算 SHA-256，
-#      记进 release/<版本>/checked.json。第一次跑时从 docs/release-notes-template.md 复制出 release/<版本>/notes.md
-#   3. 把 notes.md 里的【待填】都写好（release/ 不进 git，不会挡住「工作区干净」的检查），看过没问题：
-#      bash scripts/release.sh --publish：只上传第 2 步核对过、SHA-256 没变的文件，建 Release（不是草稿）
-# 固定名的文件让 README 和官网能一直链到最新版：
+#   2. 等这个 tag 的 CI（.github/workflows/build.yml）跑完、通过
+#   3. bash scripts/release.sh：核对代码和 tag 对得上、这个 tag 的 CI 过了（scripts/ci_passed.sh），
+#      用 RELEASE=1 bash build.sh 编出 Developer ID 签名的通用包，打出 dmg 和 zip（带版本号的一份 + 固定名 AskFree.dmg / AskFree.zip 一份），
+#      逐个核对签名；给带版本号的 zip 生成并签名自动更新用的 appcast.xml（scripts/make_appcast.sh，私钥从 dispatch env 取）；
+#      算 SHA-256，记进 release/<版本>/checked.json。第一次跑时从 docs/release-notes-template.md 复制出 release/<版本>/notes.md
+#   4. 把 notes.md 里的【待填】都写好（release/ 不进 git，不会挡住「工作区干净」的检查），看过没问题：
+#      bash scripts/release.sh --publish：只上传第 3 步核对过、SHA-256 没变的文件，建 Release（不是草稿）
+# 固定名的文件让 README 和官网能一直链到最新版，装着的 Ask Free 也从固定名的 appcast.xml 查新版本：
 #   https://github.com/SchaeferAnjon/askfree/releases/latest/download/AskFree.dmg
+#   https://github.com/SchaeferAnjon/askfree/releases/latest/download/appcast.xml
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -80,6 +83,9 @@ if [ "$PUBLISH" = "1" ]; then
     exit 0
 fi
 
+# 这个 tag 的 CI（单元测试、编译、启动自测）跑完并且通过了才编正式包
+bash "$ROOT_DIR/scripts/ci_passed.sh" "$TAG" || fail "$TAG 的 CI 没过（上面一行是原因）"
+
 # 写好的发布说明留着，其余重新来
 KEPT_NOTES=""
 [ -f "$NOTES" ] && KEPT_NOTES="$(cat "$NOTES")"
@@ -141,11 +147,20 @@ check_app "$WORK/mnt/Ask Free.app" "$(basename "$DMG")"
 [ "$(readlink "$WORK/mnt/Applications")" = "/Applications" ] || fail "dmg 里没有指向 /Applications 的替身"
 hdiutil detach -quiet "$WORK/mnt"
 
+# 自动更新：给带版本号的 zip 生成并签名 appcast.xml（Sparkle 装更新用的是 zip），下载地址指向这个 Release 里的那份 zip
+echo "生成 appcast.xml…"
+APPCAST="$OUT/appcast.xml"
+bash "$ROOT_DIR/scripts/make_appcast.sh" "$ZIP" "$APPCAST"
+ZIP_URL="https://github.com/$REPO/releases/download/$TAG/$(basename "$ZIP")"
+grep -qF "url=\"$ZIP_URL\"" "$APPCAST" || fail "appcast.xml 里的下载地址不是 $ZIP_URL"
+grep -qF "length=\"$(stat -f %z "$ZIP")\"" "$APPCAST" || fail "appcast.xml 里的大小和 $(basename "$ZIP") 对不上"
+grep -qF "<sparkle:version>$BUILD</sparkle:version>" "$APPCAST" || fail "appcast.xml 里的构建号不是 $BUILD"
+
 # 不带版本号的两份：README 和官网链到 releases/latest/download/<文件名>，点一下就开始下载最新版
 cp "$DMG" "$OUT/AskFree.dmg"
 cp "$ZIP" "$OUT/AskFree.zip"
 
-NAMES=("AskFree-$VERSION.dmg" "AskFree-$VERSION.zip" "AskFree.dmg" "AskFree.zip")
+NAMES=("AskFree-$VERSION.dmg" "AskFree-$VERSION.zip" "AskFree.dmg" "AskFree.zip" "appcast.xml")
 {
     printf '{\n "version": "%s",\n "build": "%s",\n "tag": "%s",\n "head": "%s",\n "files": [\n' "$VERSION" "$BUILD" "$TAG" "$HEAD_SHA"
     for i in "${!NAMES[@]}"; do

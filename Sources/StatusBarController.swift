@@ -57,7 +57,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         // 新版本后台下好了：点一下重启装上（不点也行，退出时装）
         if let version = AppUpdater.shared.phase.readyVersion {
-            menu.addItem(ClosureMenuItem("重启并更新到 \(version)") { AppUpdater.shared.installAndRelaunch() })
+            menu.addItem(ClosureMenuItem("重启更新到 \(version)") { AppUpdater.shared.installAndRelaunch() })
         }
         menu.addItem(.separator())
 

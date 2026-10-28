@@ -34,8 +34,8 @@ public enum UsageConsentCopy {
     public static let reason = "我们会给前 100 位用户免费额度，所以需要统计有多少人在用。统计是匿名的。"
     public static let intro = "同意后，Ask Free 每天会发给我们一次："
     public static let items = [
-        "一个随机编号：只用来数人数，是装软件时随机生成的，跟你的名字、邮箱和电脑硬件都没有关系",
-        "版本号、系统（macOS）和芯片类型",
+        "一个随机编号：只用来数人数，是第一次发送时随机生成的，跟你的名字、邮箱和电脑硬件都没有关系",
+        "是哪个软件（Ask Free）、版本号、系统（macOS）和芯片类型",
         "用会员还是自带 Key，界面是什么语言",
     ]
     public static let never = "不会发你问的话、回答、录音、截图和你的 Key，也不记你的 IP 地址。"
@@ -45,7 +45,7 @@ public enum UsageConsentCopy {
 
     public static let settingTitle = "匿名使用统计"
     public static let settingDetail = reason
-        + "开着时每天发一次：随机编号、版本号、系统和芯片、用会员还是自带 Key、界面语言，只用来数每天有多少人在用。"
+        + "开着时每天发一次：随机编号、是哪个软件、版本号、系统和芯片、用会员还是自带 Key、界面语言，只用来数每天有多少人在用。"
         + "不发你问的话、录音、截图和 Key；关着什么都不发。"
 }
 

@@ -33,7 +33,7 @@ struct UpdateSettingsGroup: View {
                     if let ready = updater.phase.readyVersion {
                         Button("重启更新") { updater.installAndRelaunch() }
                             .buttonStyle(PrimaryButtonStyle())
-                            .accessibilityLabel("重启并更新到 \(ready)")
+                            .accessibilityLabel("重启更新到 \(ready)")
                     }
                 }
             }

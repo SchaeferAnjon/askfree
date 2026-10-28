@@ -566,7 +566,7 @@ struct AboutPage: View {
             }
 
             SettingsGroup(title: "发给谁、发什么",
-                          footer: "你的问题、录音和截图只在你提问时直接发给前三家，用的是你自己的 Key，不经过我们。各家按自己的隐私政策处理收到的内容。") {
+                          footer: "你的问题、录音和截图只在你提问时直接发给前两家，用的是你自己的 Key，不经过我们。DuckDuckGo 不用 Key，只收到一个找图的搜索词，不收录音和截图。各家按自己的隐私政策处理收到的内容。") {
                 SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音。", icon: "waveform")
                 Hairline(inset: 46)
                 SettingsRow(title: "回答问题：\(ModelSettings.askName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen"))",
@@ -582,7 +582,7 @@ struct AboutPage: View {
                             icon: "arrow.down.circle")
                 Hairline(inset: 46)
                 SettingsRow(title: "匿名使用统计：我们的服务器（\(Self.pingHost)）",
-                            detail: "\(UsageConsentCopy.reason)你同意了才发，每天一次：随机编号、版本号、系统和芯片、用会员还是自带 Key、界面语言。现在\(Self.consentState(store.usageConsent))，在「通用 → 隐私」能改。",
+                            detail: "\(UsageConsentCopy.reason)你同意了才发，每天一次：随机编号、是哪个软件、版本号、系统和芯片、用会员还是自带 Key、界面语言。现在\(Self.consentState(store.usageConsent))，在「通用 → 隐私」能改。",
                             icon: "chart.bar")
             }
 

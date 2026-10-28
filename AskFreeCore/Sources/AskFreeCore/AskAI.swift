@@ -330,6 +330,7 @@ public class AskAI {
                                   completion: @escaping (Result<String, Error>) -> Void) {
         let system = Self.askSystemPrompt + Self.imagePromptSuffix + (offerSearchTool ? AskSearch.toolPromptSuffix : "")
             + (offerScreenTool ? AskScreenTool.promptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")
+            + AskReplyLanguage.promptLine(for: question)
         let tools = (offerSearchTool ? AskSearch.tools() : []) + (offerScreenTool ? [AskScreenTool.tool()] : [])
         var messages: [[String: Any]] = [["role": "system", "content": system]]
         for turn in history.suffix(6) {
@@ -445,7 +446,8 @@ public class AskAI {
 
         var messages: [[String: Any]] = [
             ["role": "system", "content": Self.askSystemPrompt + Self.imagePromptSuffix + AskVision.screenPromptSuffix
-                + (history.isEmpty ? "" : AskScreenTool.followUpScreenNote) + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")]
+                + (history.isEmpty ? "" : AskScreenTool.followUpScreenNote) + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")
+                + AskReplyLanguage.promptLine(for: question)]
         ]
         for turn in history.suffix(6) {
             messages.append(["role": "user", "content": turn.question])

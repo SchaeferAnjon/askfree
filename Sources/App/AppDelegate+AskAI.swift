@@ -76,10 +76,12 @@ extension AppDelegate {
         return true
     }
 
-    /// 启动参数 -askText：在指针处截屏，把这句话当成识别出的问题发出去（开发实测用，跳过录音和识别）
-    func devAsk(_ question: String) {
-        debugLog("Launch argument: ask \(question.count) chars")
-        askTiming = AskTiming()
+    /// 启动参数 -askText：在指针处截屏，把这句话当成识别出的问题发出去（开发实测用，跳过录音和识别）。
+    /// 给了几句时，后面的每句等前一句答完 4 秒后当追问接着问（留时间截图），和回答还在时再按一次提问键一样
+    func devAsk(_ questions: [String]) {
+        guard let question = questions.first else { return }
+        debugLog("Launch argument: ask \(questions.count) question(s), first \(question.count) chars")
+        askTiming.reset(trigger: "hotkey-screen", mode: "dev")
         startAskScreenCapture(at: CGEvent(source: nil)?.location ?? .zero)
         askRound += 1
         let round = askRound
@@ -88,6 +90,32 @@ extension AppDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             self.resolveAskScreen { screen, note in
                 self.sendAsk(question: question, history: [], screen: screen, screenNote: note, round: round)
+            }
+        }
+        devAskFollowUps(Array(questions.dropFirst()), afterAnswers: 1)
+    }
+
+    /// 等面板上答完 answered 轮再问下一句；这一轮报错了就不再往下问
+    private func devAskFollowUps(_ questions: [String], afterAnswers answered: Int) {
+        guard let question = questions.first else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self else { return }
+            if self.answerPanel.model.turns.last?.state == .failed {
+                self.debugLog("Launch argument: answer failed, \(questions.count) follow-up(s) not asked")
+                return
+            }
+            guard !self.askInFlight, self.answerPanel.history.count >= answered else {
+                self.devAskFollowUps(questions, afterAnswers: answered)
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                self.askTiming.reset(trigger: "hotkey-screen", mode: "dev")
+                self.startAskScreenCapture(at: CGEvent(source: nil)?.location ?? .zero)
+                // 和第一句一样先让截图做完再发：真实使用时这段是用户说话的那几秒
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self.submitQuestion(question, continuesThread: true)
+                    self.devAskFollowUps(Array(questions.dropFirst()), afterAnswers: answered + 1)
+                }
             }
         }
     }
@@ -281,7 +309,7 @@ extension AppDelegate {
             askTiming.fallback = "off"
             return
         }
-        guard ScreenSnapshotCapturer.hasPermission else {
+        guard DevLaunchOptions.demoScreen != nil || ScreenSnapshotCapturer.hasPermission else {
             askTiming.fallback = "noPermission"
             pendingAskScreenNote = ScreenSnapshotError.noPermission.userMessage
             // 开发版 -skipPermissionPrompts（无人值守实测）不弹授权框：权限要先在系统设置里给好

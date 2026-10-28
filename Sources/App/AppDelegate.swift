@@ -38,7 +38,12 @@ enum AppLinks {
 /// - `-openPage <start|history|hotkeys|models|answer|recording|permissions|general|about|onboarding>`：
 ///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导），正式版也认
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
-/// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效
+/// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效；
+///   可以给几个，后面的等前一句答完 4 秒后当追问接着问
+/// - `-demoData <目录>`：配置和历史换到这个目录，Key 照旧读开发版的；不收全局快捷键（不会误开麦），只在开发版生效。
+///   拍 README 截图用（scripts/readme-shots.mjs）
+/// - `-demoScreen <png> -demoPointer x,y [-demoWindow x,y,w,h]`：看屏幕问时不截真屏幕，把这张图当成整个屏幕，
+///   指针和指针所在的窗口按图上的点算（图是 2 倍像素），只在开发版生效。截图、发给模型的图、历史里存的图都只有这张图
 /// - `-pretendScreenGrantedLater`：当作屏幕录制是启动后才给的（权限页出「重新打开 Ask Free」），只在开发版生效
 /// - `-updateFeedURL <地址>`：查这个地址的 appcast.xml 而不是正式版的，开发版本来不更新、带了才更新，实测自动更新用
 /// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导六步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
@@ -60,10 +65,14 @@ enum DevLaunchOptions {
 
     static let pretendScreenGrantedLater: Bool = AppIdentity.isDevBuild && arguments.contains("-pretendScreenGrantedLater")
 
-    static let askText: String? = {
-        guard AppIdentity.isDevBuild, let i = arguments.firstIndex(of: "-askText"), i + 1 < arguments.count else { return nil }
-        return arguments[i + 1]
+    static let askTexts: [String] = {
+        guard AppIdentity.isDevBuild else { return [] }
+        return arguments.indices.dropLast().filter { arguments[$0] == "-askText" }.map { arguments[$0 + 1] }
     }()
+
+    static let isDemo: Bool = AppIdentity.demoDataDirectory != nil
+
+    static let demoScreen: DemoScreen? = AppIdentity.isDevBuild ? DemoScreen(arguments: arguments) : nil
 
     static let updateFeedURL: String? = {
         guard AppIdentity.isDevBuild, let i = arguments.firstIndex(of: "-updateFeedURL"), i + 1 < arguments.count else { return nil }
@@ -232,8 +241,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else if !cloudTranscriber.isConfigured() || !askAI.isConfigured() {
             SettingsWindowController.show(page: .start)
         }
-        if let question = DevLaunchOptions.askText {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.devAsk(question) }
+        if !DevLaunchOptions.askTexts.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.devAsk(DevLaunchOptions.askTexts) }
         }
     }
 

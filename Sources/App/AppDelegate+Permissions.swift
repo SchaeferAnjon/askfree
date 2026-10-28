@@ -76,6 +76,8 @@ extension AppDelegate {
     }
 
     func updateAccessibilityDependentFeatures() {
+        // 开发版 -demoData（拍截图）不收全局快捷键：截图时碰到那颗键也不会开麦
+        guard !DevLaunchOptions.isDemo else { return }
         let hasAccessibility = AXIsProcessTrusted()
         debugLog("Accessibility trusted=\(hasAccessibility)")
 

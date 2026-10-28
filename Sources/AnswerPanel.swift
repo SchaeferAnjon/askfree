@@ -704,7 +704,7 @@ final class AnswerPanel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in self?.model.copied = false }
     }
 
-    /// 复制到别处、折起来的上一轮、历史摘要用纯文本（规则在 AskFreeCore 的 AnswerMarkdown，有单测）
+    /// 复制到别处用纯文本，代码块原样保留（规则在 AskFreeCore 的 AnswerMarkdown，有单测）
     static func plainText(fromMarkdown md: String) -> String {
         AnswerMarkdown.plainText(md)
     }
@@ -1004,7 +1004,7 @@ struct TurnsView: View {
                 ForEach(previous.turns) { turn in
                     VStack(alignment: .leading, spacing: 3) {
                         Text(turn.question).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text2)
-                        Text(AnswerPanel.plainText(fromMarkdown: turn.answer)).font(.system(size: 13)).foregroundStyle(Theme.text2)
+                        Text(AnswerMarkdown.preview(turn.answer)).font(.system(size: 13)).foregroundStyle(Theme.text2)
                             .lineLimit(3).fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.horizontal, 10)
@@ -1042,7 +1042,7 @@ struct TurnsView: View {
             }
             if compact {
                 Button { model.expandedTurns.insert(turn.id) } label: {
-                    Text(AnswerPanel.plainText(fromMarkdown: turn.answer))
+                    Text(AnswerMarkdown.preview(turn.answer))
                         .font(.system(size: 13)).foregroundStyle(Theme.text2)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)

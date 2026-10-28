@@ -84,7 +84,7 @@ enum HistoryFormat {
 
     /// 回答的第一句，去掉 Markdown 记号
     static func preview(_ answer: String) -> String {
-        AnswerPanel.plainText(fromMarkdown: answer)
+        AnswerMarkdown.preview(answer)
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "`", with: "")
     }

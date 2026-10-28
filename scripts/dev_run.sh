@@ -9,7 +9,8 @@
 #         --prompts    不自动加 -skipPermissionPrompts（要看系统授权框时用）
 #         --stop       只结束正在运行的开发版
 #   App 启动参数原样透传，例如 -openPage settings、-askText "这是什么"
-#   环境变量里的 API Key（ARK_API_KEY、DASHSCOPE_API_KEY、ZHIPU_API_KEY、DEEPSEEK_API_KEY 等）会带进开发版。
+#   环境变量里的 API Key（ARK_API_KEY、DASHSCOPE_API_KEY、ZHIPU_API_KEY、DEEPSEEK_API_KEY 等）会带进开发版；
+#   ASKFREE_API=http://127.0.0.1:<端口> 让开发版把匿名使用统计报到这个地址（开发版平时不报）。
 set -euo pipefail
 
 MAC_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -122,8 +123,9 @@ if [ "$SKIP_PROMPTS" = "1" ]; then
 fi
 
 ENV_ARGS=()
+# ASKFREE_API：匿名使用统计报到的服务器地址，开发版设了它才报（指到本机假服务器测报到）
 for name in ARK_API_KEY DASHSCOPE_API_KEY ZHIPU_API_KEY DEEPSEEK_API_KEY \
-            BIGASR_API_KEY BIGASR_ACCESS_TOKEN BIGASR_APP_ID BIGASR_VERSION; do
+            BIGASR_API_KEY BIGASR_ACCESS_TOKEN BIGASR_APP_ID BIGASR_VERSION ASKFREE_API; do
     if [ -n "${!name:-}" ]; then
         ENV_ARGS+=(--env "$name=${!name}")
     fi

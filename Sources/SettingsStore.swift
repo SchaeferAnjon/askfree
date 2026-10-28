@@ -65,6 +65,8 @@ final class SettingsStore: ObservableObject {
     /// 回答前先思考
     @Published private(set) var askThinkingEnabled: Bool
     @Published private(set) var askThinkingEffort: AskThinkingEffort
+    /// 匿名使用统计：没问过 / 同意 / 不用了。引导那一步、主窗口的询问、「通用」里的开关读写同一个
+    @Published private(set) var usageConsent: UsageConsent
 
     private let config: AskFreeConfig
     private var observers: [NSObjectProtocol] = []
@@ -76,6 +78,7 @@ final class SettingsStore: ObservableObject {
         askImagesEnabled = ImageSearch.isEnabled
         askThinkingEnabled = AskThinkingSettings.isEnabled
         askThinkingEffort = AskThinkingSettings.effort
+        usageConsent = UsageConsent.load(from: config)
 
         let center = NotificationCenter.default
         // queue 传 nil：主线程发的通知同步处理，发通知的地方返回时各页按钮已经是新值
@@ -95,6 +98,7 @@ final class SettingsStore: ObservableObject {
         update(\.askImagesEnabled, ImageSearch.isEnabled)
         update(\.askThinkingEnabled, AskThinkingSettings.isEnabled)
         update(\.askThinkingEffort, AskThinkingSettings.effort)
+        update(\.usageConsent, UsageConsent.load(from: config))
     }
 
     private func reloadHotkeys() {
@@ -129,6 +133,13 @@ final class SettingsStore: ObservableObject {
     func setAskThinkingEffort(_ effort: AskThinkingEffort) {
         config.save(value: effort.rawValue, forKey: AskThinkingSettings.effortKey)
         update(\.askThinkingEffort, AskThinkingSettings.effort)
+    }
+
+    /// 点了「同意」/「不用了」，或者拨了设置里的开关：记下来，同意了今天就报一次
+    func setUsageConsent(agree: Bool) {
+        UsageConsent.save(agree: agree, in: config)
+        update(\.usageConsent, UsageConsent.load(from: config))
+        MainActor.assumeIsolated { UsageReporter.shared.consentDidChange(usageConsent) }
     }
 
     // MARK: 内部

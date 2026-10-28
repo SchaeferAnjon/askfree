@@ -5,7 +5,7 @@ import AskFreeCore
 
 /// 两个不用人看着的启动方式（参数说明见 DevLaunchOptions）：
 /// - `-selfTest`：CI 在正式包上跑，九页和欢迎引导都打开一遍，菜单栏图标、主窗口、引导都出来了就退出（退出码 0），少一样退出码 1
-/// - `-snapshotPages <目录>`：开发版把主窗口九页、欢迎引导六步各画成一张 PNG，改坏了界面一眼能看出来。
+/// - `-snapshotPages <目录>`：开发版把主窗口九页、欢迎引导七步各画成一张 PNG，改坏了界面一眼能看出来。
 ///   和自测一样用空的临时配置（没填 Key、没有历史），画出来的是「刚装好」的样子，不带你的历史和截图
 extension AppDelegate {
     /// 启动自测开始前这个 App 偏好里的东西：AppKit 会自己往里写菜单栏图标的位置、主窗口的位置，退出前原样放回去，
@@ -93,7 +93,7 @@ extension AppDelegate {
                     written.append(try Self.writePNG(of: window, to: directory, name: "main-\(i + 1)-\(page.rawValue)"))
                 }
                 SettingsWindowController.shared?.close()
-                for step in 0..<6 {
+                for step in 0...OnboardingView.lastStep {
                     OnboardingWindowController.shared?.close()
                     OnboardingProgress.step = step
                     OnboardingWindowController.show()

@@ -18,6 +18,7 @@
 		19A133F7C461B849A6E5BF39 /* statusbar-icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E5140CB88611661C2633A954 /* statusbar-icon@2x.png */; };
 		1F5EEA2ED1DCA16F4F3F7FFE /* Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC205BCABC7995BFD2EFC38 /* Onboarding.swift */; };
 		25818365120B6301CE1BB575 /* AppDelegate+Windows.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9054C86F9BCBA0D2E435AEC /* AppDelegate+Windows.swift */; };
+		25FDDE4DD7C3B9BFF2C24E9A /* UsageReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF467554EBA5C710FB5499C5 /* UsageReporter.swift */; };
 		2760C26B81634CC7C403959D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D43DE03E5A88F954E258150 /* main.swift */; };
 		2992A910EE961244A14BF9C0 /* AskTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D8739DD44131F7601B5571 /* AskTiming.swift */; };
 		4033E8982B6CC0CAD71D9C6E /* OverlayWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */; };
@@ -48,6 +49,7 @@
 		AC2AA48439397CEC0B085493 /* SetupStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0E5BE38B6211ECB3E3F2EF /* SetupStatus.swift */; };
 		AE4C64FD964D4AAC3EF689BF /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */; };
 		B8F065C9A2A3F0259EEDD576 /* KeyAwareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDEF40A2A336E870D54DFD6D /* KeyAwareView.swift */; };
+		BAA1F5BE5C1203D59AA47B73 /* UsageConsentViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDCCDAD2E2D423C4C1A1C397 /* UsageConsentViews.swift */; };
 		BAC3B30528F08B8B7365F887 /* MicrophoneRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBD6B87FE20993017771AFE /* MicrophoneRowView.swift */; };
 		BD5A6110D7727629E670C52D /* HotkeyChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD549AC86DEBCD241104A8F5 /* HotkeyChooser.swift */; };
 		C5C3AF0798126B52EE26790C /* AskFreeCore in Frameworks */ = {isa = PBXBuildFile; productRef = D724F3889579F56C96885303 /* AskFreeCore */; };
@@ -101,11 +103,13 @@
 		AD549AC86DEBCD241104A8F5 /* HotkeyChooser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyChooser.swift; sourceTree = "<group>"; };
 		AE11FCE0B8AE7B0E409FE907 /* ModelSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSettings.swift; sourceTree = "<group>"; };
 		AF9EE32E716AB8A5AB31D4F6 /* AppDelegate+Hotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Hotkeys.swift"; sourceTree = "<group>"; };
+		BDCCDAD2E2D423C4C1A1C397 /* UsageConsentViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageConsentViews.swift; sourceTree = "<group>"; };
 		BDEF40A2A336E870D54DFD6D /* KeyAwareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyAwareView.swift; sourceTree = "<group>"; };
 		BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		C65FF5D404E1E1042700722E /* MicrophoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophoneManager.swift; sourceTree = "<group>"; };
 		C7D09DC5E4B368BEC52F0624 /* AppDelegate+Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Permissions.swift"; sourceTree = "<group>"; };
 		C92AFC008A783675431DEE1D /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
+		CF467554EBA5C710FB5499C5 /* UsageReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageReporter.swift; sourceTree = "<group>"; };
 		D5B5B39FCF487201E24E2BCD /* AppDelegate+TypeAsk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+TypeAsk.swift"; sourceTree = "<group>"; };
 		DE7928DC40D2AF04FDD9EF8C /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
 		E0A14D5A1941B5D605435F4E /* DemoStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoStage.swift; sourceTree = "<group>"; };
@@ -163,6 +167,7 @@
 				D5B5B39FCF487201E24E2BCD /* AppDelegate+TypeAsk.swift */,
 				F9054C86F9BCBA0D2E435AEC /* AppDelegate+Windows.swift */,
 				85D5F8156A7281BBD0A33ACD /* AppUpdater.swift */,
+				CF467554EBA5C710FB5499C5 /* UsageReporter.swift */,
 				1005B18C173A34F0BC7E3FA1 /* Components */,
 			);
 			path = App;
@@ -233,6 +238,7 @@
 				A957B8F9F7692476D7E761E3 /* StartPage.swift */,
 				18BEFA122587D0C126DD26D3 /* Theme.swift */,
 				69ECB5D14A6BB5E7ED798DAF /* UpdateSettings.swift */,
+				BDCCDAD2E2D423C4C1A1C397 /* UsageConsentViews.swift */,
 				D26ECBA4E8C3E4024579AE15 /* Components */,
 			);
 			path = Settings;
@@ -401,6 +407,8 @@
 				A40F7F580FDA274593B95BB2 /* Theme.swift in Sources */,
 				0B0B663F3233C5FA9ED2DDDF /* TypeAskPanel.swift in Sources */,
 				F1EF60C371EAA7D6EA0F4ED2 /* UpdateSettings.swift in Sources */,
+				BAA1F5BE5C1203D59AA47B73 /* UsageConsentViews.swift in Sources */,
+				25FDDE4DD7C3B9BFF2C24E9A /* UsageReporter.swift in Sources */,
 				9BF896E95B79D1DE29F7E522 /* VPButton.swift in Sources */,
 				75E3E4CB0E58968D1429A966 /* VUMeterView.swift in Sources */,
 				2760C26B81634CC7C403959D /* main.swift in Sources */,

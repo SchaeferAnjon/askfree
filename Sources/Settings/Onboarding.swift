@@ -1,8 +1,8 @@
 // Onboarding.swift
 // Ask Free
 //
-// 欢迎引导（design/onboarding 方向 A「侧栏步骤」）：一个窗口六步，左边步骤清单，右边一屏一件事。
-// 欢迎 → 授权 → 语音识别 → 问答模型 → 提问键 → 试问一次。和 GetNewWord 的欢迎页同一副骨架。
+// 欢迎引导（design/onboarding 方向 A「侧栏步骤」）：一个窗口七步，左边步骤清单，右边一屏一件事。
+// 欢迎 → 授权 → 语音识别 → 问答模型 → 提问键 → 匿名统计（同意 / 不用了）→ 试问一次。和 GetNewWord 的欢迎页同一副骨架。
 // 进度和主窗口「开始」三步读同一份（SetupStatus）：在哪做完，另一边一起打勾。
 
 import SwiftUI
@@ -65,6 +65,8 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         PermissionDragHelper.shared.hide()
         SetupStatus.shared.endWatching()
         Self.shared = nil
+        // 没答匿名使用统计那一步就关了引导、主窗口又开着：在主窗口上问
+        SettingsWindowController.shared?.askUsageConsentIfNeeded()
     }
 }
 
@@ -73,15 +75,18 @@ struct OnboardingView: View {
     @StateObject private var models = ModelSettings()
     @ObservedObject private var status = SetupStatus.shared
     @ObservedObject private var store = SettingsStore.shared
-    @State private var step = min(OnboardingProgress.step, 5)
+    @State private var step = min(OnboardingProgress.step, Self.lastStep)
     @State private var moreASR = false
     @State private var moreAsk = false
     @State private var moreKeys = false
 
     private let steps: [(title: String, note: String)] = [
         ("欢迎", "看一眼怎么用"), ("授权", "麦克风、辅助功能、屏幕录制"), ("语音识别", "填一个 Key"),
-        ("问答模型", "填一个 Key"), ("提问键", "自己选一个"), ("试问一次", "确认都通了"),
+        ("问答模型", "填一个 Key"), ("提问键", "自己选一个"), ("匿名统计", "同意或不用了"), ("试问一次", "确认都通了"),
     ]
+    /// 第 6 步（下标 5）问匿名使用统计，最后一步试问一次
+    static let consentStep = 5
+    static let lastStep = 6
 
     var body: some View {
         HStack(spacing: 0) {
@@ -96,6 +101,7 @@ struct OnboardingView: View {
                         case 2: asrStep
                         case 3: askStep
                         case 4: hotkeyStep
+                        case Self.consentStep: consentStep
                         default: TryAskStep()
                         }
                     }
@@ -162,6 +168,7 @@ struct OnboardingView: View {
         case 2: return status.asrReady && models.asrKeyFilled && [.idle, .ok].contains(models.asrTest)
         case 3: return status.askReady && models.askKeyFilled && [.idle, .ok].contains(models.askTest)
         case 4: return status.screenHotkeySet
+        case Self.consentStep: return !store.usageConsent.needsAsking
         default: return false
         }
     }
@@ -214,13 +221,21 @@ struct OnboardingView: View {
             if step > 0 {
                 Button("上一步") { go(step - 1) }.buttonStyle(PlainTextButtonStyle())
             }
-            if step > 0 && step < 5 && !canContinue {
+            if step > 0 && step < Self.consentStep && !canContinue {
                 Button("先跳过") { go(step + 1) }.buttonStyle(PlainTextButtonStyle())
             }
-            Button(nextTitle) { next() }
-                .buttonStyle(PrimaryButtonStyle())
-                .keyboardShortcut(.return, modifiers: [])
-                .disabled(!canContinue)
+            if step == Self.consentStep {
+                // 两个一样的按钮代替「继续」：不替用户选，回车也不选
+                UsageConsentButtons(current: store.usageConsent) { agree in
+                    store.setUsageConsent(agree: agree)
+                    go(step + 1)
+                }
+            } else {
+                Button(nextTitle) { next() }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .keyboardShortcut(.return, modifiers: [])
+                    .disabled(!canContinue)
+            }
         }
     }
 
@@ -229,7 +244,13 @@ struct OnboardingView: View {
         case 1: return status.permissionsReady ? "三项都好了" : "还差 \(status.missingPermissions) 项"
         case 2, 3: return canContinue ? "" : "测试连接通过后就能继续"
         case 4: return canContinue ? "" : "选好提问键就能继续"
-        case 5: return "试不试都行，之后随时能问"
+        case Self.consentStep:
+            switch store.usageConsent {
+            case .yes: return "已选：\(UsageConsentCopy.agree)"
+            case .no: return "已选：\(UsageConsentCopy.decline)"
+            case .unasked: return ""
+            }
+        case Self.lastStep: return "试不试都行，之后随时能问"
         default: return ""
         }
     }
@@ -247,7 +268,7 @@ struct OnboardingView: View {
     private var nextTitle: String {
         switch step {
         case 0: return "开始设置"
-        case 5: return "完成"
+        case Self.lastStep: return "完成"
         default: return "继续"
         }
     }
@@ -255,11 +276,11 @@ struct OnboardingView: View {
     private func go(_ target: Int) {
         if step == 2 || step == 3 { models.saveKeys() }
         PermissionDragHelper.shared.hide()
-        withAnimation(.easeOut(duration: 0.2)) { step = max(0, min(5, target)) }
+        withAnimation(.easeOut(duration: 0.2)) { step = max(0, min(Self.lastStep, target)) }
     }
 
     private func next() {
-        if step == 5 { onFinish() } else { go(step + 1) }
+        if step == Self.lastStep { onFinish() } else { go(step + 1) }
     }
 
     private func header(_ title: String, _ subtitle: String) -> some View {
@@ -274,7 +295,7 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(alignment: .leading, spacing: 22) {
             DemoStage(height: 190, showsKeyHint: false)
-            header("按一个键说出问题，AI 看着屏幕回答", "按下那一刻鼠标指在哪，AI 就重点看哪。接下来 5 步，大约 3 分钟。")
+            header("按一个键说出问题，AI 看着屏幕回答", "按下那一刻鼠标指在哪，AI 就重点看哪。接下来 6 步，大约 3 分钟。")
             HStack(alignment: .top, spacing: 10) {
                 introCard("hand.raised", "授权三项", "麦克风点「允许」；另外两项把图标拖进系统设置。")
                 introCard("key", "填两个 Key", "语音识别和问答模型，都有免费额度。")
@@ -471,6 +492,19 @@ struct OnboardingView: View {
         }
     }
 
+    // MARK: 6 匿名统计
+
+    /// 正文和主窗口的询问共用（UsageConsentBody）；两个按钮在底栏
+    private var consentStep: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text(UsageConsentCopy.title).font(.system(size: 22, weight: .semibold)).foregroundStyle(Theme.text)
+            UsageConsentBody()
+                .padding(16)
+                .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.border, lineWidth: 0.5))
+        }
+    }
+
     private var customTitle: String? {
         if case .custom(let custom)? = store.hotkeys.screen { return custom.displayName }
         return nil
@@ -502,7 +536,7 @@ struct OnboardingView: View {
     }
 }
 
-// MARK: - 6 试问一次
+// MARK: - 7 试问一次
 
 /// 真的问一句：指着左边的图按提问键（或按住屏幕上的按钮）说话，回答出在右上角，下面三项打勾
 struct TryAskStep: View {

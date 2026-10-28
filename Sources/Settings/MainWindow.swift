@@ -17,6 +17,8 @@ final class MainWindowModel: ObservableObject {
     @Published var page: MainPage = .start { didSet { arrivedByArrowKey = false } }
     /// 这一页是在侧栏里按 ↑↓ 走到的：焦点该留在侧栏（「历史」不抢去给列表）
     var arrivedByArrowKey = false
+    /// 主窗口上问一次匿名使用统计（UsageConsentSheet）
+    @Published var asksUsageConsent = false
 }
 
 // MARK: - 窗口
@@ -32,6 +34,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         if let page { controller.model.page = page }
         controller.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        controller.askUsageConsentIfNeeded()
+    }
+
+    /// 匿名使用统计还没回答过：主窗口打开后问一次（老用户更新后第一次打开、引导里没答那一步的人）。
+    /// 欢迎引导开着时不问，引导关掉后再问（OnboardingWindowController.windowWillClose）
+    func askUsageConsentIfNeeded() {
+        guard UsageConsentPrompt.isAllowed, SettingsStore.shared.usageConsent.needsAsking, !model.asksUsageConsent else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+            guard let self, self.window?.isVisible == true, OnboardingWindowController.shared == nil,
+                  SettingsStore.shared.usageConsent.needsAsking else { return }
+            self.model.asksUsageConsent = true
+        }
     }
 
     /// 「设置… ⌘,」：已经在某一页设置上就留在那页，不然到第一页设置「快捷键」
@@ -94,6 +108,7 @@ struct MainWindowView: View {
     static let sidebarWidth: CGFloat = 216
     @ObservedObject var model: MainWindowModel
     @ObservedObject private var status = SetupStatus.shared
+    @ObservedObject private var store = SettingsStore.shared
     @State private var historyCount = AskHistoryStore.shared.threads().count
     /// 侧栏有键盘焦点时 ↑↓ 换页（点一下侧栏、或 Tab 进来）；历史列表、输入框有焦点时 ↑↓ 归它们
     @FocusState private var sidebarFocused: Bool
@@ -117,6 +132,14 @@ struct MainWindowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .askFreeHistoryDidChange)) { _ in
             historyCount = AskHistoryStore.shared.threads().count
         }
+        .sheet(isPresented: $model.asksUsageConsent) {
+            UsageConsentSheet { agree in
+                store.setUsageConsent(agree: agree)
+                model.asksUsageConsent = false
+            }
+        }
+        // 别处答过了（比如引导里），不用再问
+        .onChange(of: store.usageConsent) { _, now in if !now.needsAsking { model.asksUsageConsent = false } }
     }
 
     private var startTitle: String { MainPage.start.title(setupDone: status.allDone) }

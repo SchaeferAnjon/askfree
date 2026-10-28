@@ -46,7 +46,7 @@ enum AppLinks {
 ///   指针和指针所在的窗口按图上的点算（图是 2 倍像素），只在开发版生效。截图、发给模型的图、历史里存的图都只有这张图
 /// - `-pretendScreenGrantedLater`：当作屏幕录制是启动后才给的（权限页出「重新打开 Ask Free」），只在开发版生效
 /// - `-updateFeedURL <地址>`：查这个地址的 appcast.xml 而不是正式版的，开发版本来不更新、带了才更新，实测自动更新用
-/// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导六步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
+/// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导七步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
 /// - `-selfTest`：启动自测，正式版也认（CI 用）：菜单栏图标和主窗口出来就退出，退出码 0；
 ///   配置和密钥换到临时目录（AppIdentity.usesTemporaryData），不读写你的设置、钥匙串，不弹授权框，不登记开机启动
 enum DevLaunchOptions {
@@ -226,8 +226,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 启动末尾主动调一次，注册快捷键
         updateAccessibilityDependentFeatures()
 
-        // 后台查新版（开发版不查）
-        MainActor.assumeIsolated { AppUpdater.shared.start() }
+        // 后台查新版（开发版不查）；用户同意了匿名使用统计才每天报到一次（开发版不报）
+        MainActor.assumeIsolated {
+            AppUpdater.shared.start()
+            UsageReporter.shared.start()
+        }
 
         // 第一次打开出欢迎引导；看过引导但还没填 Key：打开主窗口的「开始」，不填用不了
         if let directory = DevLaunchOptions.snapshotPagesDirectory {

@@ -394,6 +394,7 @@ struct PermissionsPage: View {
 // MARK: - 通用
 
 struct GeneralPage: View {
+    @ObservedObject private var store = SettingsStore.shared
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var dock = DockIcon.isShown
     @State private var appearance = MainWindowAppearance.current
@@ -429,6 +430,13 @@ struct GeneralPage: View {
                         hideFromShare = on
                         ScreenShareHiding.setEnabled(on)
                     })).toggleStyle(.square)
+                }
+                Hairline()
+                // 三态（没问过 / 同意 / 不用了）里只有同意画成开着；打开算同意，关掉算不用了
+                SettingsRow(title: UsageConsentCopy.settingTitle, detail: UsageConsentCopy.settingDetail) {
+                    Toggle(UsageConsentCopy.settingTitle, isOn: Binding(get: { store.usageConsent.allowsPing },
+                                                                       set: { store.setUsageConsent(agree: $0) }))
+                        .toggleStyle(.square)
                 }
             }
             UpdateSettingsGroup()
@@ -489,6 +497,7 @@ struct GeneralPage: View {
 // MARK: - 关于
 
 struct AboutPage: View {
+    @ObservedObject private var store = SettingsStore.shared
     @State private var copied: CopiedItem?
     private let version = Bundle.main.appVersionInfo
 
@@ -549,7 +558,7 @@ struct AboutPage: View {
             }
 
             SettingsGroup(title: "发给谁、发什么",
-                          footer: "Ask Free 没有自己的服务器，不做使用统计：只在你提问时把内容直接发给前三家，用的是你自己的 Key。各家按自己的隐私政策处理收到的内容。") {
+                          footer: "你的问题、录音和截图只在你提问时直接发给前三家，用的是你自己的 Key，不经过我们。各家按自己的隐私政策处理收到的内容。") {
                 SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音。", icon: "waveform")
                 Hairline(inset: 46)
                 SettingsRow(title: "回答问题：\(ModelSettings.askName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen"))",
@@ -563,6 +572,10 @@ struct AboutPage: View {
                 SettingsRow(title: "检查更新：GitHub",
                             detail: "每 6 小时取一次新版本信息，有新版就下载安装包；不带你的问题、录音、截图和 Key。在「通用 → 更新」能关。",
                             icon: "arrow.down.circle")
+                Hairline(inset: 46)
+                SettingsRow(title: "匿名使用统计：我们的服务器（\(Self.pingHost)）",
+                            detail: "\(UsageConsentCopy.reason)你同意了才发，每天一次：随机编号、版本号、系统和芯片、用会员还是自带 Key、界面语言。现在\(Self.consentState(store.usageConsent))，在「通用 → 隐私」能改。",
+                            icon: "chart.bar")
             }
 
             SettingsGroup(title: "存在这台 Mac 上") {
@@ -594,6 +607,15 @@ struct AboutPage: View {
     }
 
     private static var websiteHost: String { URL(string: AppLinks.websiteURL)?.host ?? AppLinks.websiteURL }
+    private static var pingHost: String { UsagePing.apiBase()?.host ?? "api.us-cloud.uk" }
+
+    private static func consentState(_ consent: UsageConsent) -> String {
+        switch consent {
+        case .yes: return "开着"
+        case .no: return "关着"
+        case .unasked: return "还没问过你，不发"
+        }
+    }
 
     private static var asrProviderName: String {
         ModelSettings.asrName(CloudASRTranscriber().currentVersion().provider == .bailian ? .bailian : .volcano)

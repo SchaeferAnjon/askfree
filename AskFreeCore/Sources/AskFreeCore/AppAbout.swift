@@ -29,7 +29,7 @@ public enum ExternalLink {
 public struct AppVersionInfo: Equatable {
     public enum Chip: Equatable {
         case appleSilicon, intel
-        public var label: String { self == .appleSilicon ? "Apple 芯片版" : "Intel 版" }
+        public var label: String { self == .appleSilicon ? "Apple 芯片" : "Intel 芯片" }
     }
 
     public let version: String
@@ -59,7 +59,7 @@ public struct AppVersionInfo: Equatable {
         v.patchVersion == 0 ? "\(v.majorVersion).\(v.minorVersion)" : "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
     }
 
-    /// 「版本 1.1.0（3）· Apple 芯片版」；构建号缺了就不写括号
+    /// 「版本 1.2.0（4）· Apple 芯片」：通用包里此刻在跑的那一份；构建号缺了就不写括号
     public var displayLine: String {
         // 全角括号后面本身带空白，不再加空格
         let number = build.isEmpty || build == version ? "\(version) " : "\(version)（\(build)）"

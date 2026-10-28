@@ -536,6 +536,14 @@ struct AboutPage: View {
                     .buttonStyle(SecondaryButtonStyle())
                 }
                 Hairline(inset: 46)
+                SettingsRow(title: Self.appsHost, detail: "我们的其他软件：这个网站列着我们做的所有软件。", icon: "square.grid.2x2") {
+                    Button { AppLinks.safeOpen(AppLinks.appsURL) } label: {
+                        HStack(spacing: 3) { Text("打开"); Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)) }
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .accessibilityLabel("打开我们的其他软件")
+                }
+                Hairline(inset: 46)
                 SettingsRow(title: AppLinks.contactEmail, detail: "用得不顺手、想要什么功能，都可以写信告诉我们。", icon: "envelope") {
                     HStack(spacing: 8) {
                         Button("发邮件") { AppLinks.safeOpen("mailto:\(AppLinks.contactEmail)") }
@@ -607,6 +615,7 @@ struct AboutPage: View {
     }
 
     private static var websiteHost: String { URL(string: AppLinks.websiteURL)?.host ?? AppLinks.websiteURL }
+    private static var appsHost: String { URL(string: AppLinks.appsURL)?.host ?? AppLinks.appsURL }
     private static var pingHost: String { UsagePing.apiBase()?.host ?? "api.us-cloud.uk" }
 
     private static func consentState(_ consent: UsageConsent) -> String {

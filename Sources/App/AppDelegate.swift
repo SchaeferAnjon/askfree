@@ -10,6 +10,8 @@ enum AppLinks {
     static let sourceCodeURL = "https://github.com/SchaeferAnjon/askfree"
     /// 官网
     static let websiteURL = "https://askfree.us-cloud.uk"
+    /// 我们做的全部软件
+    static let appsURL = "https://apps.us-cloud.uk"
     /// 联系邮箱（和 MeetCaption 同一个）
     static let contactEmail = "infoschaeferanjon@gmail.com"
 

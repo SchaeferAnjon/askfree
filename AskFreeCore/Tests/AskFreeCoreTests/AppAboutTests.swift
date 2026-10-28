@@ -46,21 +46,21 @@ final class ExternalLinkTests: XCTestCase {
 final class AppVersionInfoTests: XCTestCase {
     func testDisplayLine() {
         let info = AppVersionInfo(version: "1.1.0", build: "3", chip: .appleSilicon, macOSVersion: "15.6.1")
-        XCTAssertEqual(info.displayLine, "版本 1.1.0（3）· Apple 芯片版")
+        XCTAssertEqual(info.displayLine, "版本 1.1.0（3）· Apple 芯片")
         XCTAssertEqual(AppVersionInfo(version: "1.1.0", build: "3", chip: .intel, macOSVersion: "14.7").displayLine,
-                       "版本 1.1.0（3）· Intel 版")
+                       "版本 1.1.0（3）· Intel 芯片")
     }
 
     func testDisplayLineWithoutSeparateBuild() {
         XCTAssertEqual(AppVersionInfo(version: "1.1.0", build: "", chip: .appleSilicon, macOSVersion: "15.6").displayLine,
-                       "版本 1.1.0 · Apple 芯片版")
+                       "版本 1.1.0 · Apple 芯片")
         XCTAssertEqual(AppVersionInfo(version: "1.1.0", build: "1.1.0", chip: .appleSilicon, macOSVersion: "15.6").displayLine,
-                       "版本 1.1.0 · Apple 芯片版")
+                       "版本 1.1.0 · Apple 芯片")
     }
 
     func testCopyTextHasVersionBuildChipAndMacOS() {
         let info = AppVersionInfo(version: "1.1.0", build: "3", chip: .appleSilicon, macOSVersion: "15.6.1")
-        XCTAssertEqual(info.copyText, "Ask Free 1.1.0\n构建号：3\n芯片：Apple 芯片版\nmacOS：15.6.1")
+        XCTAssertEqual(info.copyText, "Ask Free 1.1.0\n构建号：3\n芯片：Apple 芯片\nmacOS：15.6.1")
         XCTAssertTrue(AppVersionInfo(version: "1.1.0", build: "", chip: .intel, macOSVersion: "14.0").copyText.contains("构建号：未知"))
     }
 

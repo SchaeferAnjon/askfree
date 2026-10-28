@@ -6,7 +6,8 @@
 #   3. bash scripts/release.sh：核对代码和 tag 对得上、这个 tag 的 CI 过了（scripts/ci_passed.sh），
 #      用 RELEASE=1 bash build.sh 编出 Developer ID 签名的通用包，打出 dmg 和 zip（带版本号的一份 + 固定名 AskFree.dmg / AskFree.zip 一份），
 #      逐个核对签名；给带版本号的 zip 生成并签名自动更新用的 appcast.xml（scripts/make_appcast.sh，私钥从 dispatch env 取）；
-#      算 SHA-256，记进 release/<版本>/checked.json。第一次跑时从 docs/release-notes-template.md 复制出 release/<版本>/notes.md
+#      算 SHA-256，记进 release/<版本>/checked.json。第一次跑时把 docs/release-notes/<版本>.md（有的话）
+#      或 docs/release-notes-template.md 复制成 release/<版本>/notes.md
 #   4. 把 notes.md 里的【待填】都写好（release/ 不进 git，不会挡住「工作区干净」的检查），看过没问题：
 #      bash scripts/release.sh --publish：只上传第 3 步核对过、SHA-256 没变的文件，建 Release（不是草稿）
 # 固定名的文件让 README 和官网能一直链到最新版，装着的 Ask Free 也从固定名的 appcast.xml 查新版本：
@@ -93,6 +94,9 @@ rm -rf "$OUT"
 mkdir -p "$OUT"
 if [ -n "$KEPT_NOTES" ]; then
     printf '%s\n' "$KEPT_NOTES" >"$NOTES"
+elif [ -f "$ROOT_DIR/docs/release-notes/$VERSION.md" ]; then
+    # 提交进仓库的这一版说明草稿（docs/release-notes/<版本>.md）
+    cp "$ROOT_DIR/docs/release-notes/$VERSION.md" "$NOTES"
 else
     # 模板开头的用法注释不带过去
     sed -e '/^<!--/,/^-->/d' -e "s/{{VERSION}}/$VERSION/g" "$ROOT_DIR/docs/release-notes-template.md" >"$NOTES"

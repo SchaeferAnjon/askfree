@@ -65,14 +65,14 @@ struct AnswerPage: View {
         VStack(alignment: .leading, spacing: 24) {
             Stage(height: 190) { preview }
             SettingsGroup(title: "回答前") {
-                toggleRow("让 AI 看屏幕", "提问时把指针附近那块屏幕一起发过去；关掉就只发你说的话。",
+                toggleRow("让 AI 看屏幕", "提问时把指针附近那块屏幕一起发给 AI，也存进本机历史；关掉就只发你说的话。",
                           isOn: Binding(get: { screenshot }, set: { on in
                               screenshot = on
                               AskFreeConfig.shared.save(bool: on, forKey: AskSettings.screenshotEnabledKey)
                               SetupStatus.shared.refresh()
                           }))
                 Hairline()
-                toggleRow("联网的回答附上图", "要联网查的问题，回答下面附 3 张相关的图，点一张看原图。",
+                toggleRow("联网的回答附上图", "要联网查的问题，回答下面附 3 张相关的图，点一张看原图。找图时只把一个搜索词发给 DuckDuckGo，不发截图和录音。",
                           isOn: Binding(get: { store.askImagesEnabled }, set: { store.setAskImagesEnabled($0) }))
                 Hairline()
                 toggleRow("先想一想再答", "看图推理、要计算的难题答得更准，每问多等 1 到 3 秒。联网查的那一问不受影响。",
@@ -115,7 +115,7 @@ struct AnswerPage: View {
 
     private func toggleRow(_ title: String, _ detail: String, isOn: Binding<Bool>) -> some View {
         SettingsRow(title: title, detail: detail) {
-            Toggle("", isOn: isOn).toggleStyle(.square).labelsHidden()
+            Toggle(title, isOn: isOn).toggleStyle(.square)
         }
     }
 
@@ -180,11 +180,11 @@ struct RecordingPage: View {
                 }
                 SettingsGroup {
                     SettingsRow(title: "两边显示取消和完成", detail: "点 ✕ 不问了，点 ✓ 说完就问；关掉就是一整条声波。下次录音生效。") {
-                        Toggle("", isOn: Binding(get: { buttons }, set: { on in
+                        Toggle("两边显示取消和完成", isOn: Binding(get: { buttons }, set: { on in
                             buttons = on
                             UserDefaults.standard.set((on ? OverlayControlsMode.buttons : .classic).rawValue,
                                                       forKey: OverlayControlsMode.userDefaultsKey)
-                        })).toggleStyle(.square).labelsHidden()
+                        })).toggleStyle(.square)
                     }
                 }
             }
@@ -272,12 +272,16 @@ struct PermissionRows: View {
             switch kind {
             case .mic: return ("麦克风", status.mic == .denied ? "拒绝过了：到系统设置里把 Ask Free 的开关打开。" : "录下你说的问题。系统会弹框问一次。", "mic")
             case .accessibility: return ("辅助功能", "按提问键时 Ask Free 才收得到；没开时按键没反应。", "hand.raised")
-            case .screen: return ("屏幕录制", "看屏幕问时才看得到屏幕，只在提问那一刻截一张；开完要重新打开 Ask Free。", "rectangle.dashed")
+            case .screen:
+                return ("屏幕录制", status.screenNeedsRelaunch
+                        ? "已经允许了，重新打开 Ask Free 后才截得到屏幕。"
+                        : "看屏幕问时截一张，存进本机历史；开完要重新打开 Ask Free。", "rectangle.dashed")
             }
         }()
         let content = HStack(spacing: 12) {
             if !compact {
                 Image(systemName: icon).font(.system(size: 13)).foregroundStyle(Theme.text2).frame(width: 18)
+                    .accessibilityHidden(true)
             }
             if compact {
                 Text(title).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
@@ -289,7 +293,9 @@ struct PermissionRows: View {
                 }
             }
             Spacer(minLength: 8)
-            if done(kind) {
+            if kind == .screen && status.screenNeedsRelaunch {
+                Button("重新打开 Ask Free") { AppRelaunch.relaunch() }.buttonStyle(SecondaryButtonStyle())
+            } else if done(kind) {
                 StatusText(text: "已允许")
             } else {
                 let title = kind == .mic && status.mic == .notDetermined ? "允许" : "打开系统设置"
@@ -318,11 +324,13 @@ struct PermissionRows: View {
     }
 }
 
-/// 系统设置示意：右边浮出 Ask Free 图标，往左拖进列表
+/// 系统设置示意：右边浮出 Ask Free 图标，往左拖进列表。「减少动态效果」打开时停在拖之前那一帧
 struct DragToGrantIllustration: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 4)
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { context in
+            let t = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 4)
             let k = t < 0.8 ? 0 : min(1, (t - 0.8) / 1.4)
             let drag = k * k * (3 - 2 * k)
             let landed = t > 2.3
@@ -354,6 +362,9 @@ struct DragToGrantIllustration: View {
                 Text("把图标往左拖进列表").font(.system(size: 11.5)).foregroundStyle(Theme.text2).padding(.leading, 4)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("示意：系统设置打开后，把右边浮出的 Ask Free 图标往左拖进列表")
+        .accessibilityAddTraits(.isImage)
     }
 
     private func listRow(color: Color, name: String, on: Bool, icon: Bool = false) -> some View {
@@ -386,20 +397,21 @@ struct GeneralPage: View {
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @State private var dock = DockIcon.isShown
     @State private var appearance = MainWindowAppearance.current
+    @State private var hideFromShare = AskSettings.isHiddenFromScreenShare
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             SettingsGroup {
                 SettingsRow(title: "开机时自动启动", detail: "登录后在后台打开，不用每次自己开。") {
-                    Toggle("", isOn: Binding(get: { launchAtLogin }, set: { on in
+                    Toggle("开机时自动启动", isOn: Binding(get: { launchAtLogin }, set: { on in
                         // 以系统真实状态回填：注册失败时开关弹回去，不给人错觉
                         _ = LaunchAtLogin.setEnabled(on)
                         launchAtLogin = LaunchAtLogin.isEnabled
-                    })).toggleStyle(.square).labelsHidden()
+                    })).toggleStyle(.square)
                 }
                 Hairline()
                 SettingsRow(title: "在 Dock 里显示", detail: "关掉后只在菜单栏，点顶上的图标打开。") {
-                    Toggle("", isOn: Binding(get: { dock }, set: { on in
+                    Toggle("在 Dock 里显示", isOn: Binding(get: { dock }, set: { on in
                         dock = on
                         DockIcon.setShown(on)
                         // 切激活策略时系统会把 App 挪到后台，把窗口拉回前面
@@ -407,9 +419,19 @@ struct GeneralPage: View {
                             NSApp.activate(ignoringOtherApps: true)
                             SettingsWindowController.shared?.window?.makeKeyAndOrderFront(nil)
                         }
-                    })).toggleStyle(.square).labelsHidden()
+                    })).toggleStyle(.square)
                 }
             }
+            SettingsGroup(title: "隐私") {
+                SettingsRow(title: "共享屏幕时隐藏回答面板",
+                            detail: "开会共享屏幕、录屏或截图时，回答面板、打字框和录音浮窗不进画面，只有你自己看得见。") {
+                    Toggle("共享屏幕时隐藏回答面板", isOn: Binding(get: { hideFromShare }, set: { on in
+                        hideFromShare = on
+                        ScreenShareHiding.setEnabled(on)
+                    })).toggleStyle(.square)
+                }
+            }
+            UpdateSettingsGroup()
             VStack(alignment: .leading, spacing: 8) {
                 SectionTitle(text: "外观")
                 HStack(spacing: 10) {
@@ -418,6 +440,12 @@ struct GeneralPage: View {
                     appearanceCard(.dark, "深色")
                 }
                 Text("主窗口和回答面板一起换。").font(.system(size: 12)).foregroundStyle(Theme.text3).padding(.leading, 2)
+            }
+            SettingsGroup(title: "首次引导") {
+                SettingsRow(title: "欢迎引导", detail: "授权、填 Key、选提问键、试问一次，从第一步重看；已经填好的不会清掉。") {
+                    Button("再走一遍引导") { OnboardingWindowController.restart() }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
             }
         }
     }
@@ -461,38 +489,134 @@ struct GeneralPage: View {
 // MARK: - 关于
 
 struct AboutPage: View {
+    @State private var copied: CopiedItem?
+    private let version = Bundle.main.appVersionInfo
+
+    private enum CopiedItem { case version, email }
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(alignment: .leading, spacing: 24) {
             VStack(spacing: 8) {
                 AppIconView(size: 72)
                 Text("Ask Free").font(.system(size: 20, weight: .semibold)).foregroundStyle(Theme.text)
                 Text("按一个键说出问题，AI 看着你的屏幕回答。").font(.system(size: 13)).foregroundStyle(Theme.text2)
                 HStack(spacing: 6) {
-                    Tag(text: "版本 \(Bundle.main.appVersionString)")
+                    Tag(text: version.displayLine)
                     Tag(text: "开源 · GPL-3.0")
                     Tag(text: "免费")
                 }
                 .padding(.top, 4)
+                Button { copy(version.copyText, as: .version) } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: copied == .version ? "checkmark" : "doc.on.doc").font(.system(size: 11))
+                            .accessibilityHidden(true)
+                        Text(copied == .version ? "已复制" : "复制版本信息")
+                    }
+                }
+                .buttonStyle(PlainTextButtonStyle())
+                .help("复制版本、构建号、芯片和 macOS 版本，写信报问题时贴上")
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
+
+            SettingsGroup(title: "联系我们") {
+                SettingsRow(title: Self.websiteHost, detail: "官网：下载新版本、看配置教程和隐私说明。", icon: "globe") {
+                    Button { AppLinks.safeOpen(AppLinks.websiteURL) } label: {
+                        HStack(spacing: 3) { Text("打开"); Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)) }
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+                Hairline(inset: 46)
+                SettingsRow(title: AppLinks.contactEmail, detail: "用得不顺手、想要什么功能，都可以写信告诉我们。", icon: "envelope") {
+                    HStack(spacing: 8) {
+                        Button("发邮件") { AppLinks.safeOpen("mailto:\(AppLinks.contactEmail)") }
+                            .buttonStyle(SecondaryButtonStyle())
+                        Button(copied == .email ? "已复制" : "复制") { copy(AppLinks.contactEmail, as: .email) }
+                            .buttonStyle(SecondaryButtonStyle())
+                            .accessibilityLabel(copied == .email ? "邮箱已复制" : "复制邮箱")
+                    }
+                }
+                Hairline(inset: 46)
+                SettingsRow(title: "日志",
+                            detail: "写信报问题时附上 \(AppIdentity.debugLogFileURL.lastPathComponent)，我们能更快找到原因。只记步骤、耗时和出错原因，不记你问的话、回答和截图。",
+                            icon: "doc.text") {
+                    HStack(spacing: 8) {
+                        Button("打开日志", action: openLog).buttonStyle(SecondaryButtonStyle())
+                        Button("在访达中显示") { NSWorkspace.shared.activateFileViewerSelecting([Self.logURL()]) }
+                            .buttonStyle(SecondaryButtonStyle())
+                    }
+                }
+            }
+
+            SettingsGroup(title: "发给谁、发什么",
+                          footer: "Ask Free 没有自己的服务器，不做使用统计：只在你提问时把内容直接发给前三家，用的是你自己的 Key。各家按自己的隐私政策处理收到的内容。") {
+                SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音。", icon: "waveform")
+                Hairline(inset: 46)
+                SettingsRow(title: "回答问题：\(ModelSettings.askName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen"))",
+                            detail: "识别出的文字；看屏幕问时加上这一刻的两张截图；追问时带上这个话题前几轮的问答。在「语音与模型」换服务商。",
+                            icon: "text.bubble")
+                Hairline(inset: 46)
+                SettingsRow(title: "回答配图：DuckDuckGo 图片搜索",
+                            detail: "一个找图用的搜索词，不含截图和录音。在「回答方式」关掉「联网的回答附上图」就不发。",
+                            icon: "photo")
+                Hairline(inset: 46)
+                SettingsRow(title: "检查更新：GitHub",
+                            detail: "每 6 小时取一次新版本信息，有新版就下载安装包；不带你的问题、录音、截图和 Key。在「通用 → 更新」能关。",
+                            icon: "arrow.down.circle")
+            }
+
+            SettingsGroup(title: "存在这台 Mac 上") {
+                SettingsRow(title: (AppIdentity.configDirectory.path as NSString).abbreviatingWithTildeInPath,
+                            detail: "设置、问答历史、发给 AI 的截图和找到的图都在这个文件夹里，「历史」页能看、能删。",
+                            icon: "folder") {
+                    Button("在访达中打开") { NSWorkspace.shared.open(AppIdentity.configDirectory) }
+                        .buttonStyle(SecondaryButtonStyle())
+                }
+                Hairline(inset: 46)
+                SettingsRow(title: "API Key",
+                            detail: AppIdentity.isDevBuild
+                                ? "开发版存在上面文件夹的 dev_secrets.json 里（正式版在系统钥匙串），只发给对应的那一家。"
+                                : "存在系统钥匙串里，只发给对应的那一家。",
+                            icon: "key")
+            }
+
             SettingsGroup {
-                SettingsRow(title: "源码", detail: "在 GitHub 上，欢迎提问题和改进。") {
-                    Button {
-                        if let url = URL(string: AppLinks.sourceCodeURL) { NSWorkspace.shared.open(url) }
-                    } label: {
+                SettingsRow(title: "源码", detail: "在 GitHub 上，欢迎提问题和改进。", icon: "chevron.left.forwardslash.chevron.right") {
+                    Button { AppLinks.safeOpen(AppLinks.sourceCodeURL) } label: {
                         HStack(spacing: 3) { Text("查看源码"); Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold)) }
                     }
                     .buttonStyle(SecondaryButtonStyle())
                 }
-                Hairline()
-                SettingsRow(title: "你的数据", detail: "Key 在系统钥匙串里；问答、截图和找到的图只存在这台 Mac 上。") {
-                    Button("在访达中打开") { NSWorkspace.shared.open(AppIdentity.configDirectory) }
-                        .buttonStyle(SecondaryButtonStyle())
-                }
-                Hairline()
-                SettingsRow(title: "致谢", detail: "从 Typefree（kdsz001）的「问 AI」改出来，同样用 GPL-3.0。")
+                Hairline(inset: 46)
+                SettingsRow(title: "致谢", detail: "从 Typefree（kdsz001）的「问 AI」改出来，同样用 GPL-3.0。", icon: "heart")
             }
         }
+    }
+
+    private static var websiteHost: String { URL(string: AppLinks.websiteURL)?.host ?? AppLinks.websiteURL }
+
+    private static var asrProviderName: String {
+        ModelSettings.asrName(CloudASRTranscriber().currentVersion().provider == .bailian ? .bailian : .volcano)
+    }
+
+    /// 日志文件；还没写过（刚清掉）就先建一个空的，免得「打开」「在访达中显示」什么都不做
+    private static func logURL() -> URL {
+        let url = AppIdentity.debugLogFileURL
+        if !FileManager.default.fileExists(atPath: url.path) {
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            FileManager.default.createFile(atPath: url.path, contents: Data(), attributes: [.posixPermissions: 0o600])
+        }
+        return url
+    }
+
+    private func openLog() {
+        NSWorkspace.shared.open(Self.logURL())
+    }
+
+    private func copy(_ text: String, as item: CopiedItem) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        copied = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { if copied == item { copied = nil } }
     }
 }

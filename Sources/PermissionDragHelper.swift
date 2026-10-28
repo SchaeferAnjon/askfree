@@ -134,6 +134,7 @@ final class PermissionDragHelper {
         let pane: Pane
         let close: () -> Void
         @State private var nudge = false
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
         private let theme = VPTheme.light
 
         var body: some View {
@@ -157,12 +158,15 @@ final class PermissionDragHelper {
                         .frame(width: 18, height: 18).background(Color(nsColor: theme.accentSoft), in: Circle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("关闭")
             }
             .padding(.horizontal, 14)
             .frame(width: 340, height: 92)
             .background(Color(nsColor: theme.card), in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(nsColor: theme.sep), lineWidth: 0.5))
             .onAppear {
+                // 「减少动态效果」打开时箭头不来回晃
+                guard !reduceMotion else { return }
                 withAnimation(.easeInOut(duration: 0.6).repeatForever()) { nudge = true }
             }
         }

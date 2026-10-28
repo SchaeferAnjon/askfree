@@ -35,6 +35,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         refreshIcon()
     }
 
+    /// 启动自测用：图标真的挂上菜单栏了
+    var isShowing: Bool { statusItem.isVisible && statusItem.button?.image != nil }
+
     // MARK: 菜单
 
     /// 每次点开都按此刻的状态重排
@@ -51,6 +54,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(statusItemRow(status))
         if !status.allDone {
             menu.addItem(ClosureMenuItem("继续设置…") { OnboardingWindowController.show() })
+        }
+        // 新版本后台下好了：点一下重启装上（不点也行，退出时装）
+        if let version = AppUpdater.shared.phase.readyVersion {
+            menu.addItem(ClosureMenuItem("重启并更新到 \(version)") { AppUpdater.shared.installAndRelaunch() })
         }
         menu.addItem(.separator())
 
@@ -83,13 +90,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         item.isEnabled = false
         let dotColor: NSColor = status.allDone ? .systemGreen : .systemOrange
         let title = status.allDone ? "可以提问" : "还不能提问"
-        let detail: String
-        if status.allDone {
-            let hotkeys = SettingsStore.shared.hotkeys
-            detail = "按住 \(hotkeys.screenTitle) 看着屏幕问"
-        } else {
-            detail = "还差 \(status.missing.count) 项：" + status.missing.map(\.shortTitle).joined(separator: "、")
-        }
+        let detail = status.checklist.menuDetail(screenHotkeyTitle: SettingsStore.shared.hotkeys.screenTitle)
         let text = NSMutableAttributedString()
         text.append(NSAttributedString(string: "● ", attributes: [.foregroundColor: dotColor, .font: NSFont.systemFont(ofSize: 10)]))
         text.append(NSAttributedString(string: title + "\n", attributes: [.foregroundColor: NSColor.labelColor,

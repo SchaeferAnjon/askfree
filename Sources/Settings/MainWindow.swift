@@ -11,56 +11,12 @@ import AppKit
 import AskFreeCore
 #endif
 
-enum MainPage: String, CaseIterable, Identifiable {
-    case start, history, hotkeys, models, answer, recording, permissions, general, about
-    var id: String { rawValue }
-
-    static let settings: [MainPage] = [.hotkeys, .models, .answer, .recording, .permissions, .general, .about]
-
-    var title: String {
-        switch self {
-        case .start: return "开始"
-        case .history: return "历史"
-        case .hotkeys: return "快捷键"
-        case .models: return "语音与模型"
-        case .answer: return "回答方式"
-        case .recording: return "录音"
-        case .permissions: return "权限"
-        case .general: return "通用"
-        case .about: return "关于"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .start: return "flag"
-        case .history: return "clock"
-        case .hotkeys: return "keyboard"
-        case .models: return "waveform"
-        case .answer: return "text.bubble"
-        case .recording: return "mic"
-        case .permissions: return "lock"
-        case .general: return "gearshape"
-        case .about: return "info.circle"
-        }
-    }
-
-    /// 启动参数 -openPage 和菜单栏用的名字
-    init?(argument: String) {
-        switch argument.lowercased() {
-        case "home", "start": self = .start
-        case "model", "models": self = .models
-        case "settings", "general": self = .general
-        default:
-            guard let page = MainPage(rawValue: argument.lowercased()) else { return nil }
-            self = page
-        }
-    }
-}
-
 @MainActor
 final class MainWindowModel: ObservableObject {
-    @Published var page: MainPage = .start
+    /// 换页一律清掉 arrivedByArrowKey；只有侧栏 ↑↓ 在换完之后把它设回 true
+    @Published var page: MainPage = .start { didSet { arrivedByArrowKey = false } }
+    /// 这一页是在侧栏里按 ↑↓ 走到的：焦点该留在侧栏（「历史」不抢去给列表）
+    var arrivedByArrowKey = false
 }
 
 // MARK: - 窗口
@@ -76,6 +32,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         if let page { controller.model.page = page }
         controller.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// 「设置… ⌘,」：已经在某一页设置上就留在那页，不然到第一页设置「快捷键」
+    static func showSettings() {
+        let current = shared?.model.page
+        show(page: current.map { MainPage.settings.contains($0) } == true ? current : .hotkeys)
     }
 
     private init() {
@@ -133,6 +95,10 @@ struct MainWindowView: View {
     @ObservedObject var model: MainWindowModel
     @ObservedObject private var status = SetupStatus.shared
     @State private var historyCount = AskHistoryStore.shared.threads().count
+    /// 侧栏有键盘焦点时 ↑↓ 换页（点一下侧栏、或 Tab 进来）；历史列表、输入框有焦点时 ↑↓ 归它们
+    @FocusState private var sidebarFocused: Bool
+    /// 按过 ↑↓ 才画焦点框；用鼠标点的人看不到这圈
+    @State private var keyboardNavigating = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -153,14 +119,14 @@ struct MainWindowView: View {
         }
     }
 
-    private var startTitle: String { status.allDone ? "首页" : "开始" }
+    private var startTitle: String { MainPage.start.title(setupDone: status.allDone) }
 
     // MARK: 侧栏
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 2) {
             Color.clear.frame(height: 40)   // 让过红绿灯
-            sidebarRow(.start, title: startTitle, symbol: status.allDone ? "house" : "flag")
+            sidebarRow(.start, title: startTitle, symbol: MainPage.start.symbol(setupDone: status.allDone))
             sidebarRow(.history, trailing: historyCount > 0 ? "\(historyCount)" : nil)
             Text("设置").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
                 .padding(.leading, 10).padding(.top, 14).padding(.bottom, 4)
@@ -173,11 +139,26 @@ struct MainWindowView: View {
         .frame(width: Self.sidebarWidth)
         .frame(maxHeight: .infinity)
         .background(Theme.surface)
+        .focusable(interactions: .edit)
+        .focusEffectDisabled()
+        .focused($sidebarFocused)
+        .onKeyPress(.upArrow) { step(-1); return .handled }
+        .onKeyPress(.downArrow) { step(1); return .handled }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("侧栏")
+        .onAppear { if model.page != .history { sidebarFocused = true } }
+    }
+
+    /// 侧栏 ↑↓：按侧栏顺序换到上一页 / 下一页，到头不绕回
+    private func step(_ delta: Int) {
+        keyboardNavigating = true
+        model.page = model.page.stepped(by: delta)
+        model.arrivedByArrowKey = true
     }
 
     private func sidebarRow(_ page: MainPage, title: String? = nil, symbol: String? = nil, trailing: String? = nil) -> some View {
         let selected = model.page == page
-        return Button { model.page = page } label: {
+        return Button { model.page = page; sidebarFocused = true; keyboardNavigating = false } label: {
             HStack(spacing: 10) {
                 Image(systemName: symbol ?? page.symbol).font(.system(size: 13))
                     .foregroundStyle(selected ? Theme.text : Theme.text2)
@@ -193,20 +174,17 @@ struct MainWindowView: View {
             .padding(.horizontal, 10)
             .frame(height: 32)
             .background(selected ? Theme.selected : .clear, in: RoundedRectangle(cornerRadius: 6))
+            // 侧栏有键盘焦点时，选中那行加一圈墨黑焦点框：看得出 ↑↓ 现在换的是页
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.ink.opacity(selected && sidebarFocused && keyboardNavigating ? 0.5 : 0), lineWidth: 1.5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title ?? page.title)
+        .accessibilityValue(needsAttention(page) ? "还没设置好" : (trailing.map { "\($0) 条" } ?? ""))
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private func needsAttention(_ page: MainPage) -> Bool {
-        switch page {
-        case .start: return !status.allDone
-        case .hotkeys: return !status.screenHotkeySet
-        case .models: return !status.keysReady
-        case .permissions: return !status.permissionsReady
-        default: return false
-        }
-    }
+    private func needsAttention(_ page: MainPage) -> Bool { status.checklist.needsAttention(page) }
 
     /// 还差几步 / 一切就绪：和「开始」三步、菜单栏第一行说同一件事
     private var statusCard: some View {
@@ -214,10 +192,10 @@ struct MainWindowView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
                     Circle().fill(status.allDone ? Theme.ok : Theme.warn).frame(width: 7, height: 7)
-                    Text(status.allDone ? "一切就绪" : "还差 \(status.missing.count) 步")
+                    Text(status.checklist.statusTitle)
                         .font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.text)
                 }
-                Text(status.allDone ? status.providerSummary : status.missing.map(\.shortTitle).joined(separator: "、"))
+                Text(status.allDone ? status.providerSummary : status.checklist.missingSummary)
                     .font(.system(size: 11.5)).foregroundStyle(Theme.text2)
                     .lineLimit(2)
             }
@@ -249,7 +227,8 @@ struct MainWindowView: View {
     @ViewBuilder private var content: some View {
         switch model.page {
         case .history:
-            HistoryView()
+            // 用侧栏 ↑↓ 走到「历史」时焦点留在侧栏，不然下一下 ↓ 换的是历史里的那一条
+            HistoryView(focusListOnAppear: !model.arrivedByArrowKey)
         default:
             ScrollView {
                 pageContent

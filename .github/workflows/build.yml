@@ -1,0 +1,62 @@
+# 推到 main、打 v* tag 时：跑 AskFreeCore 的单元测试，临时签名编 Release 版，在编好的包上跑启动自测，把包打成 zip 留作产物。
+# 正式发版的包在本机用 Developer ID 签（scripts/release.sh），这里的是临时签名的，只用来确认这份代码能测过、能编、能起来；
+# 发版前 scripts/ci_passed.sh <tag> 核对这个 tag 上的这次 CI 通过了。
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mac:
+    # macos-15（Apple 芯片）带 Xcode 26.3，和本机编正式版用的同一版（README「从源码编译」）
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode 26.3
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app
+          xcodebuild -version
+
+      - name: Unit tests (AskFreeCore)
+        working-directory: AskFreeCore
+        run: swift test
+
+      # 没有 local.build.env：build.sh 自己用临时签名（ad hoc）
+      - name: Build Release (ad-hoc signed)
+        env:
+          DERIVED_DATA_PATH: ${{ runner.temp }}/askfree-dd
+        run: bash build.sh
+
+      # 菜单栏图标、主窗口九页、欢迎引导都出来了才退出码 0；配置和密钥在临时目录，不碰构建机上的东西
+      - name: Launch self-test (packaged app)
+        run: |
+          set -o pipefail
+          "dist/Ask Free.app/Contents/MacOS/AskFree" -selfTest 2>&1 | tee selftest.log
+
+      - name: Zip
+        run: |
+          VERSION=$(plutil -extract CFBundleShortVersionString raw -o - "dist/Ask Free.app/Contents/Info.plist")
+          ditto -c -k --sequesterRsrc --keepParent "dist/Ask Free.app" "AskFree-$VERSION-${GITHUB_SHA::7}-adhoc.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: askfree-adhoc
+          path: AskFree-*-adhoc.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selftest-log
+          path: selftest.log
+          if-no-files-found: ignore
+          retention-days: 3

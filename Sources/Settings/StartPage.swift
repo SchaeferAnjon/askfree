@@ -60,9 +60,7 @@ struct StartPage: View {
     }
 
     /// 先授权、再填 Key、再选键：第一件没做完的就是当前这步
-    private var current: SetupStatus.Item? {
-        [SetupStatus.Item.permissions, .keys, .hotkey].first { !status.isDone($0) }
-    }
+    private var current: SetupStatus.Item? { status.checklist.current }
 
     private func step<Trailing: View, Below: View>(_ n: Int, item: SetupStatus.Item, title: String, detail: String,
                                                   @ViewBuilder trailing: () -> Trailing,
@@ -83,6 +81,8 @@ struct StartPage: View {
                     }
                 }
                 .frame(width: 22, height: 22)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(done ? "第 \(n) 步，已完成" : "第 \(n) 步")
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title).font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(done ? Theme.text2 : Theme.text)

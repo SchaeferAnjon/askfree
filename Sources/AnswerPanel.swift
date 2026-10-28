@@ -142,11 +142,11 @@ final class AnswerPanel {
         if collapseWhenDone { collapseWhenDone = false; collapse() }
     }
 
-    /// 这次没看屏幕：回答上面一条橙底提示；没给屏幕录制权限时带「去授权」
-    func setScreenNote(_ text: String, needsPermission: Bool) {
+    /// 这次没看屏幕：回答上面一条橙底提示；没给屏幕录制权限时带「去授权」，刚给了还没生效时带「重新打开」
+    func setScreenNote(_ text: String, action: ScreenNoteAction?) {
         guard let last = model.turns.indices.last else { return }
         model.turns[last].screenNote = text
-        model.turns[last].screenNeedsPermission = needsPermission
+        model.turns[last].screenAction = action
         relayoutAfterStateChange()
     }
 
@@ -227,12 +227,14 @@ final class AnswerPanel {
         model.recording = false
         let screen = panel.screen ?? Self.screenUnderMouse()
         var out = panel.frame
-        out.origin.x = screen.frame.maxX + 12
+        // 「减少动态效果」打开时原地淡出，不往右滑
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if !reduceMotion { out.origin.x = screen.frame.maxX + 12 }
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.3
+            ctx.duration = reduceMotion ? 0.15 : 0.3
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().setFrame(out, display: true)
-            panel.animator().alphaValue = 0.2
+            panel.animator().alphaValue = reduceMotion ? 0 : 0.2
         }, completionHandler: { [weak self, weak panel] in
             // 滑出途中又弹出了新回答：这次收起作废，别把新面板藏掉
             guard let self, self.hideGeneration == generation, self.isHiding else { return }
@@ -273,8 +275,10 @@ final class AnswerPanel {
             relayoutAfterStateChange(animated: false)
             return
         }
-        let start = NSRect(x: screen.frame.maxX + 12, y: final.origin.y, width: size.width, height: size.height)
-        panel.alphaValue = 1
+        // 「减少动态效果」打开时原地淡入，不从屏幕右缘滑进来
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let start = reduceMotion ? final : NSRect(x: screen.frame.maxX + 12, y: final.origin.y, width: size.width, height: size.height)
+        panel.alphaValue = reduceMotion ? 0 : 1
         // 先定窗口尺寸，再把内容视图铺满：内容视图带自动缩放，若先设它再改窗口，会随窗口尺寸差被二次缩放，
         // 上次面板高、这次内容短时内容就被挤到底部、顶上露一块空底
         panel.setFrame(start, display: false)
@@ -282,9 +286,10 @@ final class AnswerPanel {
         panel.orderFrontRegardless()
         panel.invalidateShadow()
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.45
+            ctx.duration = reduceMotion ? 0.15 : 0.45
             ctx.timingFunction = CAMediaTimingFunction(controlPoints: 0.19, 1.0, 0.22, 1.0)
             panel.animator().setFrame(final, display: true)
+            if reduceMotion { panel.animator().alphaValue = 1 }
         }, completionHandler: { [weak self] in
             panel.invalidateShadow()
             self?.relayoutAfterStateChange()
@@ -357,6 +362,7 @@ final class AnswerPanel {
         p.isReleasedWhenClosed = false
         p.animationBehavior = .none
         p.onEscape = { [weak self] in self?.hide() }
+        ScreenShareHiding.register(p)
         panel = p
         self.hosting = hosting
         // 深浅跟「设置 → 外观」走（与主窗口一致）；内容用 Theme 的动态色
@@ -769,9 +775,9 @@ struct AnswerTurn: Identifiable {
     var state: State = .thinking
     /// 这一轮的小灰字（正在联网查、网络较慢、在想），显示在回答上方
     var note: String?
-    /// 这次没看屏幕的原因：回答上面一条橙底提示；needsPermission 时带「去授权」
+    /// 这次没看屏幕的原因：回答上面一条橙底提示，screenAction 是它右边的按钮
     var screenNote: String?
-    var screenNeedsPermission = false
+    var screenAction: ScreenNoteAction?
     /// 这一问转去联网查了（状态条写「联网」）
     var searched = false
     /// 没答成：报错卡
@@ -793,64 +799,6 @@ struct AskScreenshot {
 struct PreviousTopic {
     let question: String
     let turns: [AnswerTurn]
-}
-
-/// 没答成的几种情况：每种一句标题、一句怎么办、一两个按钮（design/panels A2）
-enum AskFailure: Equatable {
-    case noKey, invalidKey, quota, timeout, offline
-    case other(String)
-
-    enum Action { case openModels, retry }
-
-    var symbol: String {
-        switch self {
-        case .noKey, .invalidKey: return "key"
-        case .quota: return "creditcard"
-        case .timeout: return "clock"
-        case .offline: return "wifi.slash"
-        case .other: return "exclamationmark.bubble"
-        }
-    }
-
-    /// 橙 = 还差一步，红 = 出错了
-    var isError: Bool {
-        switch self {
-        case .noKey, .timeout, .offline: return false
-        case .invalidKey, .quota, .other: return true
-        }
-    }
-
-    func title(provider: String) -> String {
-        switch self {
-        case .noKey: return "还没填问答模型的 Key"
-        case .invalidKey: return "\(provider) 不认这个 Key"
-        case .quota: return "\(provider) 的额度用完了"
-        case .timeout: return "\(provider) 没有回应"
-        case .offline: return "连不上网络"
-        case .other: return "没答成"
-        }
-    }
-
-    func detail(provider: String) -> String {
-        switch self {
-        case .noKey: return "回答要用你自己的 AI Key。在「语音与模型」页填好 DeepSeek 或千问的 Key，就能接着问这一句。"
-        case .invalidKey: return "可能复制少了几位，或者在官网删掉了。到「语音与模型」页重新粘贴，点「验证」试一下。"
-        case .quota: return "账号欠费或免费额度用完了。到服务商控制台看看，或者在「语音与模型」页换一家。"
-        case .timeout: return "可能是网络不稳，也可能是它正忙。"
-        case .offline: return "检查一下网络，连上后再问一次。"
-        case .other(let reason): return reason
-        }
-    }
-
-    /// 第一个是黑色主按钮
-    var actions: [(title: String, action: Action)] {
-        switch self {
-        case .noKey: return [("去填 Key", .openModels), ("填好了，再问一次", .retry)]
-        case .invalidKey: return [("去换 Key", .openModels), ("重试", .retry)]
-        case .quota: return [("去换一家", .openModels), ("重试", .retry)]
-        case .timeout, .offline, .other: return [("再试一次", .retry)]
-        }
-    }
 }
 
 final class AnswerModel: ObservableObject {
@@ -1104,13 +1052,18 @@ struct TurnsView: View {
                 if let shot = turn.screenshot, !compact { ScreenThumb(shot: shot) }
             }
             if compact {
-                Text(AnswerPanel.plainText(fromMarkdown: turn.answer))
-                    .font(.system(size: 13)).foregroundStyle(Theme.text2)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .contentShape(Rectangle())
-                    .onTapGesture { model.expandedTurns.insert(turn.id) }
-                    .help("点一下看全文")
+                Button { model.expandedTurns.insert(turn.id) } label: {
+                    Text(AnswerPanel.plainText(fromMarkdown: turn.answer))
+                        .font(.system(size: 13)).foregroundStyle(Theme.text2)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("点一下看全文")
+                .accessibilityHint("展开这一轮的全文")
             } else {
                 answerBody(turn, isLast: isLast)
             }
@@ -1143,7 +1096,7 @@ struct TurnsView: View {
     @ViewBuilder private func answerBody(_ turn: AnswerTurn, isLast: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             // 「这次没看屏幕」只挂在当前这一问上，展开看旧的几轮时不重复
-            if isLast, let screenNote = turn.screenNote { screenBanner(screenNote, needsPermission: turn.screenNeedsPermission) }
+            if isLast, let screenNote = turn.screenNote { screenBanner(screenNote, action: turn.screenAction) }
             if let note = turn.note, !note.isEmpty, turn.state != .failed {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "info.circle").font(.system(size: 11))
@@ -1157,15 +1110,21 @@ struct TurnsView: View {
         }
     }
 
-    /// 这次没看屏幕：橙底一条，没给权限时带「去授权」
-    private func screenBanner(_ text: String, needsPermission: Bool) -> some View {
+    /// 这次没看屏幕：橙底一条，没给权限时带「去授权」，刚给了还没生效时带「重新打开」
+    private func screenBanner(_ text: String, action: ScreenNoteAction?) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "display").font(.system(size: 13)).foregroundStyle(Theme.warn)
             Text(text).font(.system(size: 12)).foregroundStyle(Theme.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            if needsPermission {
+            switch action {
+            case .grant:
                 Button("去授权", action: onGrantScreen).buttonStyle(PanelButtonStyle(solid: false, small: true))
+            case .relaunch:
+                Button("重新打开") { AppRelaunch.relaunch() }.buttonStyle(PanelButtonStyle(solid: false, small: true))
+                    .help("退出并重新打开 Ask Free，屏幕录制权限就生效了")
+            case nil:
+                EmptyView()
             }
         }
         .padding(.vertical, 7)
@@ -1240,26 +1199,34 @@ private struct ScreenThumb: View {
     @State private var hovering = false
 
     var body: some View {
-        Image(nsImage: shot.overview)
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: 58, height: 34)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(hovering ? Theme.text2 : Theme.borderStrong, lineWidth: 1))
-            .onHover { hovering = $0 }
-            .help("发给 AI 的画面，红框是你指着的地方。点开看大图")
-            .onTapGesture {
-                let dir = FileManager.default.temporaryDirectory
-                do {
-                    for (name, jpeg) in [("askfree-screen", shot.overviewJPEG), ("askfree-closeup", shot.closeUpJPEG)] {
-                        let url = dir.appendingPathComponent("\(name).jpg")
-                        try jpeg.write(to: url)
-                        NSWorkspace.shared.open(url)
-                    }
-                } catch {
-                    AnswerPanel.log?("ASK screenshot open failed: \(error.localizedDescription)")
-                }
+        Button(action: open) {
+            Image(nsImage: shot.overview)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 58, height: 34)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(hovering ? Theme.text2 : Theme.borderStrong, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("发给 AI 的画面，红框是你指着的地方。点开看大图")
+        .accessibilityLabel("发给 AI 的截图")
+        .accessibilityHint("用「预览」打开指着的地方和整个屏幕两张图")
+    }
+
+    /// 两张图写进临时文件夹，用「预览」打开（本机文件，不走外部链接）
+    private func open() {
+        let dir = FileManager.default.temporaryDirectory
+        do {
+            for (name, jpeg) in [("askfree-screen", shot.overviewJPEG), ("askfree-closeup", shot.closeUpJPEG)] {
+                let url = dir.appendingPathComponent("\(name).jpg")
+                try jpeg.write(to: url)
+                NSWorkspace.shared.open(url)
             }
+        } catch {
+            AnswerPanel.log?("ASK screenshot open failed: \(error.localizedDescription)")
+        }
     }
 }
 
@@ -1274,25 +1241,28 @@ struct AskImagesRow: View {
 
     var body: some View {
         HStack(spacing: Self.spacing) {
-            ForEach(images) { image in
-                AsyncImage(url: URL(string: image.thumb)) { phase in
-                    switch phase {
-                    // 填满格子、从顶上裁：人像的脸一般在上半部
-                    case .success(let img):
-                        img.resizable().aspectRatio(contentMode: .fill)
-                            .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
-                    case .failure: Image(systemName: "photo").foregroundStyle(Theme.text3)
-                    default: ProgressView().controlSize(.small)
+            ForEach(Array(images.enumerated()), id: \.element.id) { index, image in
+                Button { AppLinks.safeOpen(image.full) } label: {
+                    AsyncImage(url: URL(string: image.thumb)) { phase in
+                        switch phase {
+                        // 填满格子、从顶上裁：人像的脸一般在上半部
+                        case .success(let img):
+                            img.resizable().aspectRatio(contentMode: .fill)
+                                .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
+                        case .failure: Image(systemName: "photo").foregroundStyle(Theme.text3)
+                        default: ProgressView().controlSize(.small)
+                        }
                     }
+                    .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(hovering == image.id ? Theme.text2 : Theme.border))
+                    .contentShape(Rectangle())
                 }
-                .frame(width: Self.cellWidth, height: Self.cellHeight, alignment: .top)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(hovering == image.id ? Theme.text2 : Theme.border))
+                .buttonStyle(.plain)
                 .onHover { hovering = $0 ? image.id : nil }
                 .help(image.title.isEmpty ? image.pageURL : image.title)
-                .onTapGesture {
-                    if let url = URL(string: image.full) { NSWorkspace.shared.open(url) }
-                }
+                .accessibilityLabel(image.title.isEmpty ? "找到的第 \(index + 1) 张图" : "第 \(index + 1) 张图：\(image.title)")
+                .accessibilityHint("用浏览器打开原图")
             }
         }
         .padding(.top, 2)
@@ -1376,6 +1346,7 @@ struct AnswerText: View {
         }
         .foregroundStyle(Theme.text)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .environment(\.openURL, .safe)
     }
 }
 

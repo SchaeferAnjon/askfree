@@ -76,10 +76,12 @@ extension AppDelegate {
         return true
     }
 
-    /// 启动参数 -askText：在指针处截屏，把这句话当成识别出的问题发出去（开发实测用，跳过录音和识别）
-    func devAsk(_ question: String) {
-        debugLog("Launch argument: ask \(question.count) chars")
-        askTiming = AskTiming()
+    /// 启动参数 -askText：在指针处截屏，把这句话当成识别出的问题发出去（开发实测用，跳过录音和识别）。
+    /// 给了几句时，后面的每句等前一句答完 4 秒后当追问接着问（留时间截图），和回答还在时再按一次提问键一样
+    func devAsk(_ questions: [String]) {
+        guard let question = questions.first else { return }
+        debugLog("Launch argument: ask \(questions.count) question(s), first \(question.count) chars")
+        askTiming.reset(trigger: "hotkey-screen", mode: "dev")
         startAskScreenCapture(at: CGEvent(source: nil)?.location ?? .zero)
         askRound += 1
         let round = askRound
@@ -88,6 +90,32 @@ extension AppDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             self.resolveAskScreen { screen, note in
                 self.sendAsk(question: question, history: [], screen: screen, screenNote: note, round: round)
+            }
+        }
+        devAskFollowUps(Array(questions.dropFirst()), afterAnswers: 1)
+    }
+
+    /// 等面板上答完 answered 轮再问下一句；这一轮报错了就不再往下问
+    private func devAskFollowUps(_ questions: [String], afterAnswers answered: Int) {
+        guard let question = questions.first else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self else { return }
+            if self.answerPanel.model.turns.last?.state == .failed {
+                self.debugLog("Launch argument: answer failed, \(questions.count) follow-up(s) not asked")
+                return
+            }
+            guard !self.askInFlight, self.answerPanel.history.count >= answered else {
+                self.devAskFollowUps(questions, afterAnswers: answered)
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                self.askTiming.reset(trigger: "hotkey-screen", mode: "dev")
+                self.startAskScreenCapture(at: CGEvent(source: nil)?.location ?? .zero)
+                // 和第一句一样先让截图做完再发：真实使用时这段是用户说话的那几秒
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self.submitQuestion(question, continuesThread: true)
+                    self.devAskFollowUps(Array(questions.dropFirst()), afterAnswers: answered + 1)
+                }
             }
         }
     }
@@ -107,8 +135,8 @@ extension AppDelegate {
         // 问题已经发出，回答在面板里流式显示：放开录音，别让所有快捷键在回答的十几秒里都没反应
         finishAsk()
         if let screenNote {
-            let needsPermission = screenNote == ScreenSnapshotError.noPermission.userMessage
-            answerPanel.setScreenNote(Self.screenBannerText(screenNote, needsPermission: needsPermission), needsPermission: needsPermission)
+            let banner = AskScreenNote.banner(for: screenNote, needsRelaunch: ScreenSnapshotCapturer.needsRelaunch)
+            answerPanel.setScreenNote(banner.text, action: banner.action)
         }
 
         // 首字迟迟不来就在面板里说一声，别让用户盯着「正在思考…」干等
@@ -168,7 +196,7 @@ extension AppDelegate {
                 case .failure(let err):
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
                     self.debugLog("ASK failed: \(reason) \(self.askTiming.summary(totalMs: totalMs))")
-                    self.answerPanel.fail(Self.askFailure(from: err))
+                    self.answerPanel.fail(AskFailure(error: err))
                 }
             }
         }
@@ -183,31 +211,6 @@ extension AppDelegate {
         let round = askRound
         answerPanel.appendQuestion(question)
         sendAsk(question: question, history: history, screen: lastAskScreen, screenNote: nil, round: round)
-    }
-
-    /// 回答失败的原因分成几类，面板按类给标题、怎么办和按钮；认不出的原样写出来
-    static func askFailure(from err: Error) -> AskFailure {
-        if case AskAI.AskError.noAPIKey = err { return .noKey }
-        if case AskAI.AskError.quotaExhausted = err { return .quota }
-        if let url = err as? URLError {
-            switch url.code {
-            case .timedOut: return .timeout
-            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
-                return .offline
-            default: break
-            }
-        }
-        let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
-        if reason.hasPrefix("API Key 无效") { return .invalidKey }
-        if reason.hasPrefix("账号欠费") { return .quota }
-        return .other(reason)
-    }
-
-    /// 「这次没看屏幕：…」：去掉原因里「这次只按问题回答」那半句，面板上一行说完
-    static func screenBannerText(_ note: String, needsPermission: Bool) -> String {
-        if needsPermission { return "这次没看屏幕：还没给屏幕录制权限" }
-        let reason = note.components(separatedBy: "，这次只按问题回答").first ?? note
-        return "这次没看屏幕：" + reason.trimmingCharacters(in: CharacterSet(charactersIn: "。"))
     }
 
     /// 答完的一轮记进历史：文字、真发给模型的截图、已经到了的图；开着的历史页跟着刷新
@@ -306,7 +309,7 @@ extension AppDelegate {
             askTiming.fallback = "off"
             return
         }
-        guard ScreenSnapshotCapturer.hasPermission else {
+        guard DevLaunchOptions.demoScreen != nil || ScreenSnapshotCapturer.hasPermission else {
             askTiming.fallback = "noPermission"
             pendingAskScreenNote = ScreenSnapshotError.noPermission.userMessage
             // 开发版 -skipPermissionPrompts（无人值守实测）不弹授权框：权限要先在系统设置里给好
@@ -357,7 +360,7 @@ extension AppDelegate {
             case nil:
                 self.askTiming.fallback = "slowCapture"
                 self.debugLog("AC: screenshot not ready in time → text only")
-                callback(nil, "截屏没赶上，这次只按问题回答。")
+                callback(nil, AskScreenNote.slowCapture)
             }
         }
     }

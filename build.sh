@@ -42,6 +42,10 @@ fi
 if [ "$RELEASE" = "1" ] && [[ "$SIGN_IDENTITY" != "Developer ID Application:"* ]]; then
     fail "发版要用「Developer ID Application」证书，现在是：$SIGN_IDENTITY"
 fi
+# 临时签名（ad hoc）的包不开 hardened runtime：开了的话系统的库校验要求 App 和 Sparkle.framework 是同一个团队签的，
+# 临时签名没有团队号，App 一启动就因为加载不了 Sparkle 退出。Developer ID 签的包照常开
+HARDENED_RUNTIME=YES
+[ "$SIGN_IDENTITY" = "-" ] && HARDENED_RUNTIME=NO
 
 # 安全时间戳要连苹果的时间戳服务器，ad hoc 签名不支持
 SIGN_FLAGS=""
@@ -64,6 +68,7 @@ xcodebuild \
     CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
     CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
     OTHER_CODE_SIGN_FLAGS="$SIGN_FLAGS" \
+    ENABLE_HARDENED_RUNTIME="$HARDENED_RUNTIME" \
     -quiet \
     "${ACTIONS[@]}"
 

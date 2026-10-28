@@ -15,19 +15,28 @@ struct DemoStage: View {
     var keyTitle: String? = nil
     var showsKeyHint = true
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private let period: Double = 7.5
+    /// 「减少动态效果」打开时停在这一帧：指针在柱子上、红框框着、右上角回答已经出来
+    private let keyFrame: Double = 5.5
     private let question = "这根最高的是几月？"
     private let answer = "是 7 月，大约 4.2 万人，比 6 月多了三成多。"
 
     var body: some View {
         Stage(height: height) {
-            TimelineView(.animation(minimumInterval: 1 / 30)) { context in
-                let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: period)
-                scene(t)
+            if reduceMotion {
+                scene(keyFrame)
+            } else {
+                TimelineView(.animation(minimumInterval: 1 / 30)) { context in
+                    let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: period)
+                    scene(t)
+                }
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("示意：指着图表按住提问键说出问题，回答出现在右上角")
+        .accessibilityAddTraits(.isImage)
     }
 
     private func scene(_ t: Double) -> some View {
@@ -116,8 +125,8 @@ struct DemoStage: View {
         HStack(spacing: 8) {
             Image(systemName: "xmark").font(.system(size: 8, weight: .bold)).foregroundStyle(.white.opacity(0.8))
                 .frame(width: 18, height: 18).background(.white.opacity(0.14), in: Circle())
-            TimelineView(.animation(minimumInterval: 1 / 15)) { ctx in
-                let s = ctx.date.timeIntervalSinceReferenceDate
+            TimelineView(.animation(minimumInterval: 1 / 15, paused: reduceMotion)) { ctx in
+                let s = reduceMotion ? 0.4 : ctx.date.timeIntervalSinceReferenceDate
                 HStack(spacing: 2) {
                     ForEach(0..<6, id: \.self) { i in
                         Capsule()

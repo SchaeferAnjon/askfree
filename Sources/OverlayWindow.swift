@@ -186,6 +186,7 @@ class OverlayWindow {
         cv.onCancelRecording = { [weak self] in self?.onCancelRecording?() }
         cv.onFinishRecording = { [weak self] in self?.onFinishRecording?() }
         w.contentView = cv
+        ScreenShareHiding.register(w)
         self.window = w
         self.capsuleView = cv
     }
@@ -406,6 +407,7 @@ class OverlayWindow {
         }
 
         w.contentView = container
+        ScreenShareHiding.register(w)
         hintWindow = w
         repositionHintWindow()
         w.orderFrontRegardless()

@@ -21,31 +21,35 @@ struct ScreenSnapshot {
     }
 }
 
-enum ScreenSnapshotError: Error {
-    /// 没给屏幕录制权限
-    case noPermission
-    case noDisplay
-    case captureFailed(String)
-    case encodeFailed
+/// 开发版 -demoScreen：一张当成整个屏幕的图（2 倍像素），指针和指针所在的窗口按图上的点算（原点左上）。
+/// 拍 README 截图时用它代替真屏幕，截图、发给模型的图、历史里存的图都只有演示内容
+struct DemoScreen {
+    static let scale: CGFloat = 2
+    let image: CGImage
+    let pointer: CGPoint
+    let window: CGRect?
 
-    /// 给用户看的一句话，要能照着办
-    var userMessage: String {
-        switch self {
-        case .noPermission: return "还没给屏幕录制权限，这次只按问题回答。去「系统设置 → 隐私与安全性 → 屏幕录制」勾上 Ask Free，然后退出并重新打开 Ask Free。"
-        case .noDisplay: return "没找到指针所在的屏幕，这次只按问题回答。"
-        case .captureFailed(let reason): return "截屏失败（\(reason)），这次只按问题回答。"
-        case .encodeFailed: return "截屏编码失败，这次只按问题回答。"
+    /// -demoScreen <png> [-demoPointer x,y] [-demoWindow x,y,w,h]；没带 -demoScreen 返回 nil，图读不出来直接退出
+    init?(arguments: [String]) {
+        func value(_ flag: String) -> String? {
+            guard let i = arguments.firstIndex(of: flag), i + 1 < arguments.count else { return nil }
+            return arguments[i + 1]
         }
-    }
-
-    /// 日志用的短名（不含任何屏幕内容）
-    var debugName: String {
-        switch self {
-        case .noPermission: return "noPermission"
-        case .noDisplay: return "noDisplay"
-        case .captureFailed(let reason): return "captureFailed(\(reason))"
-        case .encodeFailed: return "encodeFailed"
+        func numbers(_ flag: String) -> [CGFloat] {
+            (value(flag) ?? "").split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }.map { CGFloat($0) }
         }
+        guard let path = value("-demoScreen") else { return nil }
+        let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            FileHandle.standardError.write(Data("-demoScreen: can't read \(url.path)\n".utf8))
+            exit(2)
+        }
+        let p = numbers("-demoPointer"), w = numbers("-demoWindow")
+        self.image = image
+        self.pointer = p.count == 2 ? CGPoint(x: p[0], y: p[1])
+            : CGPoint(x: CGFloat(image.width) / Self.scale / 2, y: CGFloat(image.height) / Self.scale / 2)
+        self.window = w.count == 4 ? CGRect(x: w[0], y: w[1], width: w[2], height: w[3]) : nil
     }
 }
 
@@ -54,6 +58,18 @@ enum ScreenSnapshotCapturer {
     private static let renderQueue = DispatchQueue(label: "io.github.schaeferanjon.askfree.screen-snapshot", qos: .userInitiated)
 
     static var hasPermission: Bool { CGPreflightScreenCaptureAccess() }
+
+    /// 启动那一刻有没有屏幕录制权限（noteLaunchPermission 在启动时记下）
+    private(set) static var grantedAtLaunch = true
+    /// 这次运行里截成功过：说明权限已经生效，不用重开
+    private(set) static var capturedSinceLaunch = false
+
+    static func noteLaunchPermission() {
+        grantedAtLaunch = hasPermission && !DevLaunchOptions.pretendScreenGrantedLater
+    }
+
+    /// 启动后才在系统设置里打开屏幕录制、这次运行还没截成功过：要重新打开 Ask Free 截屏才生效
+    static var needsRelaunch: Bool { !grantedAtLaunch && hasPermission && !capturedSinceLaunch }
 
     /// 弹一次系统的屏幕录制授权请求（只在第一次触发、且确实没权限时调）
     @discardableResult
@@ -80,6 +96,7 @@ enum ScreenSnapshotCapturer {
         func finish(_ result: Result<ScreenSnapshot, ScreenSnapshotError>) {
             DispatchQueue.main.async { completion(result) }
         }
+        if let demo = DevLaunchOptions.demoScreen { captureDemo(demo, finish: finish); return }
         guard hasPermission else { finish(.failure(.noPermission)); return }
         guard let displayID = displayID(containing: point) else { finish(.failure(.noDisplay)); return }
 
@@ -123,6 +140,7 @@ enum ScreenSnapshotCapturer {
                             return
                         }
                         let encodeMs = Int((ProcessInfo.processInfo.systemUptime - encodeStarted) * 1000)
+                        DispatchQueue.main.async { capturedSinceLaunch = true }
                         finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp,
                                                        captureMs: captureMs, encodeMs: encodeMs)))
                     }
@@ -130,6 +148,23 @@ enum ScreenSnapshotCapturer {
                     finish(.failure(.captureFailed(Self.shortReason(error))))
                 }
             }
+        }
+    }
+
+    /// 开发版 -demoScreen：拿那张图当屏幕，画标记、缩放、编码和真截图走同一段
+    private static func captureDemo(_ demo: DemoScreen, finish: @escaping (Result<ScreenSnapshot, ScreenSnapshotError>) -> Void) {
+        renderQueue.async {
+            let started = ProcessInfo.processInfo.systemUptime
+            let scale = DemoScreen.scale
+            let cursorPixel = CGPoint(x: demo.pointer.x * scale, y: demo.pointer.y * scale)
+            let windowPixel = demo.window.map { CGRect(x: $0.minX * scale, y: $0.minY * scale, width: $0.width * scale, height: $0.height * scale) }
+            guard let pair = render(image: demo.image, cursorPixel: cursorPixel, windowPixel: windowPixel, scale: scale) else {
+                finish(.failure(.encodeFailed))
+                return
+            }
+            let encodeMs = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+            DispatchQueue.main.async { capturedSinceLaunch = true }
+            finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp, captureMs: 0, encodeMs: encodeMs)))
         }
     }
 

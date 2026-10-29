@@ -131,6 +131,11 @@ extension AppDelegate {
     func devAsk(_ questions: [String]) {
         guard let question = questions.first else { return }
         debugLog("Launch argument: ask \(questions.count) question(s), first \(question.count) chars")
+        // 和按下提问键一样：会员已知用不了（试用用完、今天的到上限、识别分钟用完）就不「录音」，直接出卡片
+        if MainActor.assumeIsolated({ blockedByMembership(voice: true) }) {
+            debugLog("Launch argument: blocked before asking")
+            return
+        }
         askTiming.reset(trigger: "hotkey-screen", mode: "dev")
         startAskScreenCapture(at: CGEvent(source: nil)?.location ?? .zero)
         askRound += 1

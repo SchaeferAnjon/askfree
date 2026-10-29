@@ -18,6 +18,10 @@ public final class MemberClient: ObservableObject {
     @Published public private(set) var pendingCheckout: PendingCheckout?
     /// 正在问 /status
     @Published public private(set) var isRefreshing = false
+    /// 计量接口回的、/status 里看不出来的上限：这张授权今天的成本到了（429 daily-limit）、识别分钟用完了（429 / 402 asr-limit）。
+    /// 记到重置那一刻，按键时先看它（usageBlock），免得每按一次都白录一遍、上传一遍
+    @Published public private(set) var dailyBlock: MemberAPIError?
+    @Published public private(set) var asrBlock: MemberAPIError?
 
     public struct PendingCheckout: Equatable, Sendable {
         public let claim: String
@@ -46,6 +50,8 @@ public final class MemberClient: ObservableObject {
     private let pollInterval: TimeInterval
     private let pollTimeout: TimeInterval
     private var cachedToken: String?
+    /// 钥匙串读过一次就记住（没令牌也记住），侧栏每画一次不再去读钥匙串
+    private var tokenLoaded = false
     private var registering: Task<String, Error>?
     private var refreshing: Task<Void, Never>?
     private var checkedAt: Date?
@@ -86,12 +92,16 @@ public final class MemberClient: ObservableObject {
     // MARK: - 设备令牌
 
     private var token: String? {
-        if cachedToken == nil { cachedToken = secrets.get(Self.tokenAccount).flatMap { $0.isEmpty ? nil : $0 } }
+        if !tokenLoaded {
+            cachedToken = secrets.get(Self.tokenAccount).flatMap { $0.isEmpty ? nil : $0 }
+            tokenLoaded = true
+        }
         return cachedToken
     }
 
     private func saveToken(_ value: String?) {
         cachedToken = value
+        tokenLoaded = true
         secrets.set(Self.tokenAccount, value)
     }
 
@@ -165,10 +175,37 @@ public final class MemberClient: ObservableObject {
         if s != status { status = s }
     }
 
-    /// 计量接口回了 402 / 429（试用用完、每天上限……）：马上问一次 /status，卡片和会员页跟后台对齐
+    /// 计量接口回了 402 / 429（试用用完、每天上限……）：马上问一次 /status，卡片和会员页跟后台对齐。
+    /// 成本上限和识别分钟 /status 里没有：另外记下来，到重置那一刻为止
     public func noteUsageError(_ e: MemberAPIError) {
+        if e.code == "daily-limit", e.resetAt != nil { dailyBlock = e }
+        if e.code == "asr-limit" { asrBlock = e }
         guard [402, 429].contains(e.status) || e.code == "payment-failed" else { return }
         Task { await refresh() }
+    }
+
+    /// 按键时还拦着的那个：今天的用量到上限了（打字、语音都拦），voice 时再看识别分钟。
+    /// 过了重置时刻的不算；试用的识别分钟（402，没有重置时刻）成了会员就不算了（会员有自己每天的分钟）
+    public func usageBlock(voice: Bool) -> MemberAPIError? {
+        let nowMs = now().timeIntervalSince1970 * 1000
+        func active(_ e: MemberAPIError?) -> MemberAPIError? {
+            guard let e else { return nil }
+            if let reset = e.resetAt { return nowMs < reset ? e : nil }
+            return status?.isMember == true ? nil : e
+        }
+        if let e = active(dailyBlock) { return e }
+        return voice ? active(asrBlock) : nil
+    }
+
+    /// 侧栏状态卡、菜单栏、会员页第一行的一句（带上 /status 里没有的成本上限；没注册的写还没领试用）
+    public var summary: MemberSummary.Line {
+        MemberSummary.line(status, error: error ?? (base == nil ? .noServer : nil), block: usageBlock(voice: false), registered: hasDevice)
+    }
+
+    /// 换了授权（输码、解绑）：上一张授权记下的上限不再算。付完款授权不变：成本上限照旧，试用的识别分钟 usageBlock 自己不算了
+    private func clearBlocks() {
+        dailyBlock = nil
+        asrBlock = nil
     }
 
     // MARK: - 授权码
@@ -178,6 +215,7 @@ public final class MemberClient: ObservableObject {
         try await ensureDevice()
         let data = try await request("POST", "/license/activate", body: ["code": code])
         setStatus(try decodeStatus(data))
+        clearBlocks()
     }
 
     /// 这台电脑退回自己的试用授权（剩几次就几次）
@@ -185,6 +223,7 @@ public final class MemberClient: ObservableObject {
         try await ensureDevice()
         let data = try await request("POST", "/license/unbind", body: [:])
         setStatus(try decodeStatus(data))
+        clearBlocks()
     }
 
     // MARK: - 买

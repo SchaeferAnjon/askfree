@@ -421,23 +421,48 @@ final class MemberCopyTests: XCTestCase {
         MemberProblem(MemberAPIError(status: status, code: code, message: message, resetAt: resetAt), timeZone: TimeZone(identifier: "Europe/Berlin")!)
     }
 
-    func testEveryCodeSaysWhatToDoWithoutAskingForAKey() {
+    func testEveryCodeSaysWhatToDo() {
         let codes: [(Int, String)] = [(402, "trial-used-up"), (402, "trial-closed"), (402, "sub-ended"), (402, "payment-failed"),
                                       (429, "daily-limit"), (402, "asr-limit"), (429, "asr-limit"), (429, "use-limit"), (409, "use-expired"),
                                       (429, "rate"), (503, "busy"), (503, "upstream"), (502, "asr-failed"), (413, "audio-too-long"),
-                                      (503, "not-ready"), (0, "network"), (0, "timeout"), (401, "bad-device"), (500, "server")]
+                                      (503, "not-ready"), (0, "network"), (0, "timeout"), (401, "bad-device"), (500, "server"),
+                                      (400, "bad-request"), (400, "bad-audio")]
+        // 用不了会员的三种照规格 §4.0 给两条出路：订阅，或改用自带 Key（换用法并打开「语音与模型」，不是直接跳去填）
+        let ownKeyExits: Set<String> = ["trial-used-up", "trial-closed", "sub-ended"]
         for (status, code) in codes {
             let p = problem(status, code)
             XCTAssertFalse(p.title.isEmpty, code)
             XCTAssertFalse(p.detail.isEmpty, code)
-            XCTAssertFalse((p.title + p.detail + p.actions.map(\.title).joined()).contains("Key"), "\(code) 不让用户去填 Key")
-            XCTAssertFalse(p.actions.contains { $0.action == .openModels }, "\(code) 不跳去填 Key")
+            XCTAssertFalse(p.actions.contains { $0.action == .openModels }, "\(code) 会员模式下没有 Key 可换")
+            let mentionsKey = (p.title + p.detail + p.actions.map(\.title).joined()).contains("Key")
+            if ownKeyExits.contains(code) {
+                XCTAssertEqual(p.actions.map(\.action), [.openMembership, .useOwnKeys], code)
+                XCTAssertTrue(p.detail.contains("自带 Key，永久免费"), code)
+            } else {
+                XCTAssertFalse(mentionsKey, "\(code) 不提 Key")
+            }
         }
     }
 
+    func testBadRequestDoesNotShowUpstreamText() {
+        let raw = #"{"error":{"message":"This model's maximum context length is 131072 tokens","type":"invalid_request_error"}}"#
+        let p = problem(400, "bad-request", raw)
+        XCTAssertEqual(p.title, "这一问发不出去")
+        XCTAssertFalse(p.detail.contains("context"), "DeepSeek 的英文原文不上卡片")
+        XCTAssertTrue(p.actions.isEmpty, "原样重发还是 400，不给重试")
+    }
+
+    func testRateSaysHowLongToWait() {
+        XCTAssertEqual(MemberProblem(MemberAPIError(status: 429, code: "rate", message: "x", retryAfter: 12)).detail, "稍等 12 秒再问。")
+        XCTAssertEqual(MemberProblem(MemberAPIError(status: 429, code: "rate", message: "x", retryAfter: 90)).detail, "稍等 2 分钟再问。")
+        XCTAssertEqual(problem(429, "too-fast").detail, "稍等几秒再问。")
+    }
+
     func testActionsPerCode() {
-        XCTAssertEqual(problem(402, "trial-used-up").actions.map(\.action), [.openMembership])
-        XCTAssertEqual(problem(402, "trial-closed").title, "免费试用的名额发完了")
+        XCTAssertEqual(problem(402, "trial-used-up").actions.map(\.action), [.openMembership, .useOwnKeys])
+        XCTAssertEqual(problem(402, "trial-closed").title, "这台电脑没有领到免费试用",
+                       "名额发完和同一网段领太多都回 trial-closed，不能一律说前 100 份发完了")
+        XCTAssertEqual(problem(402, "sub-ended").actions.map(\.title), ["续订", "改用自带 Key"])
         XCTAssertEqual(problem(402, "payment-failed").actions.map(\.action), [.openPortal], "欠费：打开门户换卡")
         XCTAssertEqual(problem(402, "asr-limit").actions.map(\.action), [.typeInstead, .openMembership], "试用的识别分钟用完：改打字或订阅")
         XCTAssertEqual(problem(429, "asr-limit").actions.map(\.action), [.typeInstead])
@@ -471,7 +496,10 @@ final class MemberCopyTests: XCTestCase {
         XCTAssertEqual(MemberSummary.line(try s(MemberClientTests.status(plan: "none", left: 0, used: 30, canUse: false, reason: "trial-used-up"))),
                        .init(title: "免费试用", detail: "30 个问题用完了", warn: true))
         XCTAssertEqual(MemberSummary.line(try s(MemberClientTests.status(plan: "none", left: 0, used: 0, canUse: false, reason: "trial-closed"))).detail,
-                       "免费名额已经发完了")
+                       "没有领到免费试用")
+        XCTAssertEqual(MemberSummary.line(nil, registered: false), .init(title: "会员", detail: "还没领免费试用", warn: false),
+                       "没注册不写「正在连接」：启动时不替它注册")
+        let costCap = MemberAPIError(status: 429, code: "daily-limit", message: "今天的用量到上限了", resetAt: 1_793_318_400_000)
         let today = #"{"limit":200,"used":12,"left":188,"resetAt":1793318400000}"#
         XCTAssertEqual(MemberSummary.line(try s(MemberClientTests.status(plan: "member", today: today))).detail, "今天还能问 188 个")
         XCTAssertEqual(MemberSummary.line(try s(MemberClientTests.status(plan: "member", today: today, expiring: true, memberUntil: "1793404800000")), timeZone: tz),
@@ -479,6 +507,127 @@ final class MemberCopyTests: XCTestCase {
         let used = #"{"limit":200,"used":200,"left":0,"resetAt":1793318400000}"#
         XCTAssertEqual(MemberSummary.line(try s(MemberClientTests.status(plan: "member", today: used, canUse: false, reason: "daily-limit"))).detail,
                        "今天的 200 个问题用完了")
+        XCTAssertEqual(MemberSummary.line(try s(MemberClientTests.status(plan: "member", today: today)), block: costCap),
+                       .init(title: "会员", detail: "今天的用量到上限了", warn: true), "成本上限 /status 里看不出来，剩 188 个也写到上限了")
         XCTAssertEqual(MemberSummary.registration("closed", status: nil), "前 100 位新用户的免费名额已经发完了。可以订阅会员，或者改用自带 Key（永久免费）。")
+        for result in ["ip-limit", "daily-limit"] {
+            let text = try XCTUnwrap(MemberSummary.registration(result, status: nil))
+            XCTAssertTrue(text.hasPrefix("这台电脑没有领到免费试用"), result)
+            XCTAssertFalse(text.contains("今天"), "\(result)：这台以后也领不到，不暗示明天能领")
+        }
+    }
+}
+
+
+/// 用量号：重试窗口从这个号开出来算，重试不往后挪（后台 members.js beginUse 按 created_at 判 409 use-expired）
+final class MemberUseRetryTests: XCTestCase {
+    func testRetryKeepsOriginalStartSoWindowDoesNotSlide() {
+        let t0 = Date(timeIntervalSince1970: 1_793_232_000)
+        let first = MemberUseRef(startedAt: t0)
+        // 10 分钟时点重试：同一个号，开始时刻不变
+        let atTen = MemberUse.forRetry(first, now: t0 + 10 * 60)
+        XCTAssertEqual(atTen, first)
+        // 16 分钟时再点：离开出来已经 16 分钟（不是离上次重试 6 分钟），换新号，不会一直撞 409
+        let atSixteen = MemberUse.forRetry(atTen, now: t0 + 16 * 60)
+        XCTAssertNotEqual(atSixteen.id, first.id)
+        XCTAssertEqual(atSixteen.startedAt, t0 + 16 * 60)
+        // 换了新号以后再重试，窗口从新号算
+        XCTAssertEqual(MemberUse.forRetry(atSixteen, now: t0 + 20 * 60), atSixteen)
+        XCTAssertNotEqual(MemberUse.forRetry(first, now: t0 + 14 * 60).id, first.id, "留 1 分钟余量：14 分钟就换")
+        XCTAssertNotEqual(MemberUse.forRetry(nil, now: t0).id, first.id, "收到 use-expired 置空以后换新号")
+    }
+}
+
+/// 收费页上开自动续费：后台 billing.checkout 一定会拒的几种情况，按钮换成走得通的路
+final class SubscribeBlockTests: XCTestCase {
+    private let now = Date(timeIntervalSince1970: 1_793_232_000)   // 毫秒 1793232000000
+    private func s(_ json: String) throws -> MemberStatus { try JSONDecoder().decode(MemberStatus.self, from: Data(json.utf8)) }
+
+    func testBlocks() throws {
+        XCTAssertNil(try s(MemberClientTests.status()).subscribeBlock(now: now), "试用中：能订")
+        let autoRenew = MemberClientTests.status(plan: "member", subscription: #"{"status":"active","plan":"month","cancelAtPeriodEnd":false,"accessUntil":1795910400000}"#)
+            .replacingOccurrences(of: #""autoRenew":false"#, with: #""autoRenew":true"#)
+        XCTAssertEqual(try s(autoRenew).subscribeBlock(now: now), .autoRenew)
+        let canceled = MemberClientTests.status(plan: "member", subscription: #"{"status":"active","plan":"month","cancelAtPeriodEnd":true,"accessUntil":1793404800000}"#,
+                                                expiring: true, memberUntil: "1793404800000")
+        XCTAssertEqual(try s(canceled).subscribeBlock(now: now), .renewInPortal(until: 1_793_404_800_000),
+                       "到期取消了、还没到期：后台回 already-subscribed，快到期也一样，要在门户里续订")
+        let pastDue = MemberClientTests.status(plan: "member", subscription: #"{"status":"past_due","plan":"year","cancelAtPeriodEnd":false,"accessUntil":1793404800000}"#,
+                                               expiring: true, memberUntil: "1793404800000")
+        XCTAssertEqual(try s(pastDue).subscribeBlock(now: now), .paymentFailed)
+        let pastDueOver = MemberClientTests.status(plan: "none", left: 0, used: 30, canUse: false, reason: "payment-failed",
+                                                   subscription: #"{"status":"past_due","plan":"year","accessUntil":1793000000000}"#)
+        XCTAssertEqual(try s(pastDueOver).subscribeBlock(now: now), .paymentFailed, "欠费超过 3 天：后台回 409 payment-failed")
+        let ended = MemberClientTests.status(plan: "none", left: 0, used: 30, canUse: false, reason: "sub-ended",
+                                             subscription: #"{"status":"canceled","plan":"month","accessUntil":1793000000000}"#)
+        XCTAssertNil(try s(ended).subscribeBlock(now: now), "订阅结束了：能重新订")
+        let pass = #","pass":{"plan":"year","currency":"cny","amount":9900,"status":"paid","until":1824768000000}"#
+        let passFar = MemberClientTests.status(plan: "member", memberUntil: "1824768000000").replacingOccurrences(of: #","pass":null"#, with: pass)
+        XCTAssertEqual(try s(passFar).subscribeBlock(now: now), .passActive(until: 1_824_768_000_000), "一次买离到期还远：后台回 pass-active")
+        let passSoon = MemberClientTests.status(plan: "member", expiring: true, memberUntil: "1793404800000")
+            .replacingOccurrences(of: #","pass":null"#, with: pass.replacingOccurrences(of: "1824768000000", with: "1793404800000"))
+        XCTAssertNil(try s(passSoon).subscribeBlock(now: now), "离到期 3 天以内：后台放开，能接着开自动续费")
+    }
+}
+
+/// 成本上限、识别分钟 /status 里看不出来：计量接口回过一次就记到重置那一刻，按键时先拦
+@MainActor
+final class MemberUsageBlockTests: XCTestCase {
+    private var clock = Date(timeIntervalSince1970: 1_793_232_000)   // 毫秒 1793232000000
+    private let reset = 1_793_318_400_000.0                           // 下一个 UTC 0 点
+
+    private func makeClient(_ server: MemberClientTests.FakeServer, secrets: InMemorySecretStore) -> MemberClient {
+        MemberClient(base: URL(string: "http://member.test"), secrets: secrets, fingerprint: { String(repeating: "ab", count: 32) },
+                     version: "1.3.0", send: server.send, now: { [unowned self] in self.clock })
+    }
+
+    func testDailyCostCapBlocksUntilReset() {
+        let server = MemberClientTests.FakeServer()
+        let client = makeClient(server, secrets: InMemorySecretStore())
+        let e = MemberAPIError(status: 429, code: "daily-limit", message: "今天的用量到上限了，北京时间早上 8 点重置", resetAt: reset)
+        client.noteUsageError(e)
+        XCTAssertEqual(client.usageBlock(voice: false), e, "打字问也拦")
+        XCTAssertEqual(client.usageBlock(voice: true), e)
+        clock = Date(timeIntervalSince1970: reset / 1000)
+        XCTAssertNil(client.usageBlock(voice: true), "过了重置时刻就放开")
+    }
+
+    func testAsrLimitOnlyBlocksVoice() {
+        let server = MemberClientTests.FakeServer()
+        let client = makeClient(server, secrets: InMemorySecretStore())
+        let memberLimit = MemberAPIError(status: 429, code: "asr-limit", message: "今天的语音识别用到 120 分钟了", resetAt: reset)
+        client.noteUsageError(memberLimit)
+        XCTAssertNil(client.usageBlock(voice: false), "打字照常")
+        XCTAssertEqual(client.usageBlock(voice: true), memberLimit)
+        clock = Date(timeIntervalSince1970: reset / 1000 + 1)
+        XCTAssertNil(client.usageBlock(voice: true))
+    }
+
+    func testTrialAsrLimitStopsCountingOnceMemberAndActivateClears() async throws {
+        let server = MemberClientTests.FakeServer()
+        let secrets = InMemorySecretStore()
+        secrets.set(MemberClient.tokenAccount, "afd_saved")
+        let client = makeClient(server, secrets: secrets)
+        server.on("GET /v1/askfree/status", 200, MemberClientTests.status(left: 10, used: 20))
+        await client.refresh()
+        let trialLimit = MemberAPIError(status: 402, code: "asr-limit", message: "试用的语音识别一共 60 分钟，已经用完了")
+        client.noteUsageError(trialLimit)
+        XCTAssertEqual(client.usageBlock(voice: true), trialLimit, "试用的识别分钟没有重置时刻：一直拦到成了会员")
+        server.lock.withLock { server.routes["GET /v1/askfree/status"] = nil }
+        server.on("GET /v1/askfree/status", 200, MemberClientTests.status(plan: "member", today: #"{"limit":200,"used":0,"left":200,"resetAt":1793318400000}"#))
+        await client.refresh()
+        XCTAssertNil(client.usageBlock(voice: true), "成了会员：按会员每天的分钟算")
+
+        client.noteUsageError(MemberAPIError(status: 429, code: "daily-limit", message: "x", resetAt: reset))
+        server.on("POST /v1/askfree/license/activate", 200, MemberClientTests.status(plan: "member", code: "AF-ABCD-EFGH-JKMN"))
+        try await client.activate(code: "AF-ABCD-EFGH-JKMN")
+        XCTAssertNil(client.usageBlock(voice: false), "换了授权：上一张的上限不算")
+    }
+
+    func testSummaryForUnregisteredDeviceDoesNotRegister() {
+        let server = MemberClientTests.FakeServer()
+        let client = makeClient(server, secrets: InMemorySecretStore())
+        XCTAssertEqual(client.summary.detail, "还没领免费试用")
+        XCTAssertTrue(server.requests.isEmpty, "画侧栏不去注册")
     }
 }

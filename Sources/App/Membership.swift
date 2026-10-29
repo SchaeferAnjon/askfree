@@ -15,8 +15,10 @@ extension MemberClient {
         let client = MemberClient(base: MemberEndpoint.current, secrets: AppIdentity.defaultSecretStore(),
                                   fingerprint: { MemberFingerprint.current() }, version: Bundle.main.appVersionString)
         client.log = { line in (NSApp.delegate as? AppDelegate)?.debugLog(line) }
-        // 浏览器里付完回到这里：主窗口跳到会员页，收费页上写「付款成功」
+        // 浏览器里付完回到这里：真付了钱才换成会员模式（自带 Key 的人点了订阅又没付，照旧用他的 Key），
+        // 主窗口跳到会员页，收费页上写「付款成功」
         client.onPaid = { _ in
+            if !UsageModeStore.isMember { UsageModeStore.set(.member, refresh: false) }
             NotificationCenter.default.post(name: .askFreeMemberDidPay, object: nil)
             SettingsWindowController.show(page: .member)
         }
@@ -46,12 +48,19 @@ enum UsageModeStore {
 }
 
 extension AppDelegate {
-    /// 会员模式下按下提问键那一刻：上次问后台时已经知道用不了（试用用完、名额发完、到期、欠费、今天的用完了），
-    /// 不录音，直接在右上角说清楚怎么办（订阅 / 换卡），顺手再问一次后台（别处刚付过钱就能马上恢复）。回 true = 拦下了
+    /// 会员模式下按下提问键那一刻：上次问后台时已经知道用不了（试用用完、没领到、到期、欠费、今天的用完了），
+    /// 不录音，直接在右上角说清楚怎么办（订阅 / 换卡），顺手再问一次后台（别处刚付过钱就能马上恢复）。回 true = 拦下了。
+    /// voice：要录音的（按住说话、面板上按住追问）还看识别分钟用完没有；打字问不看
     @MainActor
-    func blockedByMembership() -> Bool {
+    func blockedByMembership(voice: Bool) -> Bool {
         guard UsageModeStore.isMember else { return false }
         let member = MemberClient.shared
+        // 计量接口回过的、/status 里看不出来的上限（这张授权今天的成本、识别分钟）：到重置那一刻为止
+        if let block = member.usageBlock(voice: voice) {
+            debugLog("Member: blocked before asking reason=\(block.code) (remembered)")
+            showMemberNotice(block)
+            return true
+        }
         guard let s = member.status, !s.canUse, let reason = s.reason else { return false }
         if reason == "daily-limit", let reset = s.today?.resetAt, Date().timeIntervalSince1970 * 1000 >= reset {
             Task { await member.refresh() }
@@ -65,11 +74,30 @@ extension AppDelegate {
         return true
     }
 
-    /// 还没问出问题就被后台拦下（识别那一步、按键时已知用不了）：右上角只放一张报错卡，没有可以重问的问题
+    /// 还没问出问题就被后台拦下（识别那一步、按键时已知用不了）：报错卡没有可以重问的问题。
+    /// 右上角正在看一段对话：卡片接在它后面，对话和追问都留着；上一问还在出字：不碰它，只在指针旁边提示一句；
+    /// 浮窗不在：右上角只放这一张卡
     func showMemberNotice(_ error: MemberAPIError) {
+        let failure = AskFailure(error: error).withoutRetry
+        if askInFlight {
+            overlayWindow.showHint(failure.title(provider: "会员"))
+            return
+        }
         askRound += 1
-        answerPanel.startThread(question: "")
-        answerPanel.fail(AskFailure(error: error).withoutRetry)
+        if answerPanel.isVisible, let last = answerPanel.model.turns.last {
+            // 连按几次只留一张：最后一张已经是这种卡就换掉它
+            if !(last.question.isEmpty && last.state == .failed) { answerPanel.appendQuestion("") }
+        } else {
+            answerPanel.startThread(question: "")
+        }
+        answerPanel.fail(failure)
+    }
+
+    /// 报错卡「改用自带 Key」：换成自带 Key（永久免费），打开「语音与模型」页去填
+    @MainActor
+    func switchToOwnKeys() {
+        UsageModeStore.set(.own)
+        showModelSettings()
     }
 
     /// 报错卡上的「订阅会员」「续订」：打开主窗口的会员页，收费页直接弹出来

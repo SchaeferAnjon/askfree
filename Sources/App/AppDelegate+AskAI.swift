@@ -22,8 +22,8 @@ extension AppDelegate {
             if followUp { self.answerPanel.setListening(.noSpeech) } else { self.overlayWindow.showHint("没听到问题", accent: .neutral) }
         }
         let transcribeStartedAt = Date()
-        // 一个问题一个用量号（会员模式下识别、回答、联网、重试都带它，只算一次）
-        let useId = MemberUse.newId()
+        // 一个问题一个用量号（会员模式下识别、回答、联网、重试都带它，只算一次）；重试窗口从这一刻算
+        let use = MemberUseRef()
         audioRecorder.stopRecording { [weak self] samples in
             guard let self else { return }
             guard let samples, samples.count > 16000 / 2 else {
@@ -31,14 +31,14 @@ extension AppDelegate {
                 return
             }
             DispatchQueue.main.async {
-                self.transcribe(samples: samples, useId: useId) { [weak self] result in
+                self.transcribe(samples: samples, useId: use.id) { [weak self] result in
                     guard let self else { return }
                     switch result {
                     case .success(let raw):
                         let spoken = raw.trimmingCharacters(in: .whitespacesAndNewlines)
                             .trimmingCharacters(in: CharacterSet(charactersIn: "。．.，,！!？?；;"))
                         self.askTiming.transcribeMs = Int(Date().timeIntervalSince(transcribeStartedAt) * 1000)
-                        if !self.submitQuestion(spoken, continuesThread: continuesThread, useId: useId) { noSpeech() }
+                        if !self.submitQuestion(spoken, continuesThread: continuesThread, use: use) { noSpeech() }
                     case .failure(let err):
                         // 没听到有效语音：安静地提示一次，不走红框 + 文字条的两段式报错
                         if case CloudASRTranscriber.TranscriptionError.noSpeech = err { noSpeech(); return }
@@ -46,7 +46,7 @@ extension AppDelegate {
                         self.answerPanel.setListening(.idle)
                         // 会员后台拦下的（试用用完、识别分钟用完……）：右上角一张带按钮的卡，说清楚怎么办
                         if let member = err as? MemberAPIError {
-                            self.debugLog("ASK asr member error=\(member.code)")
+                            self.debugLog("ASK asr member error=\(member.code) \(member.message.prefix(200))")
                             MainActor.assumeIsolated { MemberClient.shared.noteUsageError(member) }
                             self.showMemberNotice(member)
                             return
@@ -100,9 +100,9 @@ extension AppDelegate {
 
     /// 问题文字到手（语音识别出来的、打字的）：定下接着聊还是新话题，带上屏幕发出去。
     /// 返回 false = 去掉「新话题」几个字后什么都不剩，没发
-    /// useId：语音提问在识别时已经开了用量号，这里接着用；打字提问没给就开一个新的
+    /// use：语音提问在松开键时已经开了用量号，这里接着用；打字提问没给就开一个新的
     @discardableResult
-    func submitQuestion(_ text: String, continuesThread: Bool, useId: String? = nil) -> Bool {
+    func submitQuestion(_ text: String, continuesThread: Bool, use: MemberUseRef? = nil) -> Bool {
         // 浮窗还在但想换话题：用「新话题」开头，这几个字不算进问题里
         let (question, wantsNewThread) = AskThreading.stripNewThreadPrefix(text)
         let continuesThread = continuesThread && !wantsNewThread
@@ -119,9 +119,9 @@ extension AppDelegate {
         if appending { answerPanel.appendQuestion(question) } else { answerPanel.startThread(question: question) }
         // 图只随当轮发：多轮追问不重复传图（截图另存进历史，见 recordHistory）。
         // 追问照样截图，但先只发文字，模型说要看屏幕才发（AskScreenTool）
-        let useId = useId ?? MemberUse.newId()
+        let use = use ?? MemberUseRef()
         resolveAskScreen { screen, note in
-            self.sendAsk(question: question, history: history, screen: screen, screenNote: note, round: round, useId: useId)
+            self.sendAsk(question: question, history: history, screen: screen, screenNote: note, round: round, use: use)
         }
         return true
     }
@@ -139,7 +139,7 @@ extension AppDelegate {
         // 真实使用时截图和说话并行；这里没有说话那几秒，先等 3 秒再取图
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             self.resolveAskScreen { screen, note in
-                self.sendAsk(question: question, history: [], screen: screen, screenNote: note, round: round, useId: MemberUse.newId())
+                self.sendAsk(question: question, history: [], screen: screen, screenNote: note, round: round, use: MemberUseRef())
             }
         }
         devAskFollowUps(Array(questions.dropFirst()), afterAnswers: 1)
@@ -175,10 +175,11 @@ extension AppDelegate {
                          screen: AskAI.AskScreenContext?,
                          screenNote: String?,
                          round: Int,
-                         useId: String) {
+                         use: MemberUseRef) {
         let thread = answerPanel.threadID
         lastAskScreen = screen
-        lastAskUse = (useId, Date())
+        // 记的是这个号开出来的时刻：重试也用它，后台的 15 分钟窗口不随重试往后挪
+        lastAskUse = use
         let draft = AskHistoryDraft()
         draft.via = Self.historyVia(trigger: askTiming.trigger)
         askInFlight = true
@@ -217,7 +218,11 @@ extension AppDelegate {
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
                     self.debugLog("ASK failed: \(reason) \(self.askTiming.summary(totalMs: totalMs))")
                     // 会员后台说用不了（试用用完、每天上限、欠费）：卡片和会员页马上跟后台对齐
-                    if let member = err as? MemberAPIError { MainActor.assumeIsolated { MemberClient.shared.noteUsageError(member) } }
+                    if let member = err as? MemberAPIError {
+                        MainActor.assumeIsolated { MemberClient.shared.noteUsageError(member) }
+                        // 后台说这个号过了重试窗口：卡片上的「重新问」换新号
+                        if member.code == "use-expired", self.lastAskUse?.id == use.id { self.lastAskUse = nil }
+                    }
                     self.answerPanel.fail(AskFailure(error: err))
                 }
             }
@@ -269,12 +274,12 @@ extension AppDelegate {
             Task { @MainActor in
                 do {
                     let credentials = try await client.credentials()
-                    run(AskMember(credentials: credentials, useId: useId, onUse: onUse)) { result in
+                    run(AskMember(credentials: credentials, useId: use.id, onUse: onUse)) { result in
                         guard case .failure(let e as MemberAPIError) = result, e.isBadDevice else { finish(result); return }
                         Task { @MainActor in
                             do {
                                 let fresh = try await client.recoverDevice(after: credentials)
-                                run(AskMember(credentials: fresh, useId: useId, onUse: onUse), finish)
+                                run(AskMember(credentials: fresh, useId: use.id, onUse: onUse), finish)
                             } catch {
                                 finish(.failure(error))
                             }
@@ -288,7 +293,7 @@ extension AppDelegate {
     }
 
     /// 报错卡「重试」：同一个话题里把这一句再问一遍，屏幕内容照上次的发
-    /// 会员：重试用原来的用量号（不再算一次）；过了后台的 15 分钟窗口就换新号（会再算一次）
+    /// 会员：重试用原来的用量号（不再算一次）；离这个号开出来过了 14 分钟（后台窗口 15 分钟）就换新号（会再算一次）
     func retryAsk(_ question: String) {
         guard !askInFlight else { return }
         askTiming.reset(trigger: "retry", mode: "panel")
@@ -296,8 +301,7 @@ extension AppDelegate {
         askRound += 1
         let round = askRound
         answerPanel.appendQuestion(question)
-        let useId = lastAskUse.flatMap { Date().timeIntervalSince($0.at) < 14 * 60 ? $0.id : nil } ?? MemberUse.newId()
-        sendAsk(question: question, history: history, screen: lastAskScreen, screenNote: nil, round: round, useId: useId)
+        sendAsk(question: question, history: history, screen: lastAskScreen, screenNote: nil, round: round, use: MemberUse.forRetry(lastAskUse))
     }
 
     /// 答完的一轮记进历史：文字、真发给模型的截图、已经到了的图；开着的历史页跟着刷新
@@ -361,7 +365,7 @@ extension AppDelegate {
             return false
         }
         // 会员已知用不了（试用用完、到期……）：不让人白说一遍，直接说怎么办
-        if MainActor.assumeIsolated({ blockedByMembership() }) { return false }
+        if MainActor.assumeIsolated({ blockedByMembership(voice: true) }) { return false }
         askTiming.reset(trigger: trigger, mode: "hotkey")
         typeAskPanel.dismiss()
         voiceQuestionFollowUp = false

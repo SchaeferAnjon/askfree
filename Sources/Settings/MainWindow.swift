@@ -152,7 +152,7 @@ struct MainWindowView: View {
 
     /// 会员模式下侧栏状态卡和「会员」那一行的橙点：试用用完、到期、欠费、今天的用完了
     private var memberLine: MemberSummary.Line? {
-        usageMode == .member ? MemberSummary.line(member.status, error: member.error) : nil
+        usageMode == .member ? member.summary : nil
     }
 
     private var startTitle: String { MainPage.start.title(setupDone: status.allDone) }

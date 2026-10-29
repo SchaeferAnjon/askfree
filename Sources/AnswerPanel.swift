@@ -59,6 +59,8 @@ final class AnswerPanel {
     var onOpenMembership: (() -> Void)?
     /// 报错卡「管理订阅」（欠费换卡）
     var onOpenPortal: (() -> Void)?
+    /// 报错卡「改用自带 Key」（试用用完、没领到、会员到期）
+    var onUseOwnKeys: (() -> Void)?
     /// 「这次没看屏幕」那条的「去授权」
     var onGrantScreen: (() -> Void)?
 
@@ -325,6 +327,8 @@ final class AnswerPanel {
             onOpenPortal?()
         case .typeInstead:
             onType?()
+        case .useOwnKeys:
+            onUseOwnKeys?()
         case .retry:
             guard let last = model.turns.last, last.state == .failed else { return }
             model.turns.removeLast()
@@ -1039,7 +1043,8 @@ struct TurnsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 1) {
-                    if multi && index > 0 {
+                    // 问题是空的（还没问出来就被会员后台拦下，卡片接在对话后面）：不写「追问」
+                    if multi && index > 0 && !turn.question.isEmpty {
                         Text("追问").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
                     }
                     // 问题是空的：还没问出来就被会员后台拦下了（试用用完……），只放报错卡
@@ -1056,7 +1061,10 @@ struct TurnsView: View {
             }
             if compact {
                 Button { model.expandedTurns.insert(turn.id) } label: {
-                    Text(AnswerMarkdown.preview(turn.answer))
+                    // 没答成的旧一轮没有回答可预览：写一句没答成的原因，别留一块空白
+                    Text(turn.state == .failed && turn.answer.isEmpty
+                         ? "没答成：" + (turn.failure?.title(provider: model.providerName) ?? "")
+                         : AnswerMarkdown.preview(turn.answer))
                         .font(.system(size: 13)).foregroundStyle(Theme.text2)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)

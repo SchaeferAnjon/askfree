@@ -630,6 +630,7 @@ struct OnboardingView: View {
 /// 真的问一句：指着左边的图按提问键（或按住屏幕上的按钮）说话，回答出在右上角，下面三项打勾
 struct TryAskStep: View {
     @ObservedObject private var store = SettingsStore.shared
+    @ObservedObject private var member = MemberClient.shared
     @State private var heard = false
     @State private var captured = false
     @State private var answered = false
@@ -643,6 +644,12 @@ struct TryAskStep: View {
                 Text("试问一次").font(.system(size: 22, weight: .semibold)).foregroundStyle(Theme.text)
                 Text("真的问一句，确认麦克风、截屏和 AI 都通了。回答会出现在屏幕右上角。")
                     .font(.system(size: 13)).foregroundStyle(Theme.text2)
+                if UsageMode.current() == .member {
+                    // 试问也走会员后台，照样算次数：先说清楚
+                    let left = member.status.flatMap { $0.plan == "trial" ? $0.trial.left : nil }
+                    Text("用会员问，这一问算 1 个问题\(left.map { "（免费试用还剩 \($0) 个）" } ?? "")。")
+                        .font(.system(size: 12)).foregroundStyle(Theme.text3)
+                }
             }
             HStack(alignment: .top, spacing: 24) {
                 chart

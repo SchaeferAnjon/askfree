@@ -53,6 +53,8 @@ extension AppDelegate {
         answerPanel.onFollowUpStart = { [weak self] in
             // 上一轮还在出字时接不上话：等它答完再按住续聊
             guard let self, !self.isRecording, !self.isProcessing, !self.askInFlight else { return false }
+            // 会员已知用不了（试用用完、今天的到上限、识别分钟用完……）：不录音，报错卡接在这段对话后面
+            if MainActor.assumeIsolated({ self.blockedByMembership(voice: true) }) { return false }
             self.voiceQuestionFollowUp = true
             self.overlayWindow.recordingControls = .hidden
             guard self.startRecording(feedback: false) else { self.voiceQuestionFollowUp = false; return false }
@@ -74,6 +76,7 @@ extension AppDelegate {
         answerPanel.onOpenModels = { [weak self] in self?.showModelSettings() }
         answerPanel.onOpenMembership = { [weak self] in MainActor.assumeIsolated { self?.openMembership() } }
         answerPanel.onOpenPortal = { [weak self] in MainActor.assumeIsolated { self?.openMemberPortal() } }
+        answerPanel.onUseOwnKeys = { [weak self] in MainActor.assumeIsolated { self?.switchToOwnKeys() } }
         answerPanel.onGrantScreen = {
             MainActor.assumeIsolated { SetupStatus.shared.requestScreenRecording() }
         }

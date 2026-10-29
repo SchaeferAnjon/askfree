@@ -37,8 +37,8 @@ enum AppLinks {
 }
 
 /// 启动参数（scripts/dev_run.sh 透传）：
-/// - `-openPage <start|history|hotkeys|models|answer|recording|permissions|general|about|onboarding>`：
-///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导），正式版也认
+/// - `-openPage <start|history|member|hotkeys|models|answer|recording|permissions|general|about|onboarding|pricing>`：
+///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导，pricing 打开会员页再弹出收费页），正式版也认
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效；
 ///   可以给几个，后面的等前一句答完 4 秒后当追问接着问
@@ -137,8 +137,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var askInFlight = false
     /// 最近一问发出去的屏幕内容：报错卡「重试」时照原样再发
     var lastAskScreen: AskAI.AskScreenContext?
-    /// 最近一问的用量号和开始时间：报错卡「重试」15 分钟内用原来的号（会员不再算一次）
-    var lastAskUse: (id: String, at: Date)?
+    /// 最近一问的用量号和它开出来的时刻：报错卡「重试」14 分钟内用原来的号（会员不再算一次）
+    var lastAskUse: MemberUseRef?
     let answerPanel = AnswerPanel()
     /// 打字问 AI：双击修饰键弹出的输入框和它的监听
     let typeAskPanel = TypeAskPanel()
@@ -237,8 +237,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated {
             AppUpdater.shared.start()
             UsageReporter.shared.start()
-            // 会员：启动时跟后台对一次剩几次（没注册的这时领试用）。欢迎引导还没走完的等用户在「用法」那一步选
-            if UsageModeStore.isMember, OnboardingProgress.isCompleted || UsageMode.isChosen() {
+            // 会员：注册过的启动时跟后台对一次剩几次。没注册的不在这时领试用（升级上来的老用户不声不响就占掉一份名额）：
+            // 等第一次提问、打开会员页，或在欢迎引导「用法」那一步点「领取免费试用」
+            if UsageModeStore.isMember, MemberClient.shared.hasDevice {
                 Task { await MemberClient.shared.refresh() }
             }
         }
@@ -252,6 +253,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else if let page = DevLaunchOptions.openPage {
             debugLog("Launch argument: opening page \(page)")
             SettingsWindowController.show(page: page)
+            if DevLaunchOptions.openPageArgument?.lowercased() == "pricing" {
+                MainActor.assumeIsolated { SettingsWindowController.shared?.model.showsPricing = true }
+            }
         } else if !cloudTranscriber.isConfigured() || !askAI.isConfigured() {
             SettingsWindowController.show(page: .start)
         }

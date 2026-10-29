@@ -57,7 +57,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         // 会员：剩几个问题、到期、欠费，点开会员页
         if UsageModeStore.isMember {
-            let line = MemberSummary.line(MemberClient.shared.status, error: MemberClient.shared.error)
+            let line = MemberClient.shared.summary
             let item = ClosureMenuItem("会员…") { SettingsWindowController.show(page: .member) }
             item.attributedTitle = trailing("会员", "\(line.title) · \(line.detail)")
             menu.addItem(item)

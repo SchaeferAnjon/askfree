@@ -132,7 +132,7 @@ struct MemberPage: View {
                     UsageModeStore.set(picked)
                 }
             }
-            if mode == .member { memberStatus } else { ownNote }
+            if mode == .member { memberStatus } else { VStack(alignment: .leading, spacing: 12) { ownNote } }
             LicenseCodeGroup()
             if mode == .member {
                 VStack(alignment: .leading, spacing: 6) {
@@ -145,7 +145,8 @@ struct MemberPage: View {
         }
         .onAppear {
             mode = UsageMode.current()
-            if mode == .member { Task { await member.refresh(maxAge: 30) } }
+            // 自带 Key 但注册过（以前用过会员、付过钱）：也对一次，好知道有没有会员；没注册的不去注册
+            if mode == .member || member.hasDevice { Task { await member.refresh(maxAge: 30) } }
         }
         .onReceive(NotificationCenter.default.publisher(for: .askFreeUsageModeDidChange)) { _ in mode = UsageMode.current() }
     }
@@ -170,7 +171,11 @@ struct MemberPage: View {
                 SettingsRow(title: headline(s), detail: detailLine(s), icon: s?.isMember == true ? "sparkles" : "gift") {
                     if member.isRefreshing { ProgressView().controlSize(.small) }
                 }
-                if let today = s?.today {
+                if let block = member.usageBlock(voice: false) {
+                    // 这张授权今天的成本到上限了（/status 里的剩几个看不出来）
+                    Hairline(inset: 46)
+                    SettingsRow(title: "今天的用量到上限了", detail: "\(MemberFormat.resetLine(block.resetAt))重置。", icon: "calendar")
+                } else if let today = s?.today {
                     Hairline(inset: 46)
                     SettingsRow(title: "今天还能问 \(today.left) 个", detail: "每天 \(today.limit) 个问题，\(MemberFormat.resetLine(today.resetAt))重置。",
                                 icon: "calendar")
@@ -206,7 +211,7 @@ struct MemberPage: View {
             if let until = s.memberUntil { return "会员 · 用到 \(MemberFormat.day(until))" }
             return "会员"
         }
-        let line = MemberSummary.line(s, error: member.error)
+        let line = member.summary
         return "\(line.title) · \(line.detail)"
     }
 
@@ -218,6 +223,7 @@ struct MemberPage: View {
             if sub.cancelAtPeriodEnd == true, let until = sub.accessUntil ?? s.memberUntil {
                 return "\(cycle) \(price)，已取消自动续费，用到 \(MemberFormat.day(until))。"
             }
+            if sub.status == "past_due" { return "\(cycle) \(price)，这一期的续费没扣成，在「管理订阅」里换一张卡。" }
             if let end = sub.periodEnd { return "\(cycle) \(price)，自动续费，下次扣款 \(MemberFormat.day(end))。随时能在「管理订阅」里取消。" }
             return "\(cycle) \(price)，自动续费。"
         }
@@ -227,7 +233,7 @@ struct MemberPage: View {
         }
         if s.isMember, let until = s.memberUntil { return "用到 \(MemberFormat.day(until))。" }
         switch s.reason {
-        case "trial-closed": return "前 100 位新用户的免费名额已经发完了。订阅以后每天能问 200 个，或者改用自带 Key。"
+        case "trial-closed": return "免费试用只发前 100 份，同一个网络里领得多了也会发不到。订阅以后每天能问 200 个，或者改用自带 Key。"
         case "sub-ended": return "续订或再买一段就能接着问；没用完的试用次数也还在。"
         case "trial-used-up": return "免费的 \(s.trial.total) 个问题用完了。订阅以后每天能问 200 个，或者改用自带 Key。"
         default: return "前 100 位新用户各 \(s.trial.total) 个问题，不过期。已经用了 \(s.trial.used) 个。"
@@ -255,11 +261,26 @@ struct MemberPage: View {
 
     // MARK: 自带 Key
 
-    private var ownNote: some View {
+    @ViewBuilder private var ownNote: some View {
+        // 付了钱但现在用的是自带 Key（比如先点了「不等了」，后来在浏览器里付完）：提醒一句，一键换回会员
+        if member.status?.isMember == true {
+            Callout(icon: "sparkles", title: "你有会员，现在用的是自带 Key",
+                    detail: "选上面的「会员」就不用自己的 Key，次数算在会员里。") {
+                Button("改用会员") {
+                    mode = .member
+                    UsageModeStore.set(.member)
+                }
+                .buttonStyle(SecondaryButtonStyle(height: 28))
+            }
+        }
         Callout(icon: "key", title: "正在用自带 Key，永久免费",
                 detail: "语音识别和回答用你在「语音与模型」里填的 Key，直接发给服务商，不经过我们，也不算次数。") {
             Button("去语音与模型") { model.page = .models }.buttonStyle(SecondaryButtonStyle(height: 28))
         }
+        // 只看看价格：不换用法、不注册（收费页自己不替没注册的电脑领试用）；真付了钱才换成会员
+        Button("看看会员方案") { model.showsPricing = true }
+            .buttonStyle(PlainTextButtonStyle())
+            .padding(.leading, 2)
     }
 }
 
@@ -432,10 +453,12 @@ struct PricingSheet: View {
         let state: String = {
             guard let status else { return "选会员后自动领取" }
             if status.isMember { return "已是会员" }
-            if trial?.granted == false { return "名额已发完" }
+            if trial?.granted == false { return "这台没领到" }
             return (trial?.left ?? 0) > 0 ? "试用中 · 剩 \(trial?.left ?? 0) 个" : "试用已用完"
         }()
-        return column(name: "免费试用", tags: [("前 100 位新用户", false)], price: "免费", unit: "· \(trial?.total ?? 30) 个问题",
+        // 没领到的 total 是 0：这一栏写的是试用本身给多少，照 30 写
+        return column(name: "免费试用", tags: [("前 100 位新用户", false)], price: "免费",
+                      unit: "· \(trial?.granted == true ? trial?.total ?? 30 : 30) 个问题",
                       sub: "装好就能问，不用填任何 Key", featured: false,
                       items: ["语音识别、问答、联网都能用", "不用注册、不用登录", "不过期，用完再选会员或自带 Key"]) {
             Text(state).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.text2)
@@ -454,7 +477,8 @@ struct PricingSheet: View {
             VStack(alignment: .leading, spacing: 10) {
                 MiniSegmented(options: [("month", "月付"), ("year", "年付")], selection: $plan)
                 memberAction(price: price)
-                if currency == "cny", let pass = status?.passPrices, !(status?.autoRenew ?? false) {
+                // 一次买：自动续费中、欠费时后台都会拒（409），不画
+                if currency == "cny", let pass = status?.passPrices, ![.autoRenew, .paymentFailed].contains(block) {
                     passRow(pass)
                 }
                 if let error {
@@ -466,6 +490,9 @@ struct PricingSheet: View {
             }
         }
     }
+
+    /// 开自动续费后台一定会拒的情况（已经在自动续费、欠费、到期取消了还没到期、一次买离到期还远）
+    private var block: MemberStatus.SubscribeBlock? { status?.subscribeBlock() }
 
     @ViewBuilder private func memberAction(price: String) -> some View {
         if justPaid {
@@ -483,22 +510,39 @@ struct PricingSheet: View {
                 }
             }
             .frame(minHeight: 32)
-        } else if status?.autoRenew == true {
+        } else if block == .autoRenew {
             Button("已是会员 · 管理订阅") { portal() }
                 .buttonStyle(SecondaryButtonStyle(height: 32)).frame(maxWidth: .infinity)
+        } else if block == .paymentFailed {
+            blockedAction("这一期的续费没扣成：换一张卡就恢复，不用重新订阅。", button: "管理订阅 · 换卡")
+        } else if case .renewInPortal(let until) = block {
+            blockedAction("已取消自动续费，会员用到 \(MemberFormat.day(until))。在「管理订阅」里点「续订」就接着自动续费。", button: "管理订阅 · 续订")
+        } else if case .passActive(let until) = block {
+            Text("一次买的会员用到 \(MemberFormat.day(until))。到期前 3 天能开自动续费，接着用不断档。")
+                .font(.system(size: 12)).foregroundStyle(Theme.text2).fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: 32, alignment: .leading)
         } else if status != nil && status?.prices == nil {
             Text("购买还没开通，稍后再试").font(.system(size: 12)).foregroundStyle(Theme.text3).frame(height: 32)
         } else {
             Button { buy(plan: plan, mode: "sub") } label: {
                 HStack(spacing: 6) {
                     if opening == "sub" { ProgressView().controlSize(.mini) }
-                    Text(status?.isMember == true ? "开自动续费 · \(price)" : "订阅 · \(price) / \(plan == "year" ? "年" : "月")")
+                    Text(status?.isMember == true ? "开自动续费 · \(price) / \(plan == "year" ? "年" : "月")" : "订阅 · \(price) / \(plan == "year" ? "年" : "月")")
                     Image(systemName: "arrow.right").font(.system(size: 11, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(opening != nil)
+        }
+    }
+
+    /// 订阅这条路后台会拒时：说一句为什么，按钮去「管理订阅」
+    private func blockedAction(_ note: String, button: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(note).font(.system(size: 12)).foregroundStyle(Theme.text2).fixedSize(horizontal: false, vertical: true)
+            Button(button) { portal() }
+                .buttonStyle(SecondaryButtonStyle(height: 32)).frame(maxWidth: .infinity)
         }
     }
 
@@ -580,7 +624,7 @@ struct PricingSheet: View {
 
     private var faq: some View {
         let items = [
-            ("一个问题怎么算？", "按一次键问一句就是一个问题：识别、回答、联网查、点「重试」都算在这一个里面。没听到你说话、没答成的不算。追问是新的一个。"),
+            ("一个问题怎么算？", "按一次键问一句就是一个问题：识别、回答、联网查都算在这一个里面，没答成时 15 分钟内点「再试一次」也不另算。没听到你说话的不算；说的话一识别出来就算一个，打字问没答成的不算。追问是新的一个。"),
             ("每天 200 个用完了会怎样？", "当天不能再问，北京时间早上 8 点重置。改成自带 Key 照样能用，不限次数。"),
             ("怎么取消？", "「会员」页点「管理订阅」，在 Stripe 的页面里取消，用到这一期结束，不再扣钱。微信一次买的到期就停，不会自动扣款。"),
             ("我的问题会被存吗？", "会员的语音和截图经我们的服务器转给火山引擎和 DeepSeek，服务器不存这些内容，只记每个问题用了多少。历史只存在你的 Mac 上。"),
@@ -606,7 +650,7 @@ struct PricingSheet: View {
         Task { @MainActor in
             defer { opening = nil }
             do {
-                if UsageMode.current() != .member { UsageModeStore.set(.member) }
+                // 不在这里换成会员模式：自带 Key 的人点了订阅又没付，照旧用他的 Key。付完了 onPaid 才换（Membership.swift）
                 let url = try await member.checkout(plan: plan, currency: mode == "pass" ? "cny" : currency, mode: mode)
                 MemberLinks.open(url)
             } catch let e as MemberAPIError {

@@ -33,7 +33,7 @@ extension AppDelegate {
             }
             return
         }
-        if MainActor.assumeIsolated({ blockedByMembership() }) { return }
+        if MainActor.assumeIsolated({ blockedByMembership(voice: false) }) { return }
         let point = CGEvent(source: nil)?.location ?? .zero
         askTiming.reset(trigger: "hotkey-type", mode: "type")
         startAskScreenCapture(at: point)

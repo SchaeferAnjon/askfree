@@ -86,6 +86,26 @@ public struct MemberCredentials: Equatable, Sendable {
 /// 一个问题一个用量号（UUID 小写）：追问、新问题换新号，「重试」用原来的号
 public enum MemberUse {
     public static func newId() -> String { UUID().uuidString.lowercased() }
+
+    /// 后台的重试窗口 15 分钟，从这个号第一次出现算（重试不往后挪）；留 1 分钟余量，钟差一点也不撞上 409 use-expired
+    public static let retryWindow: TimeInterval = 14 * 60
+
+    /// 「再试一次」用哪个号：没过窗口用原来的（开始的时刻不变），过了窗口或没有就换新号（会再算一次）
+    public static func forRetry(_ last: MemberUseRef?, now: Date = Date()) -> MemberUseRef {
+        if let last, now.timeIntervalSince(last.startedAt) < retryWindow { return last }
+        return MemberUseRef(startedAt: now)
+    }
+}
+
+/// 一个问题的用量号和它开出来的时刻（语音提问是松开键那一刻，打字提问是发出那一刻）
+public struct MemberUseRef: Equatable, Sendable {
+    public let id: String
+    public let startedAt: Date
+
+    public init(id: String = MemberUse.newId(), startedAt: Date = Date()) {
+        self.id = id
+        self.startedAt = startedAt
+    }
 }
 
 /// 计量接口的返回头：X-Use-Charged / X-Uses-Kind / X-Uses-Left / X-Uses-Reset
@@ -232,6 +252,29 @@ public struct MemberStatus: Decodable, Equatable, Sendable {
     public var now: Double?
 
     public var isMember: Bool { plan == "member" }
+
+    /// 收费页上开自动续费，后台一定会拒的几种情况（meetcaption-server billing.checkout）：照它换成走得通的那条路
+    public enum SubscribeBlock: Equatable, Sendable {
+        /// 自动续费中：改周期、取消都在「管理订阅」
+        case autoRenew
+        /// 续费没扣成（past_due，Stripe 还在重试）：后台回 409，在「管理订阅」换卡
+        case paymentFailed
+        /// 订阅点了到期取消、还没到期：后台回 409 already-subscribed，在「管理订阅」点续订
+        case renewInPortal(until: Double)
+        /// 一次买的会员离到期还超过 3 天：后台回 409 pass-active，到期前 3 天才能开
+        case passActive(until: Double)
+    }
+
+    public func subscribeBlock(now: Date = Date()) -> SubscribeBlock? {
+        if autoRenew { return .autoRenew }
+        if let sub = subscription {
+            if sub.status == "past_due" { return .paymentFailed }
+            if let until = sub.accessUntil, until > now.timeIntervalSince1970 * 1000 { return .renewInPortal(until: until) }
+        }
+        // expiring = 会员、不自动续费、离到期不到 3 天：和后台放开订阅的那一刻是同一个判断
+        if isMember, pass != nil, !expiring, let until = memberUntil { return .passActive(until: until) }
+        return nil
+    }
 
     /// 计量接口的返回头到了：本地先把剩几次改掉（会员是今天剩几次，试用是试用剩几次），不用再问一次 /status
     public mutating func apply(_ headers: MemberUseHeaders) {

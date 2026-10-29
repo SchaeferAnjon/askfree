@@ -119,6 +119,26 @@ extension AppDelegate {
         case render(String)
     }
 
+    /// 开发版设了 ASKFREE_SHOT_DIR：收到 SIGUSR1 就把这时屏上自己的每个窗口画成 PNG 放进这个目录（不截屏、不用屏幕录制权限）。
+    /// 文件名前缀写在目录里的 .name 文件里（没有就用 shot），后面接窗口序号。实测时给回答面板、报错卡、会员页留图用
+    func installDevWindowShots() {
+        guard AppIdentity.isDevBuild, let path = ProcessInfo.processInfo.environment["ASKFREE_SHOT_DIR"], !path.isEmpty else { return }
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+        signal(SIGUSR1, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
+        source.setEventHandler { [weak self] in
+            let prefix = (try? String(contentsOf: directory.appendingPathComponent(".name"), encoding: .utf8))?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? "shot"
+            var written: [String] = []
+            for (i, window) in NSApp.windows.enumerated() where window.isVisible && window.frame.width > 120 && window.frame.height > 60 {
+                if let name = try? Self.writePNG(of: window, to: directory, name: "\(prefix.isEmpty ? "shot" : prefix)-\(i)") { written.append(name) }
+            }
+            self?.debugLog("Dev shot: \(written.joined(separator: ", "))")
+        }
+        source.resume()
+        devShotSource = source
+    }
+
     /// 只画这个窗口自己（标题栏和红绿灯在内），不截屏、不用屏幕录制权限
     private static func writePNG(of window: NSWindow, to directory: URL, name: String) throws -> String {
         guard let view = window.contentView?.superview ?? window.contentView,

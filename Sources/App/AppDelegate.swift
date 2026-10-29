@@ -133,6 +133,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// 第几轮提问：回答在面板里流式出字时录音不再被占住，旧回答的回调按这个编号丢掉，不写进新一轮。
     /// 面板开始显示新一轮（startThread / appendQuestion）时加一
     var askRound = 0
+    /// 开发版的窗口留图（installDevWindowShots）：收 SIGUSR1 的那个源要留着，不然马上被释放
+    var devShotSource: DispatchSourceSignal?
     /// 有一轮回答还在路上。这期间新提问一律另起话题，面板上按住续聊先不接（上一轮还没答完，接不上）
     var askInFlight = false
     /// 最近一问发出去的屏幕内容：报错卡「重试」时照原样再发
@@ -244,6 +246,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        installDevWindowShots()
         // 第一次打开出欢迎引导；看过引导但还没填 Key：打开主窗口的「开始」，不填用不了
         if let directory = DevLaunchOptions.snapshotPagesDirectory {
             runPageSnapshots(into: directory)

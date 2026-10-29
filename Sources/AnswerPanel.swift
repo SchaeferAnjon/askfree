@@ -961,11 +961,21 @@ struct AnswerView: View {
                     .padding(.leading, 6)
                 Spacer(minLength: 0)
             case .idle:
-                HoldToAskButton(keyCap: model.voiceKey, onStart: onHoldStart, onEnd: onHoldEnd, model: model)
-                FooterButton(symbol: "keyboard", title: "打字", prefix: model.typeKey == nil ? nil : "双击", keyCap: model.typeKey, action: onType)
-                Spacer(minLength: 4)
-                Text("开头说「新话题」另起").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
-                    .padding(.trailing, 4)
+                // 最后一张是会员的上限卡：今天的用量到上限了就不给追问的按钮（按了也只是再出这张卡）；识别分钟用完只留打字
+                let limit = model.turns.last?.failure?.memberCode
+                if limit == "daily-limit" {
+                    Text("北京时间早上 8 点重置以后再问").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
+                        .padding(.leading, 6)
+                    Spacer(minLength: 0)
+                } else {
+                    if limit != "asr-limit" {
+                        HoldToAskButton(keyCap: model.voiceKey, onStart: onHoldStart, onEnd: onHoldEnd, model: model)
+                    }
+                    FooterButton(symbol: "keyboard", title: "打字", prefix: model.typeKey == nil ? nil : "双击", keyCap: model.typeKey, action: onType)
+                    Spacer(minLength: 4)
+                    Text("开头说「新话题」另起").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
+                        .padding(.trailing, 4)
+                }
             }
         }
         .padding(.leading, 8)

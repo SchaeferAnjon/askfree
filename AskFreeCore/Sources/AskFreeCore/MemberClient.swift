@@ -205,7 +205,7 @@ public final class MemberClient: ObservableObject {
                     return MemberAPIError(status: 429, code: "asr-limit", message: "今天的语音识别用到 \(v.limitMinutes) 分钟了，北京时间早上 8 点重置；打字提问照常", resetAt: reset)
                 }
             } else if !s.isMember {
-                return MemberAPIError(status: 402, code: "asr-limit", message: "试用的语音识别一共 \(v.limitMinutes) 分钟，已经用完了；打字提问照常，订阅会员每天另有识别分钟")
+                return MemberAPIError(status: 402, code: "asr-limit", message: "试用的 \(v.limitMinutes) 分钟用完了。打字提问照常；订阅会员每天另有识别分钟。")
             }
         }
         return active(asrBlock)

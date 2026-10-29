@@ -158,8 +158,9 @@ public struct MemberProblem: Equatable, Sendable {
                       actions: [subscribe, ownKeys], isError: false, symbol: "gift")
         case "trial-closed":
             // 后台对「名额发完」和「同一网段 / 当天领的太多、没发」都回这个码；具体是哪种看 /status 的 trialResult
+            // 按钮已经写了「订阅会员 / 改用自带 Key」，正文只说原因和两条路，不再报价格
             self.init(code: e.code, title: MemberTrialResult.title(trialResult),
-                      detail: MemberTrialResult.reason(trialResult) + "订阅会员就能问：每天 200 个问题，每月 ¥9.9 或每年 ¥99。" + orOwnKeys,
+                      detail: MemberTrialResult.reason(trialResult) + "可以订阅会员，或改用自带 Key（永久免费）。",
                       actions: [subscribe, ownKeys], isError: false, symbol: "gift")
         case "sub-ended":
             self.init(code: e.code, title: "会员到期了", detail: "续订或再买一段，就能接着问。" + orOwnKeys,
@@ -168,8 +169,14 @@ public struct MemberProblem: Equatable, Sendable {
             self.init(code: e.code, title: "续费没扣成", detail: "打开「管理订阅」换一张卡，换好就能接着问。",
                       actions: [Button(title: "管理订阅", action: .openPortal)], isError: true, symbol: "creditcard")
         case "daily-limit":
-            self.init(code: e.code, title: "今天的额度用完了", detail: e.message + localReset,
-                      actions: [], isError: false, symbol: "calendar")
+            // 成本上限（后台原话是「今天的用量到上限了…」）：标题就说到上限了，正文只写几点重置，不把标题再说一遍
+            if e.message.contains("用量到上限") {
+                self.init(code: e.code, title: "今天的用量到上限了", detail: "北京时间早上 8 点重置" + localReset + "。",
+                          actions: [], isError: false, symbol: "calendar")
+            } else {
+                self.init(code: e.code, title: "今天的额度用完了", detail: e.message + localReset,
+                          actions: [], isError: false, symbol: "calendar")
+            }
         case "re-register-limit":
             // 同一台电脑 24 小时里重新注册太多次（后台防一个设备标识在多台电脑上共用会员）：message 写了要等多久
             self.init(code: e.code, title: "这台电脑重新注册太多次了", detail: e.message,

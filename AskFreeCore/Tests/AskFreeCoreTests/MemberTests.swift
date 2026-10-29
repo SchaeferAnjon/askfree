@@ -437,7 +437,7 @@ final class MemberCopyTests: XCTestCase {
             let mentionsKey = (p.title + p.detail + p.actions.map(\.title).joined()).contains("Key")
             if ownKeyExits.contains(code) {
                 XCTAssertEqual(p.actions.map(\.action), [.openMembership, .useOwnKeys], code)
-                XCTAssertTrue(p.detail.contains("自带 Key，永久免费"), code)
+                XCTAssertTrue(p.detail.contains("自带 Key，永久免费") || p.detail.contains("自带 Key（永久免费）"), code)
             } else {
                 XCTAssertFalse(mentionsKey, "\(code) 不提 Key")
             }
@@ -742,6 +742,15 @@ final class MemberStatusLimitTests: XCTestCase {
         }
         XCTAssertEqual(paid?.isMember, true)
         XCTAssertNil(c.pendingCheckout)
+    }
+
+    func testCostCapCardDoesNotRepeatTitle() {
+        let p = MemberProblem(MemberAPIError(status: 429, code: "daily-limit", message: "今天的用量到上限了，北京时间早上 8 点重置", resetAt: reset),
+                              timeZone: TimeZone(identifier: "Asia/Shanghai")!)
+        XCTAssertEqual(p.title, "今天的用量到上限了")
+        XCTAssertEqual(p.detail, "北京时间早上 8 点重置。")
+        let count = MemberProblem(MemberAPIError(status: 429, code: "daily-limit", message: "今天的 200 次用完了，北京时间早上 8 点重置", resetAt: reset))
+        XCTAssertEqual(count.title, "今天的额度用完了")
     }
 
     func testReRegisterLimitCardShowsServerMessage() {

@@ -129,6 +129,9 @@ public enum TeXFlatten {
                 case "~":
                     i += 1
                     out += " "
+                case " ", "\n", "\t":
+                    // 公式里的空白照 TeX 不算数：a\neq 0 和 a\neq0 写出来一样
+                    i += 1
                 default:
                     out.append(c)
                     i += 1
@@ -196,7 +199,9 @@ public enum TeXFlatten {
             switch name {
             case "frac", "dfrac", "tfrac", "cfrac":
                 let num = argument(), den = argument()
-                return wrap(num) + "/" + wrap(den)
+                let fraction = wrap(num) + "/" + wrap(den)
+                // 分数后面紧跟字母、数字或括号（\frac{b}{a}x）：整个括起来，免得读成 b/(ax)
+                return followedByOperand() ? "(" + fraction + ")" : fraction
             case "sqrt":
                 var index = ""
                 if i < s.count, s[i] == "[" {
@@ -251,10 +256,27 @@ public enum TeXFlatten {
             if let sym = TeXFlatten.symbols[name] { return sym }
             if TeXFlatten.functions.contains(name) {
                 // sin x、log n：后面紧跟字母或数字时空一格
-                if i < s.count, s[i].isLetter || s[i].isNumber || s[i] == "\\" { return name + " " }
+                var j = i
+                while j < s.count, s[j] == " " { j += 1 }
+                if j < s.count, s[j].isLetter || s[j].isNumber || s[j] == "\\" { return name + " " }
                 return name
             }
             return name   // 不认的命令：去掉反斜杠
+        }
+
+        /// 后面（跳过空白）紧跟的是字母、数字、括号，或者会写成字母的命令（希腊字母、函数名）
+        func followedByOperand() -> Bool {
+            var j = i
+            while j < s.count, s[j] == " " { j += 1 }
+            guard j < s.count else { return false }
+            let c = s[j]
+            if c.isLetter || c.isNumber || c == "(" { return true }
+            guard c == "\\" else { return false }
+            var name = ""
+            var k = j + 1
+            while k < s.count, s[k].isLetter, s[k].isASCII { name.append(s[k]); k += 1 }
+            if TeXFlatten.functions.contains(name) { return true }
+            return TeXFlatten.symbols[name]?.first?.isLetter == true
         }
 
         func script(_ arg: String, sup: Bool) -> String {
@@ -281,6 +303,8 @@ public enum TeXFlatten {
             let p = Array(part)
             guard !p.isEmpty else { return true }
             if p.allSatisfy({ $0.isNumber || $0 == "." }) { return true }
+            // √x、√(…)：根号连着它管的那一块算一个
+            if p[0] == "√", p.count > 1 { return isAtomic(String(p.dropFirst())) }
             let scripts = Set(TeXFlatten.superscripts.values).union(TeXFlatten.subscripts.values)
             if p.dropFirst().allSatisfy({ scripts.contains($0) }) && !"+−±=<>≤≥/·×, ".contains(p[0]) { return true }
             if let open = p.first, let close = p.last, (open == "(" && close == ")") || (open == "[" && close == "]") {

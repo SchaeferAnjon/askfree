@@ -85,11 +85,9 @@ enum HistoryFormat {
         return f.string(from: day)
     }
 
-    /// 回答的第一句，去掉 Markdown 记号
+    /// 回答的摘要：去掉 Markdown 记号、公式写成普通字符，各段用一个空格接成一行
     static func preview(_ answer: String) -> String {
         AnswerMarkdown.preview(answer)
-            .replacingOccurrences(of: "\n", with: " ")
-            .replacingOccurrences(of: "`", with: "")
     }
 
     static func copyText(_ thread: AskHistoryThread) -> String {

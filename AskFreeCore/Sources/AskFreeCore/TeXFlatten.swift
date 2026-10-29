@@ -4,9 +4,27 @@ import Foundation
 /// 例：`x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}` → `x=(−b±√(b²−4ac))/(2a)`。不追求排版，只求读得懂
 public enum TeXFlatten {
     public static func plain(_ tex: String) -> String {
+        // 和排公式一样的上限（MathGlyphs）：太长、括号套得太深的不转，原样给源码（几百层 \sqrt 能转上好几秒）
+        guard tex.count <= maxLength, braceDepth(tex) <= maxBraceDepth else { return tex }
         var parser = Parser(Array(tex))
         let out = parser.sequence(untilBrace: false, text: false)
         return collapseSpaces(out)
+    }
+
+    public static let maxLength = 2000
+    public static let maxBraceDepth = 40
+    /// 不带括号也能一层套一层（\sqrt\sqrt\sqrt x、\frac1\frac1…）：套到这么深，里面剩下的原样留着
+    static let maxNesting = 60
+
+    public static func braceDepth(_ tex: String) -> Int {
+        var depth = 0, deepest = 0
+        var escaped = false
+        for c in tex {
+            if escaped { escaped = false; continue }
+            if c == "\\" { escaped = true; continue }
+            if c == "{" { depth += 1; deepest = max(deepest, depth) } else if c == "}" { depth -= 1 }
+        }
+        return deepest
     }
 
     // MARK: - 对照表
@@ -80,6 +98,9 @@ public enum TeXFlatten {
         "′": "′", "*": "*", "†": "†", "∗": "∗",
     ]
 
+    /// 上下标字符（写在右上、右下的那些）
+    static let scriptCharacters: Set<Character> = Set(superscripts.values).union(subscripts.values)
+
     static let subscripts: [Character: Character] = [
         "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
         "+": "₊", "-": "₋", "−": "₋", "=": "₌", "(": "₍", ")": "₎",
@@ -92,6 +113,8 @@ public enum TeXFlatten {
     private struct Parser {
         let s: [Character]
         var i = 0
+        /// 现在套在几层参数里
+        var nesting = 0
         init(_ s: [Character]) { self.s = s }
 
         /// 读到 } 或末尾为止。text：\text{} 里面，减号不换、空格照留
@@ -144,6 +167,13 @@ public enum TeXFlatten {
         mutating func argument() -> String {
             while i < s.count, s[i] == " " { i += 1 }
             guard i < s.count else { return "" }
+            if nesting >= TeXFlatten.maxNesting {
+                let rest = String(s[i...])
+                i = s.count
+                return rest
+            }
+            nesting += 1
+            defer { nesting -= 1 }
             if s[i] == "{" { i += 1; return sequence(untilBrace: true, text: false) }
             if s[i] == "\\" { return command(text: false) }
             let c = s[i]
@@ -300,13 +330,12 @@ public enum TeXFlatten {
         }
 
         func isAtomic(_ part: String) -> Bool {
-            let p = Array(part)
+            var p = Array(part)
+            // √x、√(…)、√√x：根号连着它管的那一块算一个
+            while p.count > 1, p[0] == "√" { p.removeFirst() }
             guard !p.isEmpty else { return true }
             if p.allSatisfy({ $0.isNumber || $0 == "." }) { return true }
-            // √x、√(…)：根号连着它管的那一块算一个
-            if p[0] == "√", p.count > 1 { return isAtomic(String(p.dropFirst())) }
-            let scripts = Set(TeXFlatten.superscripts.values).union(TeXFlatten.subscripts.values)
-            if p.dropFirst().allSatisfy({ scripts.contains($0) }) && !"+−±=<>≤≥/·×, ".contains(p[0]) { return true }
+            if p.dropFirst().allSatisfy({ TeXFlatten.scriptCharacters.contains($0) }) && !"+−±=<>≤≥/·×, ".contains(p[0]) { return true }
             if let open = p.first, let close = p.last, (open == "(" && close == ")") || (open == "[" && close == "]") {
                 // 整个括起来：括号要配得上（(a)(b) 不算）
                 var depth = 0

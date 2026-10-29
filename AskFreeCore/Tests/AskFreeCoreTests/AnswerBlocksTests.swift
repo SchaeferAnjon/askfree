@@ -138,13 +138,70 @@ final class AnswerBlocksTests: XCTestCase {
     }
 
     func testTooLongUnclosedDisplayMathShownAsText() {
-        let long = "$$" + String(repeating: "x", count: 501)
+        let long = "$$" + String(repeating: "x", count: 4001)
         XCTAssertEqual(parse(long, streaming: true), [.paragraph(long)])
-        let manyLines = "$$\n" + Array(repeating: "x", count: 15).joined(separator: "\n")
+        let manyLines = "$$\n" + Array(repeating: "x", count: 80).joined(separator: "\n")
         XCTAssertEqual(parse(manyLines, streaming: true), [.paragraph(manyLines)])
         XCTAssertEqual(parse(manyLines, streaming: false), [.paragraph(manyLines)])
-        let fewLines = "$$\n" + Array(repeating: "x", count: 13).joined(separator: "\n")
+        let fewLines = "$$\n" + Array(repeating: "x", count: 78).joined(separator: "\n")
         XCTAssertEqual(parse(fewLines, streaming: true), [.pending])
+    }
+
+    // MARK: - 评审修正（task-lue8s 代码评审 2、3、7）
+
+    /// 8 行 aligned 推导（近 800 字）是一条公式，收尾的 $$ 不和下一条公式的开头配对
+    func testLongAlignedDerivationIsOneFormula() {
+        let rows = (1...8).map { k in "f_{\(k)}(x) &= \\int_0^{\\infty} \\frac{x^{\(k)} e^{-x}}{\\Gamma(\(k)+1)} \\, dx + \\sum_{n=0}^{N} a_n x^n \\\\" }
+        let tex = "\\begin{aligned}\n" + rows.joined(separator: "\n") + "\n\\end{aligned}"
+        XCTAssertGreaterThan(tex.count, 700)
+        let md = "$$\n" + tex + "\n$$\n\n所以结论是这样的，下面再看第二个式子：\n\n$$\nE = mc^2\n$$\n\n完。"
+        let expected: [AnswerBlock] = [.math(tex: tex, attachedTo: nil), .paragraph("所以结论是这样的，下面再看第二个式子："),
+                                       .math(tex: "E = mc^2", attachedTo: nil), .paragraph("完。")]
+        XCTAssertEqual(parse(md, streaming: false), expected)
+        XCTAssertEqual(parse(md, streaming: true), expected)
+        // 流式中途：推导还没收尾时先不显示，前面没有落单的 $$
+        let half = String(md.prefix(400))
+        XCTAssertEqual(parse(half, streaming: true), [.pending])
+    }
+
+    private func show(_ s: String) -> String {
+        AnswerBlocks.inline(s).map { piece -> String in
+            switch piece {
+            case .text(let t): return "T[\(t)]"
+            case .math(let m): return "M[\(m)]"
+            }
+        }.joined()
+    }
+
+    /// 中文里不带空格的价钱不和后面的公式配成一条（代码评审 3）
+    func testPricesInChineseAreNotFormulas() {
+        XCTAssertEqual(show("每件成本$5，售价设为$x$，利润是$x-5$。"), "T[每件成本$5，售价设为]M[x]T[，利润是]M[x-5]T[。]")
+        XCTAssertEqual(show("成本是$5，设利润为$p$。"), "T[成本是$5，设利润为]M[p]T[。]")
+        XCTAssertEqual(show("the price ($5) and the profit ($p$)"), "T[the price ($5) and the profit (]M[p]T[)]")
+        XCTAssertEqual(show("门票（$5）和人数（$n$）"), "T[门票（$5）和人数（]M[n]T[）]")
+        // 原来就对的照旧
+        XCTAssertEqual(show("$5 and $10"), "T[$5 and $10]")
+        XCTAssertEqual(show("From $5 to $10, a $2 rise."), "T[From $5 to $10, a $2 rise.]")
+        // 公式里本来就能有的：\text{} 里的中文和全角标点、开头是数字的式子、区间
+        XCTAssertEqual(show("速度 $v=\\text{路程，时间}$ 和 $2x+1$ 和 $[0, 1)$"), "T[速度 ]M[v=\\text{路程，时间}]T[ 和 ]M[2x+1]T[ 和 ]M[[0, 1)]")
+        XCTAssertEqual(show("下标 $v_{平均}$"), "T[下标 ]M[v_{平均}]")
+        // 流式：价钱那个 $ 不当公式开头，后面的字照常显示
+        XCTAssertEqual(parse("成本是$5，设利润为$p", streaming: true), [.paragraph("成本是$5，设利润为")])
+        XCTAssertEqual(parse("成本是$5，设利润为$p$", streaming: true), [.paragraph("成本是$5，设利润为$p$")])
+    }
+
+    /// 流式时两边都是空格的 ** 是普通字，不给它补收尾（代码评审 7）
+    func testLoneDoubleStarIsNotBold() {
+        let line = "In Python, 2 ** 3 is 8 and more words"
+        var acc = ""
+        for ch in line {
+            acc.append(ch)
+            guard case .paragraph(let p)? = parse(acc, streaming: true).first else { continue }
+            XCTAssertFalse(p.hasSuffix("**") && !acc.hasSuffix("**"), "「\(acc)」显示成「\(p)」")
+        }
+        XCTAssertEqual(parse(line, streaming: true), [.paragraph(line)])
+        XCTAssertEqual(parse("先 **加粗的词", streaming: true), [.paragraph("先 **加粗的词**")])
+        XCTAssertEqual(parse("**a** 和 2 ** 3 和 **b", streaming: true), [.paragraph("**a** 和 2 ** 3 和 **b**")])
     }
 
     func testDisplayMathAttachesToListUntilParagraph() {

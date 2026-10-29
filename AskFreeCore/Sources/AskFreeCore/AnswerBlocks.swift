@@ -25,9 +25,10 @@ public enum InlinePiece: Equatable, Sendable {
 /// 流式时（streaming）最后一块里没收尾的公式、还没写完的围栏行先不显示，收尾那一下整条出来；代码块边来边长。
 /// 规则见 task-lue8s 的施工计划 §4；AnswerMarkdown（复制、预览）用同一套围栏和公式判断
 public enum AnswerBlocks {
-    /// 独立公式开头之后多少字、多少行之内必须收尾，超过就当普通段落（流式时在这之内先不显示）
-    static let displayMathMaxChars = 500
-    static let displayMathMaxLines = 15
+    /// 独立公式开头之后多少字、多少行之内必须收尾，超过就当普通段落（流式时在这之内先不显示）。
+    /// 多步 aligned 推导、大矩阵常有上千字；再长的多半是落单的 $$，跟下一条公式的开头配对会把中间的字全吞掉
+    static let displayMathMaxChars = 4000
+    static let displayMathMaxLines = 80
     /// 流式时最后一行先不显示的行内字数上限，超过就原样显示
     static let inlineHoldMaxChars = 200
 
@@ -278,11 +279,13 @@ public enum AnswerBlocks {
 
     /// 流式时最后一行：没闭合的 **加粗** 和 `行内代码` 先按闭合的样子显示，收尾那一下不再从「**词」变成粗体「词」、
     /// 字宽一变整段折行跟着变（高度会缩一行）。刚打出来、后面还没有字的 **、`、单独的 * 先不显示（可能是 ** 或围栏的前半截）。
-    /// 公式和已经闭合的行内代码里的 * 不算
+    /// 公式和已经闭合的行内代码里的 * 不算；只有能当加粗开头（后面紧跟非空白）或收尾（前面紧跟非空白）的 ** 才算，
+    /// 「2 ** 3」里那个两边都是空格的 ** 是普通字，不补收尾
     static func autoCloseMarks(_ line: String) -> String {
         let s = Array(line)
         var i = 0
-        var bold: [Int] = []
+        /// 还没收尾的加粗开头
+        var boldOpen: Int?
         var openCode: (start: Int, count: Int)?
         scan: while i < s.count {
             switch s[i] {
@@ -301,7 +304,15 @@ public enum AnswerBlocks {
                     i += 1
                 }
             case "*":
-                if i + 1 < s.count, s[i + 1] == "*" { bold.append(i); i += 2 } else { i += 1 }
+                guard i + 1 < s.count, s[i + 1] == "*" else { i += 1; break }
+                let before: Character? = i > 0 ? s[i - 1] : nil
+                let after: Character? = i + 2 < s.count ? s[i + 2] : nil
+                if boldOpen != nil {
+                    if let before, !before.isWhitespace { boldOpen = nil }
+                } else if after.map({ !$0.isWhitespace }) ?? true {
+                    boldOpen = i   // 后面还没字：可能是开头，先记着
+                }
+                i += 2
             default:
                 i += 1
             }
@@ -315,15 +326,15 @@ public enum AnswerBlocks {
                 tail = Array(repeating: "`", count: code.count)
             }
         }
-        if bold.count % 2 == 1, let last = bold.last, openCode == nil {
-            if out[(last + 2)...].allSatisfy(\.isWhitespace) {
-                out = Array(out[..<last])
+        if let open = boldOpen, openCode == nil {
+            if out[(open + 2)...].allSatisfy(\.isWhitespace) {
+                out = Array(out[..<open])
             } else {
                 var end = out.count
                 while end > 0, out[end - 1].isWhitespace { end -= 1 }
                 out.insert(contentsOf: ["*", "*"], at: end)
             }
-        } else if bold.count % 2 == 0, openCode == nil, out.last == "*", out.count < 2 || out[out.count - 2] != "*" {
+        } else if boldOpen == nil, openCode == nil, out.last == "*", out.count < 2 || out[out.count - 2] != "*" {
             out.removeLast()
         }
         return String(out + tail)
@@ -362,9 +373,9 @@ public enum AnswerBlocks {
     enum DisplayMathResult: Equatable {
         /// tex：分隔符之间去掉首尾空白；endLine：收尾符所在的行；rest：收尾符后面同一行剩下的字
         case found(tex: String, endLine: Int, rest: String)
-        /// 流式中途还没收尾，也还没超过 500 字、15 行
+        /// 流式中途还没收尾，也还没超过 4000 字、80 行
         case waiting
-        /// 超过 500 字、15 行还没收尾（答完时就是没收尾）：这一行当普通的字
+        /// 超过 4000 字、80 行还没收尾（答完时就是没收尾）：这一行当普通的字
         case notMath
     }
 
@@ -452,7 +463,9 @@ public enum AnswerBlocks {
     }
 
     /// s[i] 是 `$`（后面不是 `$`）：开头的后面紧跟的不能是空白；同一行里后面第一个 `$` 是收尾的，
-    /// 它前面紧跟的不能是空白、后面紧跟的不能是数字，不然这个 `$` 就是普通字（`$5 and $10`、`$x$5` 都不是公式）。`\x` 成对跳过
+    /// 它前面紧跟的不能是空白、后面紧跟的不能是数字，不然这个 `$` 就是普通字（`$5 and $10`、`$x$5` 都不是公式）。`\x` 成对跳过。
+    /// 中文里不带空格的价钱也不是公式：两个 `$` 之间（`\text{…}` 外面）有全角标点（「成本$5，售价设为$x$」），
+    /// 或者开头紧跟数字、中间又有汉字或括号配不上（「$5，设利润为$p$」「($5) and the profit ($p$)」）
     private static func findDollarClose(_ s: [Character], from i: Int) -> DollarClose {
         guard i + 1 < s.count, !s[i + 1].isWhitespace else { return .none }
         var j = i + 1
@@ -462,10 +475,63 @@ public enum AnswerBlocks {
             if c == "\\" { j += 2; continue }
             if c == "$" {
                 let afterIsDigit = j + 1 < s.count && s[j + 1].isNumber
-                return !s[j - 1].isWhitespace && !afterIsDigit ? .close(j) : .invalid
+                guard !s[j - 1].isWhitespace, !afterIsDigit, looksLikeMath(s[(i + 1)..<j]) else { return .invalid }
+                return .close(j)
             }
             j += 1
         }
         return .none
+    }
+
+    /// 一对 `$` 中间的字像不像公式：`\text{…}`（还有 \mbox、\textrm 这些）外面不能有全角标点；
+    /// 开头是数字时（像价钱），外面也不能有汉字、假名、韩文，圆括号方括号要配得上
+    private static func looksLikeMath(_ body: ArraySlice<Character>) -> Bool {
+        let t = Array(body)
+        let startsWithDigit = t.first?.isNumber == true
+        var depth = 0   // 圆括号、方括号
+        var k = 0
+        while k < t.count {
+            let c = t[k]
+            if c == "\\" {
+                // \text{…} 整组跳过：里面写中文、全角标点都行
+                var name = ""
+                var m = k + 1
+                while m < t.count, t[m].isLetter, t[m].isASCII { name.append(t[m]); m += 1 }
+                if textCommands.contains(name), m < t.count, t[m] == "{" {
+                    var braces = 0
+                    while m < t.count {
+                        if t[m] == "\\" { m += 2; continue }
+                        if t[m] == "{" { braces += 1 } else if t[m] == "}" { braces -= 1; if braces == 0 { break } }
+                        m += 1
+                    }
+                    k = m + 1
+                    continue
+                }
+                k = max(m, k + 2)
+                continue
+            }
+            if isFullwidthPunctuation(c) { return false }
+            if startsWithDigit {
+                if isCJK(c) { return false }
+                if c == "(" || c == "[" { depth += 1 } else if c == ")" || c == "]" { depth -= 1; if depth < 0 { return false } }
+            }
+            k += 1
+        }
+        return !(startsWithDigit && depth != 0)
+    }
+
+    private static let textCommands: Set<String> = ["text", "textrm", "textbf", "textit", "textnormal", "mbox", "mathrm", "operatorname"]
+
+    /// 中文标点：公式里不会有，价钱后面接着中文才会有（全角的 ＋－＝＜＞ 不算，它们可能是写成全角的式子）
+    private static let fullwidthPunctuation: Set<Character> = ["，", "。", "、", "；", "：", "！", "？", "（", "）", "【", "】", "「", "」",
+                                                             "『", "』", "《", "》", "〈", "〉", "…", "—", "“", "”", "‘", "’"]
+
+    private static func isFullwidthPunctuation(_ c: Character) -> Bool { fullwidthPunctuation.contains(c) }
+
+    /// 汉字、假名、韩文
+    private static func isCJK(_ c: Character) -> Bool {
+        guard let v = c.unicodeScalars.first?.value else { return false }
+        return (0x4E00...0x9FFF).contains(v) || (0x3400...0x4DBF).contains(v) || (0x3040...0x30FF).contains(v)
+            || (0xAC00...0xD7AF).contains(v) || (0xF900...0xFAFF).contains(v) || (0x20000...0x2FA1F).contains(v)
     }
 }

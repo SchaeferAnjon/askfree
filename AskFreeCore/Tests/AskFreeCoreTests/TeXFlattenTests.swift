@@ -84,3 +84,23 @@ final class TeXFlattenTests: XCTestCase {
         _ = flat(String(repeating: "\\frac{", count: 500))
     }
 }
+
+/// 构造出来的深套公式不卡主线程（task-lue8s 代码评审 5）
+final class TeXFlattenCostTests: XCTestCase {
+    func testDeepNestingIsCheap() {
+        for n in [300, 399] {
+            let tex = String(repeating: "\\sqrt", count: n) + " x"
+            let start = Date()
+            let out = TeXFlatten.plain(tex)
+            XCTAssertLessThan(Date().timeIntervalSince(start), 0.1, "\(n) 层根号")
+            XCTAssertTrue(out.hasPrefix("√√√"))
+        }
+        // 超过 2000 字、括号套 40 层以上：原样给源码
+        let long = String(repeating: "x+", count: 1100)
+        XCTAssertEqual(TeXFlatten.plain(long), long)
+        let deep = String(repeating: "{", count: 50) + "x" + String(repeating: "}", count: 50)
+        XCTAssertEqual(TeXFlatten.plain(deep), deep)
+        // 平常的照旧
+        XCTAssertEqual(TeXFlatten.plain("\\sqrt{\\sqrt{x}}"), "√√x")
+    }
+}

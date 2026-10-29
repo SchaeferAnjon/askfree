@@ -59,4 +59,39 @@ final class AnswerMarkdownTests: XCTestCase {
         XCTAssertEqual(AnswerMarkdown.plainText(""), "")
         XCTAssertEqual(AnswerMarkdown.preview(""), "")
     }
+
+    // MARK: - 公式（task-lue8s）
+
+    /// 复制时公式连分隔符原样：里面的 *、_、反引号一个不删
+    func testCopyKeepsFormulasVerbatim() {
+        XCTAssertEqual(AnswerMarkdown.plainText("**面积** $a*b*c$ 和 $\\mathbf{x}_1$，`code` \\(x^2\\)"),
+                       "面积 $a*b*c$ 和 $\\mathbf{x}_1$，code \\(x^2\\)")
+        XCTAssertEqual(AnswerMarkdown.plainText("- 判别式 $\\Delta=b^2-4ac$"), "• 判别式 $\\Delta=b^2-4ac$")
+    }
+
+    func testCopyKeepsDisplayMathVerbatim() {
+        let md = "推出：\n\n$$\nx = \\frac{**a**}{b}\n$$\n\n\\[a*b\\]"
+        XCTAssertEqual(AnswerMarkdown.plainText(md), md)
+    }
+
+    func testCopyKeepsIndentedAndUnclosedFences() {
+        let indented = "1. 装：\n   ```bash\n   npm i **x**\n   ```"
+        XCTAssertEqual(AnswerMarkdown.plainText(indented), "1. 装：\n   ```bash\n   npm i **x**\n   ```")
+        let unclosed = "看：\n```js\nconst a = `x`;\n**b**"
+        XCTAssertEqual(AnswerMarkdown.plainText(unclosed), unclosed)
+    }
+
+    func testPreviewFlattensInlineFormulas() {
+        XCTAssertEqual(AnswerMarkdown.preview("求根公式 $x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$，**判别式** \\(\\Delta\\)"),
+                       "求根公式 x=(−b±√(b²−4ac))/(2a)，判别式 Δ")
+    }
+
+    func testPreviewFlattensDisplayFormulasOnTheirOwnLine() {
+        XCTAssertEqual(AnswerMarkdown.preview("配方：\n\n$$\n(x+\\frac{b}{2a})^2\n$$\n\n\\[E=mc^2\\] 是质能"),
+                       "配方：\n\n(x+b/(2a))²\n\nE=mc²\n是质能")
+    }
+
+    func testPreviewStillDropsFences() {
+        XCTAssertEqual(AnswerMarkdown.preview("跑：\n\n```python\n  print($x$)\n```\n完"), "跑：\n\nprint($x$)\n完")
+    }
 }

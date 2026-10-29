@@ -57,7 +57,7 @@ extension AppDelegate {
             Task { await member.refresh() }
             return false
         }
-        let message = MemberSummary.line(s).detail
+        let message = reason == "daily-limit" ? "今天的 \(s.today?.limit ?? 200) 个问题用完了，北京时间早上 8 点重置" : MemberSummary.line(s).detail
         debugLog("Member: blocked before asking reason=\(reason)")
         showMemberNotice(MemberAPIError(status: reason == "daily-limit" ? 429 : 402, code: reason, message: message,
                                         resetAt: s.today?.resetAt))

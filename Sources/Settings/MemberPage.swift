@@ -199,7 +199,13 @@ struct MemberPage: View {
         }
     }
 
+    /// 第一行：会员写在用哪种（剩几个在下一行），其余写剩几个 / 为什么用不了
     private func headline(_ s: MemberStatus?) -> String {
+        if let s, s.isMember {
+            if s.autoRenew { return "会员 · 自动续费中" }
+            if let until = s.memberUntil { return "会员 · 用到 \(MemberFormat.day(until))" }
+            return "会员"
+        }
         let line = MemberSummary.line(s, error: member.error)
         return "\(line.title) · \(line.detail)"
     }

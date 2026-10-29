@@ -61,6 +61,48 @@ final class PerfReplayTests: XCTestCase {
         }
     }
 
+    /// 一段像样的 Python：函数头、带字符串和数字的调用、判断、抛错、返回字典，五行一轮
+    static func pythonCode(lines: Int) -> String {
+        (0..<lines).map { k -> String in
+            switch k % 5 {
+            case 0: return "def handler_\(k)(request, *args, **kwargs):  # 处理第 \(k) 个请求"
+            case 1: return "    value = compute(\"key_\(k)\", timeout=\(k).5, retries=3)"
+            case 2: return "    if value is None or value == 'missing':"
+            case 3: return "        raise ValueError(f\"bad value {value!r} at step \(k)\")"
+            default: return "    return {\"id\": \(k), \"result\": value, \"ok\": True}"
+            }
+        }.joined(separator: "\n")
+    }
+
+    /// P1b：一句说明加一个 150 行的 Python 代码块，每 12 字一段回放，和 P1 一样两份视图（代码评审 1：原来 100 行 p95 155 ms、最长 176 ms）
+    func testP1bLongCodeBlockReplay() {
+        AnswerRenderCaches.reset()
+        let md = "下面是完整的脚本：\n\n```python\n" + Self.pythonCode(lines: 150) + "\n```\n\n跑一下就行。"
+        var chunks: [String] = []
+        var rest = Substring(md)
+        while !rest.isEmpty { chunks.append(String(rest.prefix(12))); rest = rest.dropFirst(12) }
+        let measure = NSHostingView(rootView: PanelCard(markdown: "", streaming: true))
+        let shown = NSHostingView(rootView: ScrollView { PanelCard(markdown: "", streaming: true) })
+        shown.frame = NSRect(x: 0, y: 0, width: 400, height: 500)
+        Offscreen.window.contentView = shown
+        var acc = ""
+        var times: [Double] = []
+        for chunk in chunks {
+            acc += chunk
+            let start = DispatchTime.now().uptimeNanoseconds
+            measure.rootView = PanelCard(markdown: acc, streaming: true)
+            shown.rootView = ScrollView { PanelCard(markdown: acc, streaming: true) }
+            measure.layoutSubtreeIfNeeded()
+            shown.layoutSubtreeIfNeeded()
+            _ = measure.fittingSize
+            times.append(ms(since: start))
+        }
+        let s = stats(times)
+        print(String(format: "P1b code 150 lines, updates %d median %.2f ms p95 %.2f ms max %.2f ms", times.count, s.median, s.p95, s.max))
+        XCTAssertLessThanOrEqual(s.max, 50)
+        if strict { XCTAssertLessThanOrEqual(s.p95, 10) }
+    }
+
     /// P2：249 条公式逐条第一次排版（冷缓存，字体已预热）
     func testP2FirstTypesetPerFormula() {
         MathGlyphs.warmUp()

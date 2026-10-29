@@ -1,8 +1,10 @@
 import AppKit
 import SwiftUI
 
-/// 代码块：左上语言名、右上「复制」，下面一条发丝线；代码等宽 12.5、行距 3、四周留 12，长行不折行、横向滚，
-/// 高度等于内容（长代码靠外层面板滚）。底色、描边由 AnswerStyle 给（Theme.hover / Theme.border，8 圆角）
+/// 代码块：左上语言名、右上「复制」，下面一条发丝线；代码等宽 12.5、行距 3、四周留 12，长行不折行、横向滚
+/// （放不下时右端渐隐，滚到头去掉），高度等于内容（长代码靠外层面板滚）。底色、描边由 AnswerStyle 给（Theme.hover / Theme.border，8 圆角）。
+/// 面板里一行代码一个 Text：流式出字时只有最后一行在变，前面的行不重新着色、不重新排版；
+/// 历史页能选中复制，整块是一个 Text（选得了多行），它不流式
 struct CodeBlockView: View {
     let language: String
     let code: String
@@ -39,12 +41,22 @@ struct CodeBlockView: View {
             .padding(.horizontal, 12)
             .frame(height: 28)
             Rectangle().fill(style.codeBorder).frame(height: 1)
-            ScrollView(.horizontal, showsIndicators: true) {
-                Text(CodeHighlighter.highlight(shown, language: language))
-                    .font(.system(size: style.codeSize, design: .monospaced))
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: true, vertical: true)
-                    .padding(12)
+            OverflowScroll {
+                Group {
+                    if style.selectable {
+                        Text(CodeHighlighter.highlight(shown, language: language))
+                            .lineSpacing(Self.lineSpacing)
+                            .fixedSize(horizontal: true, vertical: true)
+                    } else {
+                        VStack(alignment: .leading, spacing: Self.lineSpacing) {
+                            ForEach(Array(CodeHighlighter.highlightLines(shown, language: language).enumerated()), id: \.offset) { _, line in
+                                CodeLine(text: line).equatable()
+                            }
+                        }
+                    }
+                }
+                .font(.system(size: style.codeSize, design: .monospaced))
+                .padding(12)
             }
             // 高度等于内容；「始终显示滚动条」时 SwiftUI 自己给横向滚动条多留一条高度，不盖住最后一行
             .fixedSize(horizontal: false, vertical: true)
@@ -56,6 +68,8 @@ struct CodeBlockView: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(language.isEmpty ? "代码块" : "代码块，\(language)")
     }
+
+    static let lineSpacing: CGFloat = 3
 
     private func copy() {
         Self.copy(code, to: .general)
@@ -70,6 +84,15 @@ struct CodeBlockView: View {
     static func copy(_ code: String, to pasteboard: NSPasteboard) {
         pasteboard.clearContents()
         pasteboard.setString(code, forType: .string)
+    }
+}
+
+/// 一行代码。空行写成一个空格：空的 Text 没有高度
+struct CodeLine: View, Equatable {
+    let text: AttributedString
+
+    var body: some View {
+        Text(text.characters.isEmpty ? AttributedString(" ") : text).fixedSize()
     }
 }
 

@@ -1,0 +1,1496 @@
+[
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "ax^2+bx+c=0"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "a\\neq0"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "x=\\dfrac{-b\\pm\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "a"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "x^2+\\dfrac{b}{a}x+\\dfrac{c}{a}=0"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "x^2+\\dfrac{b}{a}x=-\\dfrac{c}{a}"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "\\left(\\dfrac{b}{2a}\\right)^2"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "\\left(x+\\dfrac{b}{2a}\\right)^2=\\dfrac{b^2-4ac}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "x+\\dfrac{b}{2a}=\\pm\\dfrac{\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "x=\\dfrac{-b\\pm\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "2a"
+},
+{
+"file": "q1_quadratic_zh__current",
+"delim": "$",
+"display": false,
+"tex": "b^2-4ac"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "x^2+\\frac{b}{a}x+\\frac{c}{a}=0"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "x^2+\\frac{b}{a}x=-\\frac{c}{a}"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\left(x+\\frac{b}{2a}\\right)^2=\\frac{b^2-4ac}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "x+\\frac{b}{2a}=\\pm\\frac{\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "ax^2+bx+c=0"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "a\\neq 0"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "a"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\left(\\frac{b}{2a}\\right)^2"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "(x+m)^2"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\Delta=b^2-4ac"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\Delta>0"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\Delta=0"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\Delta<0"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\sqrt{4a^2}=2|a|"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\pm"
+},
+{
+"file": "q1_quadratic_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "2a"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$$",
+"display": true,
+"tex": "x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$$",
+"display": true,
+"tex": "x^2+\\frac{b}{a}x+\\frac{c}{a}=0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$$",
+"display": true,
+"tex": "x^2+\\frac{b}{a}x=-\\frac{c}{a}"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$$",
+"display": true,
+"tex": "\\left(x+\\frac{b}{2a}\\right)^2=\\frac{b^2}{4a^2}-\\frac{c}{a}=\\frac{b^2-4ac}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$$",
+"display": true,
+"tex": "x+\\frac{b}{2a}=\\pm\\frac{\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$$",
+"display": true,
+"tex": "x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "ax^2+bx+c=0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "a\\neq 0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "a"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\left(\\frac{b}{2a}\\right)^2"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "b^2-4ac\\ge 0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\Delta=b^2-4ac"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\Delta>0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\Delta=0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\Delta<0"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\sqrt{4a^2}=2|a|"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "\\pm"
+},
+{
+"file": "q1_quadratic_zh__latex",
+"delim": "$",
+"display": false,
+"tex": "2a"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "ax^2+bx+c=0,\\quad a\\neq \n0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x^2+\\frac ba x+\\frac ca=0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x^2+\\frac ba x=-\\frac ca"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x^2+\\frac ba x+\\frac{b^2}{4a^2}\n=\n-\\frac ca+\\frac{b^2}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\left(x+\\frac{b}{2a}\\right)^2\n=\n\\frac{b^2}{4a^2}-\\frac ca"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\frac{b^2}{4a^2}-\\frac ca\n=\n\\frac{b^2}{4a^2}-\\frac{4ac}{4a^2}\n=\n\\frac{b^2-4ac}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\left(x+\\frac{b}{2a}\\right)^2\n=\n\\frac{b^2-4ac}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x+\\frac{b}{2a}\n=\n\\pm\\frac{\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x=-\\frac{b}{2a}\\pm\\frac{\\sqrt{b^2-4ac}}{2a}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\boxed{x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\Delta=b^2-4ac"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "x=-\\frac{b}{2a}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "ax^2+bx+c=0\n\\Rightarrow\n\\left(x+\\frac{b}{2a}\\right)^2\n=\n\\frac{b^2-4ac}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "ax^2+bx+c=0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "a\\neq 0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "a"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\frac ba"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\frac{b}{2a}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\frac{b^2}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\frac{b^2}{4a^2}"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "b^2-4ac\\ge 0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\Delta>0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\Delta=0"
+},
+{
+"file": "q1_quadratic_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\Delta<0"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\int x e^x\\,dx = x e^x - \\int e^x\\,dx = x e^x - e^x + C"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\int x e^x\\,dx = (x-1)e^x + C"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "u=x"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "dv=e^x\\,dx"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "du=dx"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "v=e^x"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "u"
+},
+{
+"file": "q2_integral_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "x"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\[",
+"display": true,
+"tex": "\\int x e^x\\,dx = x e^x - \\int e^x\\,dx = x e^x - e^x + C = e^x(x-1)+C"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "u=x"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "dv=e^x dx"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "du=dx"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "v=e^x"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "u=x"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "x"
+},
+{
+"file": "q2_integral_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "(e^x(x-1))' = e^x(x-1)+e^x = xe^x"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\int u\\,dv = uv - \\int v\\,du"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\int x e^x\\,dx = x e^x - \\int e^x\\,dx = x e^x - e^x + C"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\boxed{\\int x e^x\\,dx = e^x(x-1) + C}"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\int x e^x\\,dx"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "u = x"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "du = dx"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "dv = e^x\\,dx"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "v = e^x"
+},
+{
+"file": "q2_integral_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "C"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "-\\frac{\\hbar^2}{2m}\\frac{d^2\\psi}{dx^2}+V(x)\\psi=E\\psi"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$$",
+"display": true,
+"tex": "E_n=\\frac{n^2\\pi^2\\hbar^2}{2mL^2},\\quad n=1,2,3,\\dots"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\hbar"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "m"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "V(x)"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\psi"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "E"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "E"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "L"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "V=0"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "V=\\infty"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "n^2"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "n"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "E_1=\\frac{\\pi^2\\hbar^2}{2mL^2}"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\psi_n(x)=\\sqrt{\\frac{2}{L}}\\sin\\frac{n\\pi x}{L}"
+},
+{
+"file": "q3_schrodinger_zh__dollar",
+"delim": "$",
+"display": false,
+"tex": "n"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\[",
+"display": true,
+"tex": "E_n = \\frac{n^2\\pi^2\\hbar^2}{2mL^2},\\quad n=1,2,3,\\dots"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\[",
+"display": true,
+"tex": "\\psi_n(x)=\\sqrt{\\frac{2}{L}}\\sin\\frac{n\\pi x}{L}"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\psi"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "|\\psi|^2"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "i\\hbar\\frac{\\partial\\psi}{\\partial t}=\\hat H\\psi"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\hat H\\psi=E\\psi"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "E"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "0<x<L"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "V=0"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "V=\\infty"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "n"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "n=1"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "E_1=\\frac{\\pi^2\\hbar^2}{2mL^2}>0"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "n"
+},
+{
+"file": "q3_schrodinger_zh__latex",
+"delim": "\\(",
+"display": false,
+"tex": "L"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "i\\hbar \\frac{\\partial \\Psi}{\\partial t} = \\\n\\hat{H} \\Psi"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\hat{H}\\psi = E\\psi"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "E_n = \\frac{n^2 \\pi^2 \\hbar^2}{2ma^2}, \\quad n = 1, 2, 3, \\dots"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\[",
+"display": true,
+"tex": "\\psi_n(x) = \\sqrt{\\frac{2}{a}} \\sin\\left(\\frac{n\\pi x}{a}\\right), \\quad 0 < x < a"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\hat{H}"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\Psi"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "a"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "m"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "a"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "\\hbar"
+},
+{
+"file": "q3_schrodinger_zh__plain",
+"delim": "\\(",
+"display": false,
+"tex": "E_1 > 0"
+},
+{
+"file": "q4_bayes_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "P(D \\mid +) = \\frac{P(+ \\mid D)\\,P(D)}{P(+ \\mid D)\\,P(D) + P(+ \\mid \\lnot D)\\,P(\\lnot D)}"
+},
+{
+"file": "q4_bayes_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "P(D \\mid +) = \\frac{95}{590} \\approx 0.161"
+},
+{
+"file": "q4_bayes_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "P(D)"
+},
+{
+"file": "q4_bayes_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "P(+ \\mid D)"
+},
+{
+"file": "q4_bayes_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "P(+ \\mid \\lnot D)"
+},
+{
+"file": "q4_bayes_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "P(D \\mid +)"
+},
+{
+"file": "q4_bayes_en__latex",
+"delim": "\\[",
+"display": true,
+"tex": "P(D\\mid +)=\\frac{P(+\\mid D)\\,P(D)}{P(+\\mid D)\\,P(D)+P(+\\mid \\neg D)\\,P(\\neg D)}"
+},
+{
+"file": "q4_bayes_en__latex",
+"delim": "\\[",
+"display": true,
+"tex": "P(D\\mid +)=\\frac{0.99\\times 0.001}{0.99\\times 0.001+0.05\\times 0.999}\\approx 0.019"
+},
+{
+"file": "q4_bayes_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "P(D)"
+},
+{
+"file": "q4_bayes_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "P(+\\mid D)"
+},
+{
+"file": "q4_bayes_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "P(+\\mid \\neg D)"
+},
+{
+"file": "q4_bayes_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "P(D\\mid +)"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "P(D \\mid T^+) = \\frac{P(T^+ \\mid D) \\cdot P(D)}{P(T^+)}"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "P(T^+) = P(T^+ \\mid D)\\,P(D) + P(T^+ \\mid \\text{no } D)\\,P(\\text{no } D)"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "P(T^+) = 0.0099 + 0.0495 = 0.0594"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "P(D \\mid T^+) = \\frac{0.0099}{0.0594} \\approx 0.167"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(D \\mid T^+)"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(T^+ \\mid D)"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(D)"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(T^+)"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(D) = 1\\% = 0.01"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(T^+ \\mid D) = 99\\%"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "P(T^+ \\mid \\text{no } D) = 5\\%"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "0.99 \\times 0.01 = 0.0099"
+},
+{
+"file": "q4_bayes_en__plain",
+"delim": "$",
+"display": false,
+"tex": "0.05 \\times 0.99 = 0.0495"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\cdot \\mathbf{B} = 0"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} + \\mu_0 \\varepsilon_0 \\frac{\\partial \\mathbf{E}}{\\partial t}"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\varepsilon_0"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\rho = 0"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{J} = 0"
+},
+{
+"file": "q5_maxwell_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "c = 1/\\sqrt{\\mu_0 \\varepsilon_0}"
+},
+{
+"file": "q5_maxwell_en__latex",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}"
+},
+{
+"file": "q5_maxwell_en__latex",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\cdot \\mathbf{B} = 0"
+},
+{
+"file": "q5_maxwell_en__latex",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}"
+},
+{
+"file": "q5_maxwell_en__latex",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} + \\mu_0 \\varepsilon_0 \\frac{\\partial \\mathbf{E}}{\\partial t}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\cdot \\mathbf{B} = 0"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\nabla \\times \\mathbf{B} = \\mu_0 \\mathbf{J} + \\mu_0 \\varepsilon_0 \\frac{\\partial \\mathbf{E}}{\\partial t}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{J}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{E}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{B}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\rho"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{J}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\varepsilon_0"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mu_0"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\nabla \\cdot"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\nabla \\times"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\nabla \\cdot \\mathbf{D} = \\rho_f"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\nabla \\cdot \\mathbf{B} = 0"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\nabla \\times \\mathbf{E} = -\\partial \\mathbf{B}/\\partial t"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\nabla \\times \\mathbf{H} = \\mathbf{J}_f + \\partial \\mathbf{D}/\\partial t"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{D} = \\varepsilon_0\\mathbf{E} + \\mathbf{P}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\mathbf{H} = \\mathbf{B}/\\mu_0 - \\mathbf{M}"
+},
+{
+"file": "q5_maxwell_en__plain",
+"delim": "$",
+"display": false,
+"tex": "f"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\det(A - \\lambda I) = 0"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$$",
+"display": true,
+"tex": "\\lambda^2 - (a+d)\\lambda + (ad - bc) = 0"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "A"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "a+d"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "ad-bc"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "A = \\begin{pmatrix} 4 & 1 \\\\ 2 & 3 \\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "= 4+3 = 7"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "= 4\\cdot3 - 1\\cdot2 = 10"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\lambda^2 - 7\\lambda + 10 = 0"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "(\\lambda - 5)(\\lambda - 2) = 0"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\lambda_1 = 5"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\lambda_2 = 2"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "5 + 2 = 7"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "5 \\cdot 2 = 10"
+},
+{
+"file": "q6_matrix_en__dollar",
+"delim": "$",
+"display": false,
+"tex": "\\lambda = \\frac{(a+d) \\pm \\sqrt{(a+d)^2 - 4(ad-bc)}}{2}"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\[",
+"display": true,
+"tex": "\\det(A-\\lambda I)=\\lambda^2-(a+d)\\lambda+(ad-bc)=0"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\[",
+"display": true,
+"tex": "\\lambda=\\frac{(a+d)\\pm\\sqrt{(a+d)^2-4(ad-bc)}}{2}"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "A=\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "A=\\begin{pmatrix}4&1\\\\2&3\\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "a+d=7"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "ad-bc=12-2=10"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\lambda^2-7\\lambda+10=0"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "(\\lambda-5)(\\lambda-2)=0"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\lambda=5"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\lambda=2"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\lambda=5"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "A-\\lambda I"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "\\begin{pmatrix}-1&1\\\\2&-2\\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__latex",
+"delim": "\\(",
+"display": false,
+"tex": "-2\\times"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "A\\vec{v} = \\lambda \\vec{v}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "(A - \\lambda I)\\vec{v} = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\det(A - \\lambda I) = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\det\\begin{pmatrix} a-\\lambda & b \\\\ c & d-\\lambda \\end{pmatrix} = (a-\\lambda)(d-\\lambda) - bc = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\lambda^2 - (a+d)\\lambda + (ad - bc) = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\lambda = \\frac{(a+d) \\pm \\sqrt{(a+d)^2 - 4(ad-bc)}}{2}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "A = \\begin{pmatrix} 4 & 1 \\\\ 2 & 3 \\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\det\\begin{pmatrix} 4-\\lambda & 1 \\\\ 2 & 3-\\lambda \\end{pmatrix} = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "(4-\\lambda)(3-\\lambda) - (1)(2) = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "12 - 4\\lambda - 3\\lambda + \\lambda^2 - 2 = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\lambda^2 - 7\\lambda + 10 = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "(\\lambda - 5)(\\lambda - 2) = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$$",
+"display": true,
+"tex": "\\boxed{\\lambda_1 = 5, \\quad \\lambda_2 = 2}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "(A - 5I)\\vec{v} = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\begin{pmatrix} -1 & 1 \\\\ 2 & -2 \\end{pmatrix}\\vec{v} = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\vec{v} = \\begin{pmatrix} 1 \\\\ 1 \\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "(A - 2I)\\vec{v} = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\begin{pmatrix} 2 & 1 \\\\ 2 & 1 \\end{pmatrix}\\vec{v} = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\vec{v} = \\begin{pmatrix} 1 \\\\ -2 \\end{pmatrix}"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\det(A - \\lambda I) = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "\\lambda^2 - (\\text{trace})\\lambda + (\\text{det}) = 0"
+},
+{
+"file": "q6_matrix_en__plain",
+"delim": "$",
+"display": false,
+"tex": "(a+d)^2 - 4(ad-bc)"
+}
+]

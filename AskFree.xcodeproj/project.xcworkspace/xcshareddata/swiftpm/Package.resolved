@@ -8,6 +8,14 @@
         "revision" : "eef1a539a373c1f1a320624b1130fc5de7b2e100",
         "version" : "2.10.0"
       }
+    },
+    {
+      "identity" : "swiftmath",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mgriebling/SwiftMath.git",
+      "state" : {
+        "revision" : "0b0222e102ba415b352cd29f334075622bd4e6aa"
+      }
     }
   ],
   "version" : 2

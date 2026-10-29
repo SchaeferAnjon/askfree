@@ -1,0 +1,2343 @@
+{
+ "question": "What are Maxwell's equations in differential form and what does each one mean",
+ "prompt": "plain",
+ "model": "deepseek-chat",
+ "chunks": [
+  {
+   "t_ms": 977,
+   "text": "#"
+  },
+  {
+   "t_ms": 1064,
+   "text": " Maxwell"
+  },
+  {
+   "t_ms": 1080,
+   "text": "'s"
+  },
+  {
+   "t_ms": 1080,
+   "text": " Equations"
+  },
+  {
+   "t_ms": 1080,
+   "text": " ("
+  },
+  {
+   "t_ms": 1097,
+   "text": "D"
+  },
+  {
+   "t_ms": 1097,
+   "text": "ifferential"
+  },
+  {
+   "t_ms": 1097,
+   "text": " Form"
+  },
+  {
+   "t_ms": 1097,
+   "text": ")\n\n"
+  },
+  {
+   "t_ms": 1097,
+   "text": "##"
+  },
+  {
+   "t_ms": 1110,
+   "text": " "
+  },
+  {
+   "t_ms": 1126,
+   "text": "1"
+  },
+  {
+   "t_ms": 1126,
+   "text": "."
+  },
+  {
+   "t_ms": 1126,
+   "text": " Gauss"
+  },
+  {
+   "t_ms": 1140,
+   "text": "'s"
+  },
+  {
+   "t_ms": 1140,
+   "text": " Law"
+  },
+  {
+   "t_ms": 1140,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1140,
+   "text": "$$\\"
+  },
+  {
+   "t_ms": 1160,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 1160,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1160,
+   "text": "cdot"
+  },
+  {
+   "t_ms": 1160,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1160,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 1170,
+   "text": "{E"
+  },
+  {
+   "t_ms": 1170,
+   "text": "}"
+  },
+  {
+   "t_ms": 1170,
+   "text": " ="
+  },
+  {
+   "t_ms": 1170,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1170,
+   "text": "frac"
+  },
+  {
+   "t_ms": 1170,
+   "text": "{\\"
+  },
+  {
+   "t_ms": 1199,
+   "text": "rho"
+  },
+  {
+   "t_ms": 1199,
+   "text": "}{\\"
+  },
+  {
+   "t_ms": 1199,
+   "text": "varepsilon"
+  },
+  {
+   "t_ms": 1199,
+   "text": "_"
+  },
+  {
+   "t_ms": 1199,
+   "text": "0"
+  },
+  {
+   "t_ms": 1199,
+   "text": "}$$\n\n"
+  },
+  {
+   "t_ms": 1199,
+   "text": "**"
+  },
+  {
+   "t_ms": 1199,
+   "text": "Meaning"
+  },
+  {
+   "t_ms": 1199,
+   "text": ":**"
+  },
+  {
+   "t_ms": 1215,
+   "text": " Electric"
+  },
+  {
+   "t_ms": 1216,
+   "text": " charges"
+  },
+  {
+   "t_ms": 1239,
+   "text": " are"
+  },
+  {
+   "t_ms": 1239,
+   "text": " the"
+  },
+  {
+   "t_ms": 1247,
+   "text": " source"
+  },
+  {
+   "t_ms": 1247,
+   "text": " of"
+  },
+  {
+   "t_ms": 1247,
+   "text": " electric"
+  },
+  {
+   "t_ms": 1247,
+   "text": " field"
+  },
+  {
+   "t_ms": 1353,
+   "text": " lines"
+  },
+  {
+   "t_ms": 1353,
+   "text": "."
+  },
+  {
+   "t_ms": 1353,
+   "text": " The"
+  },
+  {
+   "t_ms": 1353,
+   "text": " divergence"
+  },
+  {
+   "t_ms": 1353,
+   "text": " of"
+  },
+  {
+   "t_ms": 1353,
+   "text": " the"
+  },
+  {
+   "t_ms": 1353,
+   "text": " electric"
+  },
+  {
+   "t_ms": 1353,
+   "text": " field"
+  },
+  {
+   "t_ms": 1353,
+   "text": " at"
+  },
+  {
+   "t_ms": 1353,
+   "text": " any"
+  },
+  {
+   "t_ms": 1353,
+   "text": " point"
+  },
+  {
+   "t_ms": 1353,
+   "text": " is"
+  },
+  {
+   "t_ms": 1353,
+   "text": " proportional"
+  },
+  {
+   "t_ms": 1353,
+   "text": " to"
+  },
+  {
+   "t_ms": 1353,
+   "text": " the"
+  },
+  {
+   "t_ms": 1353,
+   "text": " charge"
+  },
+  {
+   "t_ms": 1369,
+   "text": " density"
+  },
+  {
+   "t_ms": 1369,
+   "text": " there"
+  },
+  {
+   "t_ms": 1369,
+   "text": "."
+  },
+  {
+   "t_ms": 1369,
+   "text": " Field"
+  },
+  {
+   "t_ms": 1383,
+   "text": " lines"
+  },
+  {
+   "t_ms": 1383,
+   "text": " begin"
+  },
+  {
+   "t_ms": 1411,
+   "text": " on"
+  },
+  {
+   "t_ms": 1418,
+   "text": " positive"
+  },
+  {
+   "t_ms": 1418,
+   "text": " charges"
+  },
+  {
+   "t_ms": 1418,
+   "text": " and"
+  },
+  {
+   "t_ms": 1418,
+   "text": " end"
+  },
+  {
+   "t_ms": 1428,
+   "text": " on"
+  },
+  {
+   "t_ms": 1428,
+   "text": " negative"
+  },
+  {
+   "t_ms": 1428,
+   "text": " charges"
+  },
+  {
+   "t_ms": 1428,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 1428,
+   "text": "##"
+  },
+  {
+   "t_ms": 1428,
+   "text": " "
+  },
+  {
+   "t_ms": 1448,
+   "text": "2"
+  },
+  {
+   "t_ms": 1448,
+   "text": "."
+  },
+  {
+   "t_ms": 1448,
+   "text": " Gauss"
+  },
+  {
+   "t_ms": 1448,
+   "text": "'s"
+  },
+  {
+   "t_ms": 1460,
+   "text": " Law"
+  },
+  {
+   "t_ms": 1460,
+   "text": " for"
+  },
+  {
+   "t_ms": 1460,
+   "text": " Magnet"
+  },
+  {
+   "t_ms": 1460,
+   "text": "ism"
+  },
+  {
+   "t_ms": 1460,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1460,
+   "text": "$$\\"
+  },
+  {
+   "t_ms": 1471,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 1471,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1471,
+   "text": "cdot"
+  },
+  {
+   "t_ms": 1471,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1471,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 1471,
+   "text": "{B"
+  },
+  {
+   "t_ms": 1492,
+   "text": "}"
+  },
+  {
+   "t_ms": 1492,
+   "text": " ="
+  },
+  {
+   "t_ms": 1492,
+   "text": " "
+  },
+  {
+   "t_ms": 1492,
+   "text": "0"
+  },
+  {
+   "t_ms": 1492,
+   "text": "$$\n\n"
+  },
+  {
+   "t_ms": 1492,
+   "text": "**"
+  },
+  {
+   "t_ms": 1503,
+   "text": "Meaning"
+  },
+  {
+   "t_ms": 1503,
+   "text": ":**"
+  },
+  {
+   "t_ms": 1503,
+   "text": " There"
+  },
+  {
+   "t_ms": 1503,
+   "text": " are"
+  },
+  {
+   "t_ms": 1503,
+   "text": " no"
+  },
+  {
+   "t_ms": 1503,
+   "text": " magnetic"
+  },
+  {
+   "t_ms": 1534,
+   "text": " monop"
+  },
+  {
+   "t_ms": 1534,
+   "text": "oles"
+  },
+  {
+   "t_ms": 1534,
+   "text": "."
+  },
+  {
+   "t_ms": 1534,
+   "text": " Magnetic"
+  },
+  {
+   "t_ms": 1540,
+   "text": " field"
+  },
+  {
+   "t_ms": 1540,
+   "text": " lines"
+  },
+  {
+   "t_ms": 1540,
+   "text": " always"
+  },
+  {
+   "t_ms": 1549,
+   "text": " form"
+  },
+  {
+   "t_ms": 1566,
+   "text": " closed"
+  },
+  {
+   "t_ms": 1566,
+   "text": " loops"
+  },
+  {
+   "t_ms": 1566,
+   "text": " —"
+  },
+  {
+   "t_ms": 1566,
+   "text": " they"
+  },
+  {
+   "t_ms": 1578,
+   "text": " never"
+  },
+  {
+   "t_ms": 1578,
+   "text": " begin"
+  },
+  {
+   "t_ms": 1593,
+   "text": " or"
+  },
+  {
+   "t_ms": 1593,
+   "text": " end"
+  },
+  {
+   "t_ms": 1593,
+   "text": " at"
+  },
+  {
+   "t_ms": 1605,
+   "text": " a"
+  },
+  {
+   "t_ms": 1605,
+   "text": " point"
+  },
+  {
+   "t_ms": 1605,
+   "text": "."
+  },
+  {
+   "t_ms": 1605,
+   "text": " Whatever"
+  },
+  {
+   "t_ms": 1621,
+   "text": " magnetic"
+  },
+  {
+   "t_ms": 1637,
+   "text": " flux"
+  },
+  {
+   "t_ms": 1637,
+   "text": " enters"
+  },
+  {
+   "t_ms": 1637,
+   "text": " a"
+  },
+  {
+   "t_ms": 1651,
+   "text": " region"
+  },
+  {
+   "t_ms": 1667,
+   "text": " must"
+  },
+  {
+   "t_ms": 1684,
+   "text": " leave"
+  },
+  {
+   "t_ms": 1684,
+   "text": " it"
+  },
+  {
+   "t_ms": 1684,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 1684,
+   "text": "##"
+  },
+  {
+   "t_ms": 1723,
+   "text": " "
+  },
+  {
+   "t_ms": 1723,
+   "text": "3"
+  },
+  {
+   "t_ms": 1723,
+   "text": "."
+  },
+  {
+   "t_ms": 1724,
+   "text": " Faraday"
+  },
+  {
+   "t_ms": 1724,
+   "text": "'s"
+  },
+  {
+   "t_ms": 1724,
+   "text": " Law"
+  },
+  {
+   "t_ms": 1724,
+   "text": " of"
+  },
+  {
+   "t_ms": 1729,
+   "text": " Induction"
+  },
+  {
+   "t_ms": 1729,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1729,
+   "text": "$$\\"
+  },
+  {
+   "t_ms": 1729,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 1729,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1729,
+   "text": "times"
+  },
+  {
+   "t_ms": 1742,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1742,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 1742,
+   "text": "{E"
+  },
+  {
+   "t_ms": 1742,
+   "text": "}"
+  },
+  {
+   "t_ms": 1742,
+   "text": " ="
+  },
+  {
+   "t_ms": 1742,
+   "text": " -\\"
+  },
+  {
+   "t_ms": 1759,
+   "text": "frac"
+  },
+  {
+   "t_ms": 1759,
+   "text": "{\\"
+  },
+  {
+   "t_ms": 1759,
+   "text": "partial"
+  },
+  {
+   "t_ms": 1759,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1759,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 1759,
+   "text": "{B"
+  },
+  {
+   "t_ms": 1773,
+   "text": "}}{\\"
+  },
+  {
+   "t_ms": 1773,
+   "text": "partial"
+  },
+  {
+   "t_ms": 1773,
+   "text": " t"
+  },
+  {
+   "t_ms": 1773,
+   "text": "}$$\n\n"
+  },
+  {
+   "t_ms": 1773,
+   "text": "**"
+  },
+  {
+   "t_ms": 1774,
+   "text": "Meaning"
+  },
+  {
+   "t_ms": 1868,
+   "text": ":**"
+  },
+  {
+   "t_ms": 1868,
+   "text": " A"
+  },
+  {
+   "t_ms": 1868,
+   "text": " time"
+  },
+  {
+   "t_ms": 1868,
+   "text": "-varying"
+  },
+  {
+   "t_ms": 1868,
+   "text": " magnetic"
+  },
+  {
+   "t_ms": 1868,
+   "text": " field"
+  },
+  {
+   "t_ms": 1868,
+   "text": " induces"
+  },
+  {
+   "t_ms": 1868,
+   "text": " a"
+  },
+  {
+   "t_ms": 1868,
+   "text": " circulating"
+  },
+  {
+   "t_ms": 1868,
+   "text": " electric"
+  },
+  {
+   "t_ms": 1868,
+   "text": " field"
+  },
+  {
+   "t_ms": 1868,
+   "text": "."
+  },
+  {
+   "t_ms": 1868,
+   "text": " This"
+  },
+  {
+   "t_ms": 1869,
+   "text": " is"
+  },
+  {
+   "t_ms": 1869,
+   "text": " the"
+  },
+  {
+   "t_ms": 1869,
+   "text": " principle"
+  },
+  {
+   "t_ms": 1886,
+   "text": " behind"
+  },
+  {
+   "t_ms": 1886,
+   "text": " electric"
+  },
+  {
+   "t_ms": 1893,
+   "text": " generators"
+  },
+  {
+   "t_ms": 1893,
+   "text": " and"
+  },
+  {
+   "t_ms": 1906,
+   "text": " transformers"
+  },
+  {
+   "t_ms": 1906,
+   "text": "."
+  },
+  {
+   "t_ms": 1923,
+   "text": " The"
+  },
+  {
+   "t_ms": 1923,
+   "text": " minus"
+  },
+  {
+   "t_ms": 1923,
+   "text": " sign"
+  },
+  {
+   "t_ms": 1938,
+   "text": " ("
+  },
+  {
+   "t_ms": 1938,
+   "text": "L"
+  },
+  {
+   "t_ms": 1938,
+   "text": "enz"
+  },
+  {
+   "t_ms": 1953,
+   "text": "'s"
+  },
+  {
+   "t_ms": 1953,
+   "text": " law"
+  },
+  {
+   "t_ms": 1953,
+   "text": ")"
+  },
+  {
+   "t_ms": 1953,
+   "text": " reflects"
+  },
+  {
+   "t_ms": 1970,
+   "text": " that"
+  },
+  {
+   "t_ms": 1970,
+   "text": " the"
+  },
+  {
+   "t_ms": 1970,
+   "text": " induced"
+  },
+  {
+   "t_ms": 2018,
+   "text": " field"
+  },
+  {
+   "t_ms": 2018,
+   "text": " opposes"
+  },
+  {
+   "t_ms": 2018,
+   "text": " the"
+  },
+  {
+   "t_ms": 2018,
+   "text": " change"
+  },
+  {
+   "t_ms": 2018,
+   "text": " that"
+  },
+  {
+   "t_ms": 2018,
+   "text": " produced"
+  },
+  {
+   "t_ms": 2018,
+   "text": " it"
+  },
+  {
+   "t_ms": 2018,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 2018,
+   "text": "##"
+  },
+  {
+   "t_ms": 2018,
+   "text": " "
+  },
+  {
+   "t_ms": 2018,
+   "text": "4"
+  },
+  {
+   "t_ms": 2028,
+   "text": "."
+  },
+  {
+   "t_ms": 2028,
+   "text": " Amp"
+  },
+  {
+   "t_ms": 2044,
+   "text": "ère"
+  },
+  {
+   "t_ms": 2044,
+   "text": "–"
+  },
+  {
+   "t_ms": 2044,
+   "text": "Max"
+  },
+  {
+   "t_ms": 2059,
+   "text": "well"
+  },
+  {
+   "t_ms": 2059,
+   "text": " Law"
+  },
+  {
+   "t_ms": 2059,
+   "text": "\n"
+  },
+  {
+   "t_ms": 2059,
+   "text": "$$\\"
+  },
+  {
+   "t_ms": 2059,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 2059,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2074,
+   "text": "times"
+  },
+  {
+   "t_ms": 2074,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2074,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2074,
+   "text": "{B"
+  },
+  {
+   "t_ms": 2074,
+   "text": "}"
+  },
+  {
+   "t_ms": 2074,
+   "text": " ="
+  },
+  {
+   "t_ms": 2090,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2090,
+   "text": "mu"
+  },
+  {
+   "t_ms": 2090,
+   "text": "_"
+  },
+  {
+   "t_ms": 2090,
+   "text": "0"
+  },
+  {
+   "t_ms": 2090,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2090,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2104,
+   "text": "{J"
+  },
+  {
+   "t_ms": 2104,
+   "text": "}"
+  },
+  {
+   "t_ms": 2104,
+   "text": " +"
+  },
+  {
+   "t_ms": 2104,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2104,
+   "text": "mu"
+  },
+  {
+   "t_ms": 2104,
+   "text": "_"
+  },
+  {
+   "t_ms": 2120,
+   "text": "0"
+  },
+  {
+   "t_ms": 2120,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2120,
+   "text": "varepsilon"
+  },
+  {
+   "t_ms": 2120,
+   "text": "_"
+  },
+  {
+   "t_ms": 2120,
+   "text": "0"
+  },
+  {
+   "t_ms": 2120,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2135,
+   "text": "frac"
+  },
+  {
+   "t_ms": 2135,
+   "text": "{\\"
+  },
+  {
+   "t_ms": 2135,
+   "text": "partial"
+  },
+  {
+   "t_ms": 2135,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2135,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2135,
+   "text": "{E"
+  },
+  {
+   "t_ms": 2149,
+   "text": "}}{\\"
+  },
+  {
+   "t_ms": 2149,
+   "text": "partial"
+  },
+  {
+   "t_ms": 2149,
+   "text": " t"
+  },
+  {
+   "t_ms": 2149,
+   "text": "}$$\n\n"
+  },
+  {
+   "t_ms": 2149,
+   "text": "**"
+  },
+  {
+   "t_ms": 2149,
+   "text": "Meaning"
+  },
+  {
+   "t_ms": 2167,
+   "text": ":**"
+  },
+  {
+   "t_ms": 2167,
+   "text": " Magnetic"
+  },
+  {
+   "t_ms": 2185,
+   "text": " fields"
+  },
+  {
+   "t_ms": 2185,
+   "text": " are"
+  },
+  {
+   "t_ms": 2185,
+   "text": " produced"
+  },
+  {
+   "t_ms": 2200,
+   "text": " by"
+  },
+  {
+   "t_ms": 2200,
+   "text": " two"
+  },
+  {
+   "t_ms": 2217,
+   "text": " things"
+  },
+  {
+   "t_ms": 2225,
+   "text": ":"
+  },
+  {
+   "t_ms": 2226,
+   "text": " ("
+  },
+  {
+   "t_ms": 2226,
+   "text": "a"
+  },
+  {
+   "t_ms": 2242,
+   "text": ")"
+  },
+  {
+   "t_ms": 2242,
+   "text": " electric"
+  },
+  {
+   "t_ms": 2242,
+   "text": " currents"
+  },
+  {
+   "t_ms": 2242,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2253,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2253,
+   "text": "{J"
+  },
+  {
+   "t_ms": 2253,
+   "text": "}$,"
+  },
+  {
+   "t_ms": 2253,
+   "text": " and"
+  },
+  {
+   "t_ms": 2253,
+   "text": " ("
+  },
+  {
+   "t_ms": 2253,
+   "text": "b"
+  },
+  {
+   "t_ms": 2269,
+   "text": ")"
+  },
+  {
+   "t_ms": 2269,
+   "text": " a"
+  },
+  {
+   "t_ms": 2284,
+   "text": " time"
+  },
+  {
+   "t_ms": 2284,
+   "text": "-varying"
+  },
+  {
+   "t_ms": 2284,
+   "text": " electric"
+  },
+  {
+   "t_ms": 2299,
+   "text": " field"
+  },
+  {
+   "t_ms": 2299,
+   "text": " ("
+  },
+  {
+   "t_ms": 2392,
+   "text": "the"
+  },
+  {
+   "t_ms": 2392,
+   "text": " \""
+  },
+  {
+   "t_ms": 2392,
+   "text": "dis"
+  },
+  {
+   "t_ms": 2392,
+   "text": "placement"
+  },
+  {
+   "t_ms": 2392,
+   "text": " current"
+  },
+  {
+   "t_ms": 2392,
+   "text": "\""
+  },
+  {
+   "t_ms": 2392,
+   "text": " term"
+  },
+  {
+   "t_ms": 2392,
+   "text": ")."
+  },
+  {
+   "t_ms": 2392,
+   "text": " Maxwell"
+  },
+  {
+   "t_ms": 2392,
+   "text": "'s"
+  },
+  {
+   "t_ms": 2392,
+   "text": " addition"
+  },
+  {
+   "t_ms": 2394,
+   "text": " of"
+  },
+  {
+   "t_ms": 2394,
+   "text": " the"
+  },
+  {
+   "t_ms": 2394,
+   "text": " displacement"
+  },
+  {
+   "t_ms": 2394,
+   "text": " current"
+  },
+  {
+   "t_ms": 2394,
+   "text": " was"
+  },
+  {
+   "t_ms": 2394,
+   "text": " crucial"
+  },
+  {
+   "t_ms": 2423,
+   "text": " —"
+  },
+  {
+   "t_ms": 2423,
+   "text": " it"
+  },
+  {
+   "t_ms": 2423,
+   "text": " made"
+  },
+  {
+   "t_ms": 2423,
+   "text": " the"
+  },
+  {
+   "t_ms": 2423,
+   "text": " equations"
+  },
+  {
+   "t_ms": 2435,
+   "text": " consistent"
+  },
+  {
+   "t_ms": 2451,
+   "text": " and"
+  },
+  {
+   "t_ms": 2451,
+   "text": " predicted"
+  },
+  {
+   "t_ms": 2467,
+   "text": " electromagnetic"
+  },
+  {
+   "t_ms": 2479,
+   "text": " waves"
+  },
+  {
+   "t_ms": 2479,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 2479,
+   "text": "---\n\n"
+  },
+  {
+   "t_ms": 2503,
+   "text": "##"
+  },
+  {
+   "t_ms": 2503,
+   "text": " Key"
+  },
+  {
+   "t_ms": 2503,
+   "text": " Symbols"
+  },
+  {
+   "t_ms": 2508,
+   "text": "\n"
+  },
+  {
+   "t_ms": 2508,
+   "text": "|"
+  },
+  {
+   "t_ms": 2524,
+   "text": " Symbol"
+  },
+  {
+   "t_ms": 2524,
+   "text": " |"
+  },
+  {
+   "t_ms": 2524,
+   "text": " Meaning"
+  },
+  {
+   "t_ms": 2524,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2524,
+   "text": "|"
+  },
+  {
+   "t_ms": 2541,
+   "text": "--------"
+  },
+  {
+   "t_ms": 2541,
+   "text": "|"
+  },
+  {
+   "t_ms": 2541,
+   "text": "---------"
+  },
+  {
+   "t_ms": 2541,
+   "text": "|\n"
+  },
+  {
+   "t_ms": 2541,
+   "text": "|"
+  },
+  {
+   "t_ms": 2541,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2629,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2629,
+   "text": "{E"
+  },
+  {
+   "t_ms": 2629,
+   "text": "}$"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |"
+  },
+  {
+   "t_ms": 2629,
+   "text": " Electric"
+  },
+  {
+   "t_ms": 2629,
+   "text": " field"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2629,
+   "text": "|"
+  },
+  {
+   "t_ms": 2629,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2629,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2629,
+   "text": "{B"
+  },
+  {
+   "t_ms": 2629,
+   "text": "}$"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |"
+  },
+  {
+   "t_ms": 2629,
+   "text": " Magnetic"
+  },
+  {
+   "t_ms": 2629,
+   "text": " field"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2629,
+   "text": "|"
+  },
+  {
+   "t_ms": 2629,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2629,
+   "text": "rho"
+  },
+  {
+   "t_ms": 2629,
+   "text": "$"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |"
+  },
+  {
+   "t_ms": 2629,
+   "text": " Electric"
+  },
+  {
+   "t_ms": 2629,
+   "text": " charge"
+  },
+  {
+   "t_ms": 2629,
+   "text": " density"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2629,
+   "text": "|"
+  },
+  {
+   "t_ms": 2629,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2629,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2629,
+   "text": "{J"
+  },
+  {
+   "t_ms": 2629,
+   "text": "}$"
+  },
+  {
+   "t_ms": 2629,
+   "text": " |"
+  },
+  {
+   "t_ms": 2629,
+   "text": " Electric"
+  },
+  {
+   "t_ms": 2629,
+   "text": " current"
+  },
+  {
+   "t_ms": 2629,
+   "text": " density"
+  },
+  {
+   "t_ms": 2646,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2646,
+   "text": "|"
+  },
+  {
+   "t_ms": 2646,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2646,
+   "text": "varepsilon"
+  },
+  {
+   "t_ms": 2646,
+   "text": "_"
+  },
+  {
+   "t_ms": 2646,
+   "text": "0"
+  },
+  {
+   "t_ms": 2659,
+   "text": "$"
+  },
+  {
+   "t_ms": 2659,
+   "text": " |"
+  },
+  {
+   "t_ms": 2659,
+   "text": " Vac"
+  },
+  {
+   "t_ms": 2659,
+   "text": "uum"
+  },
+  {
+   "t_ms": 2659,
+   "text": " perm"
+  },
+  {
+   "t_ms": 2675,
+   "text": "itt"
+  },
+  {
+   "t_ms": 2675,
+   "text": "ivity"
+  },
+  {
+   "t_ms": 2675,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2675,
+   "text": "|"
+  },
+  {
+   "t_ms": 2675,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2675,
+   "text": "mu"
+  },
+  {
+   "t_ms": 2691,
+   "text": "_"
+  },
+  {
+   "t_ms": 2691,
+   "text": "0"
+  },
+  {
+   "t_ms": 2691,
+   "text": "$"
+  },
+  {
+   "t_ms": 2691,
+   "text": " |"
+  },
+  {
+   "t_ms": 2691,
+   "text": " Vac"
+  },
+  {
+   "t_ms": 2691,
+   "text": "uum"
+  },
+  {
+   "t_ms": 2710,
+   "text": " permeability"
+  },
+  {
+   "t_ms": 2710,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2710,
+   "text": "|"
+  },
+  {
+   "t_ms": 2710,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2710,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 2710,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2721,
+   "text": "cdot"
+  },
+  {
+   "t_ms": 2721,
+   "text": "$"
+  },
+  {
+   "t_ms": 2721,
+   "text": " |"
+  },
+  {
+   "t_ms": 2721,
+   "text": " Div"
+  },
+  {
+   "t_ms": 2721,
+   "text": "erg"
+  },
+  {
+   "t_ms": 2737,
+   "text": "ence"
+  },
+  {
+   "t_ms": 2737,
+   "text": " operator"
+  },
+  {
+   "t_ms": 2753,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2753,
+   "text": "|"
+  },
+  {
+   "t_ms": 2753,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2753,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 2753,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2753,
+   "text": "times"
+  },
+  {
+   "t_ms": 2765,
+   "text": "$"
+  },
+  {
+   "t_ms": 2765,
+   "text": " |"
+  },
+  {
+   "t_ms": 2765,
+   "text": " Cur"
+  },
+  {
+   "t_ms": 2765,
+   "text": "l"
+  },
+  {
+   "t_ms": 2765,
+   "text": " operator"
+  },
+  {
+   "t_ms": 2782,
+   "text": " |\n\n"
+  },
+  {
+   "t_ms": 2782,
+   "text": "##"
+  },
+  {
+   "t_ms": 2782,
+   "text": " In"
+  },
+  {
+   "t_ms": 2782,
+   "text": " Matter"
+  },
+  {
+   "t_ms": 2798,
+   "text": " ("
+  },
+  {
+   "t_ms": 2798,
+   "text": "mac"
+  },
+  {
+   "t_ms": 2809,
+   "text": "roscopic"
+  },
+  {
+   "t_ms": 2809,
+   "text": " form"
+  },
+  {
+   "t_ms": 2809,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 2809,
+   "text": "When"
+  },
+  {
+   "t_ms": 2827,
+   "text": " working"
+  },
+  {
+   "t_ms": 2919,
+   "text": " inside"
+  },
+  {
+   "t_ms": 2919,
+   "text": " materials"
+  },
+  {
+   "t_ms": 2919,
+   "text": ","
+  },
+  {
+   "t_ms": 2919,
+   "text": " the"
+  },
+  {
+   "t_ms": 2919,
+   "text": " equations"
+  },
+  {
+   "t_ms": 2919,
+   "text": " are"
+  },
+  {
+   "t_ms": 2919,
+   "text": " often"
+  },
+  {
+   "t_ms": 2967,
+   "text": " written"
+  },
+  {
+   "t_ms": 2967,
+   "text": " with"
+  },
+  {
+   "t_ms": 2967,
+   "text": " auxiliary"
+  },
+  {
+   "t_ms": 2967,
+   "text": " fields"
+  },
+  {
+   "t_ms": 2967,
+   "text": ":\n"
+  },
+  {
+   "t_ms": 2967,
+   "text": "-"
+  },
+  {
+   "t_ms": 2967,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2967,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 2967,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2967,
+   "text": "cdot"
+  },
+  {
+   "t_ms": 2967,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2967,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2967,
+   "text": "{D"
+  },
+  {
+   "t_ms": 2967,
+   "text": "}"
+  },
+  {
+   "t_ms": 2967,
+   "text": " ="
+  },
+  {
+   "t_ms": 2967,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2967,
+   "text": "rho"
+  },
+  {
+   "t_ms": 2967,
+   "text": "_f"
+  },
+  {
+   "t_ms": 2967,
+   "text": "$\n"
+  },
+  {
+   "t_ms": 2967,
+   "text": "-"
+  },
+  {
+   "t_ms": 2967,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2967,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 2967,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2967,
+   "text": "cdot"
+  },
+  {
+   "t_ms": 2977,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2977,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 2977,
+   "text": "{B"
+  },
+  {
+   "t_ms": 2977,
+   "text": "}"
+  },
+  {
+   "t_ms": 2977,
+   "text": " ="
+  },
+  {
+   "t_ms": 2977,
+   "text": " "
+  },
+  {
+   "t_ms": 2994,
+   "text": "0"
+  },
+  {
+   "t_ms": 2994,
+   "text": "$\n"
+  },
+  {
+   "t_ms": 2994,
+   "text": "-"
+  },
+  {
+   "t_ms": 2994,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 2994,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 2994,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3005,
+   "text": "times"
+  },
+  {
+   "t_ms": 3005,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3005,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3005,
+   "text": "{E"
+  },
+  {
+   "t_ms": 3005,
+   "text": "}"
+  },
+  {
+   "t_ms": 3006,
+   "text": " ="
+  },
+  {
+   "t_ms": 3023,
+   "text": " -\\"
+  },
+  {
+   "t_ms": 3023,
+   "text": "partial"
+  },
+  {
+   "t_ms": 3043,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3043,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3043,
+   "text": "{B"
+  },
+  {
+   "t_ms": 3043,
+   "text": "}/\\"
+  },
+  {
+   "t_ms": 3043,
+   "text": "partial"
+  },
+  {
+   "t_ms": 3043,
+   "text": " t"
+  },
+  {
+   "t_ms": 3070,
+   "text": "$\n"
+  },
+  {
+   "t_ms": 3070,
+   "text": "-"
+  },
+  {
+   "t_ms": 3070,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 3070,
+   "text": "nabla"
+  },
+  {
+   "t_ms": 3070,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3070,
+   "text": "times"
+  },
+  {
+   "t_ms": 3070,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3070,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3070,
+   "text": "{H"
+  },
+  {
+   "t_ms": 3070,
+   "text": "}"
+  },
+  {
+   "t_ms": 3070,
+   "text": " ="
+  },
+  {
+   "t_ms": 3070,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3099,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3099,
+   "text": "{J"
+  },
+  {
+   "t_ms": 3099,
+   "text": "}_"
+  },
+  {
+   "t_ms": 3099,
+   "text": "f"
+  },
+  {
+   "t_ms": 3099,
+   "text": " +"
+  },
+  {
+   "t_ms": 3099,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3099,
+   "text": "partial"
+  },
+  {
+   "t_ms": 3099,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3099,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3099,
+   "text": "{D"
+  },
+  {
+   "t_ms": 3099,
+   "text": "}/\\"
+  },
+  {
+   "t_ms": 3099,
+   "text": "partial"
+  },
+  {
+   "t_ms": 3113,
+   "text": " t"
+  },
+  {
+   "t_ms": 3113,
+   "text": "$\n\n"
+  },
+  {
+   "t_ms": 3113,
+   "text": "where"
+  },
+  {
+   "t_ms": 3113,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 3113,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3113,
+   "text": "{D"
+  },
+  {
+   "t_ms": 3136,
+   "text": "}"
+  },
+  {
+   "t_ms": 3136,
+   "text": " ="
+  },
+  {
+   "t_ms": 3136,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3136,
+   "text": "varepsilon"
+  },
+  {
+   "t_ms": 3141,
+   "text": "_"
+  },
+  {
+   "t_ms": 3141,
+   "text": "0"
+  },
+  {
+   "t_ms": 3141,
+   "text": "\\mathbf"
+  },
+  {
+   "t_ms": 3141,
+   "text": "{E"
+  },
+  {
+   "t_ms": 3141,
+   "text": "}"
+  },
+  {
+   "t_ms": 3141,
+   "text": " +"
+  },
+  {
+   "t_ms": 3160,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3160,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3160,
+   "text": "{P"
+  },
+  {
+   "t_ms": 3160,
+   "text": "}$"
+  },
+  {
+   "t_ms": 3160,
+   "text": " and"
+  },
+  {
+   "t_ms": 3160,
+   "text": " $\\"
+  },
+  {
+   "t_ms": 3174,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3174,
+   "text": "{H"
+  },
+  {
+   "t_ms": 3174,
+   "text": "}"
+  },
+  {
+   "t_ms": 3174,
+   "text": " ="
+  },
+  {
+   "t_ms": 3174,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3174,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3189,
+   "text": "{B"
+  },
+  {
+   "t_ms": 3189,
+   "text": "}/\\"
+  },
+  {
+   "t_ms": 3189,
+   "text": "mu"
+  },
+  {
+   "t_ms": 3189,
+   "text": "_"
+  },
+  {
+   "t_ms": 3189,
+   "text": "0"
+  },
+  {
+   "t_ms": 3189,
+   "text": " -"
+  },
+  {
+   "t_ms": 3209,
+   "text": " \\"
+  },
+  {
+   "t_ms": 3209,
+   "text": "mathbf"
+  },
+  {
+   "t_ms": 3209,
+   "text": "{M"
+  },
+  {
+   "t_ms": 3209,
+   "text": "}$,"
+  },
+  {
+   "t_ms": 3221,
+   "text": " and"
+  },
+  {
+   "t_ms": 3221,
+   "text": " the"
+  },
+  {
+   "t_ms": 3232,
+   "text": " subscript"
+  },
+  {
+   "t_ms": 3232,
+   "text": " $"
+  },
+  {
+   "t_ms": 3248,
+   "text": "f"
+  },
+  {
+   "t_ms": 3248,
+   "text": "$"
+  },
+  {
+   "t_ms": 3248,
+   "text": " denotes"
+  },
+  {
+   "t_ms": 3264,
+   "text": " \""
+  },
+  {
+   "t_ms": 3287,
+   "text": "free"
+  },
+  {
+   "t_ms": 3287,
+   "text": "\""
+  },
+  {
+   "t_ms": 3287,
+   "text": " charge"
+  },
+  {
+   "t_ms": 3291,
+   "text": "/"
+  },
+  {
+   "t_ms": 3310,
+   "text": "current"
+  },
+  {
+   "t_ms": 3310,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 3310,
+   "text": "Together"
+  },
+  {
+   "t_ms": 3321,
+   "text": " these"
+  },
+  {
+   "t_ms": 3340,
+   "text": " four"
+  },
+  {
+   "t_ms": 3340,
+   "text": " equations"
+  },
+  {
+   "t_ms": 3340,
+   "text": " ("
+  },
+  {
+   "t_ms": 3442,
+   "text": "plus"
+  },
+  {
+   "t_ms": 3442,
+   "text": " the"
+  },
+  {
+   "t_ms": 3442,
+   "text": " Lorentz"
+  },
+  {
+   "t_ms": 3442,
+   "text": " force"
+  },
+  {
+   "t_ms": 3442,
+   "text": " law"
+  },
+  {
+   "t_ms": 3442,
+   "text": ")"
+  },
+  {
+   "t_ms": 3442,
+   "text": " form"
+  },
+  {
+   "t_ms": 3442,
+   "text": " the"
+  },
+  {
+   "t_ms": 3442,
+   "text": " complete"
+  },
+  {
+   "t_ms": 3442,
+   "text": " classical"
+  },
+  {
+   "t_ms": 3442,
+   "text": " description"
+  },
+  {
+   "t_ms": 3450,
+   "text": " of"
+  },
+  {
+   "t_ms": 3450,
+   "text": " electricity"
+  },
+  {
+   "t_ms": 3459,
+   "text": ","
+  },
+  {
+   "t_ms": 3475,
+   "text": " magnetism"
+  },
+  {
+   "t_ms": 3475,
+   "text": ","
+  },
+  {
+   "t_ms": 3476,
+   "text": " and"
+  },
+  {
+   "t_ms": 3476,
+   "text": " light"
+  },
+  {
+   "t_ms": 3493,
+   "text": "."
+  }
+ ]
+}

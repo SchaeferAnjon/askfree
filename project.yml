@@ -18,10 +18,18 @@ targets:
     sources:
       - path: Sources
       - path: Resources/AskFree.icns
+      - path: Resources/ThirdPartyNotices.txt
     dependencies:
       - package: AskFreeCore
+        product: AskFreeCore
+      # 回答正文排版（公式、代码块），带着 SwiftMath
+      - package: AskFreeCore
+        product: AnswerRender
       - package: Sparkle
     postBuildScripts:
+      - name: 只留公式用的那套字体
+        script: bash "$SRCROOT/scripts/trim_math_fonts.sh"
+        basedOnDependencyAnalysis: false
       - name: 重签 Sparkle 的辅助程序
         script: bash "$SRCROOT/scripts/sign_sparkle.sh"
         basedOnDependencyAnalysis: false

@@ -1,0 +1,2715 @@
+{
+ "question": "Explain Bayes' theorem with a medical test example, false positive rate 5 percent",
+ "prompt": "plain",
+ "model": "deepseek-chat",
+ "chunks": [
+  {
+   "t_ms": 857,
+   "text": "#"
+  },
+  {
+   "t_ms": 953,
+   "text": " Bayes"
+  },
+  {
+   "t_ms": 970,
+   "text": "'"
+  },
+  {
+   "t_ms": 970,
+   "text": " Theorem"
+  },
+  {
+   "t_ms": 970,
+   "text": " Explained"
+  },
+  {
+   "t_ms": 979,
+   "text": " with"
+  },
+  {
+   "t_ms": 998,
+   "text": " a"
+  },
+  {
+   "t_ms": 998,
+   "text": " Medical"
+  },
+  {
+   "t_ms": 998,
+   "text": " Test"
+  },
+  {
+   "t_ms": 998,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1013,
+   "text": "##"
+  },
+  {
+   "t_ms": 1013,
+   "text": " The"
+  },
+  {
+   "t_ms": 1013,
+   "text": " Formula"
+  },
+  {
+   "t_ms": 1030,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1030,
+   "text": "$$"
+  },
+  {
+   "t_ms": 1055,
+   "text": "P"
+  },
+  {
+   "t_ms": 1055,
+   "text": "(D"
+  },
+  {
+   "t_ms": 1055,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1089,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1089,
+   "text": " T"
+  },
+  {
+   "t_ms": 1089,
+   "text": "^"
+  },
+  {
+   "t_ms": 1089,
+   "text": "+)"
+  },
+  {
+   "t_ms": 1089,
+   "text": " ="
+  },
+  {
+   "t_ms": 1089,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1089,
+   "text": "frac"
+  },
+  {
+   "t_ms": 1089,
+   "text": "{P"
+  },
+  {
+   "t_ms": 1089,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1110,
+   "text": "^"
+  },
+  {
+   "t_ms": 1110,
+   "text": "+"
+  },
+  {
+   "t_ms": 1110,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1110,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1110,
+   "text": " D"
+  },
+  {
+   "t_ms": 1117,
+   "text": ")"
+  },
+  {
+   "t_ms": 1117,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1117,
+   "text": "cdot"
+  },
+  {
+   "t_ms": 1117,
+   "text": " P"
+  },
+  {
+   "t_ms": 1117,
+   "text": "(D"
+  },
+  {
+   "t_ms": 1117,
+   "text": ")}{"
+  },
+  {
+   "t_ms": 1128,
+   "text": "P"
+  },
+  {
+   "t_ms": 1128,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1128,
+   "text": "^"
+  },
+  {
+   "t_ms": 1128,
+   "text": "+"
+  },
+  {
+   "t_ms": 1128,
+   "text": ")}"
+  },
+  {
+   "t_ms": 1146,
+   "text": "$$\n\n"
+  },
+  {
+   "t_ms": 1146,
+   "text": "Where"
+  },
+  {
+   "t_ms": 1146,
+   "text": ":\n"
+  },
+  {
+   "t_ms": 1157,
+   "text": "-"
+  },
+  {
+   "t_ms": 1157,
+   "text": " $"
+  },
+  {
+   "t_ms": 1175,
+   "text": "P"
+  },
+  {
+   "t_ms": 1175,
+   "text": "(D"
+  },
+  {
+   "t_ms": 1175,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1175,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1175,
+   "text": " T"
+  },
+  {
+   "t_ms": 1192,
+   "text": "^"
+  },
+  {
+   "t_ms": 1192,
+   "text": "+"
+  },
+  {
+   "t_ms": 1192,
+   "text": ")$"
+  },
+  {
+   "t_ms": 1192,
+   "text": " ="
+  },
+  {
+   "t_ms": 1192,
+   "text": " probability"
+  },
+  {
+   "t_ms": 1213,
+   "text": " you"
+  },
+  {
+   "t_ms": 1224,
+   "text": " have"
+  },
+  {
+   "t_ms": 1239,
+   "text": " the"
+  },
+  {
+   "t_ms": 1239,
+   "text": " disease"
+  },
+  {
+   "t_ms": 1239,
+   "text": " **"
+  },
+  {
+   "t_ms": 1252,
+   "text": "given"
+  },
+  {
+   "t_ms": 1252,
+   "text": "**"
+  },
+  {
+   "t_ms": 1252,
+   "text": " a"
+  },
+  {
+   "t_ms": 1252,
+   "text": " positive"
+  },
+  {
+   "t_ms": 1367,
+   "text": " test"
+  },
+  {
+   "t_ms": 1367,
+   "text": " ("
+  },
+  {
+   "t_ms": 1367,
+   "text": "the"
+  },
+  {
+   "t_ms": 1367,
+   "text": " \""
+  },
+  {
+   "t_ms": 1367,
+   "text": "post"
+  },
+  {
+   "t_ms": 1367,
+   "text": "erior"
+  },
+  {
+   "t_ms": 1367,
+   "text": "\")\n"
+  },
+  {
+   "t_ms": 1367,
+   "text": "-"
+  },
+  {
+   "t_ms": 1367,
+   "text": " $"
+  },
+  {
+   "t_ms": 1367,
+   "text": "P"
+  },
+  {
+   "t_ms": 1367,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1367,
+   "text": "^"
+  },
+  {
+   "t_ms": 1367,
+   "text": "+"
+  },
+  {
+   "t_ms": 1367,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1367,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1367,
+   "text": " D"
+  },
+  {
+   "t_ms": 1367,
+   "text": ")$"
+  },
+  {
+   "t_ms": 1367,
+   "text": " ="
+  },
+  {
+   "t_ms": 1367,
+   "text": " probability"
+  },
+  {
+   "t_ms": 1368,
+   "text": " of"
+  },
+  {
+   "t_ms": 1374,
+   "text": " a"
+  },
+  {
+   "t_ms": 1374,
+   "text": " positive"
+  },
+  {
+   "t_ms": 1387,
+   "text": " test"
+  },
+  {
+   "t_ms": 1387,
+   "text": " **"
+  },
+  {
+   "t_ms": 1387,
+   "text": "given"
+  },
+  {
+   "t_ms": 1401,
+   "text": "**"
+  },
+  {
+   "t_ms": 1401,
+   "text": " you"
+  },
+  {
+   "t_ms": 1401,
+   "text": " have"
+  },
+  {
+   "t_ms": 1401,
+   "text": " the"
+  },
+  {
+   "t_ms": 1418,
+   "text": " disease"
+  },
+  {
+   "t_ms": 1418,
+   "text": " ("
+  },
+  {
+   "t_ms": 1418,
+   "text": "test"
+  },
+  {
+   "t_ms": 1433,
+   "text": " **"
+  },
+  {
+   "t_ms": 1447,
+   "text": "s"
+  },
+  {
+   "t_ms": 1447,
+   "text": "ensitivity"
+  },
+  {
+   "t_ms": 1447,
+   "text": "**"
+  },
+  {
+   "t_ms": 1447,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 1447,
+   "text": "-"
+  },
+  {
+   "t_ms": 1447,
+   "text": " $"
+  },
+  {
+   "t_ms": 1462,
+   "text": "P"
+  },
+  {
+   "t_ms": 1462,
+   "text": "(D"
+  },
+  {
+   "t_ms": 1462,
+   "text": ")$"
+  },
+  {
+   "t_ms": 1462,
+   "text": " ="
+  },
+  {
+   "t_ms": 1462,
+   "text": " **"
+  },
+  {
+   "t_ms": 1492,
+   "text": "prior"
+  },
+  {
+   "t_ms": 1492,
+   "text": "**"
+  },
+  {
+   "t_ms": 1492,
+   "text": " probability"
+  },
+  {
+   "t_ms": 1492,
+   "text": " of"
+  },
+  {
+   "t_ms": 1497,
+   "text": " the"
+  },
+  {
+   "t_ms": 1497,
+   "text": " disease"
+  },
+  {
+   "t_ms": 1497,
+   "text": " in"
+  },
+  {
+   "t_ms": 1516,
+   "text": " the"
+  },
+  {
+   "t_ms": 1516,
+   "text": " population"
+  },
+  {
+   "t_ms": 1516,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1516,
+   "text": "-"
+  },
+  {
+   "t_ms": 1516,
+   "text": " $"
+  },
+  {
+   "t_ms": 1556,
+   "text": "P"
+  },
+  {
+   "t_ms": 1556,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1556,
+   "text": "^"
+  },
+  {
+   "t_ms": 1556,
+   "text": "+"
+  },
+  {
+   "t_ms": 1556,
+   "text": ")$"
+  },
+  {
+   "t_ms": 1556,
+   "text": " ="
+  },
+  {
+   "t_ms": 1556,
+   "text": " overall"
+  },
+  {
+   "t_ms": 1569,
+   "text": " probability"
+  },
+  {
+   "t_ms": 1569,
+   "text": " of"
+  },
+  {
+   "t_ms": 1569,
+   "text": " a"
+  },
+  {
+   "t_ms": 1569,
+   "text": " positive"
+  },
+  {
+   "t_ms": 1569,
+   "text": " test"
+  },
+  {
+   "t_ms": 1569,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1606,
+   "text": "The"
+  },
+  {
+   "t_ms": 1606,
+   "text": " denominator"
+  },
+  {
+   "t_ms": 1606,
+   "text": " expands"
+  },
+  {
+   "t_ms": 1607,
+   "text": " to"
+  },
+  {
+   "t_ms": 1619,
+   "text": ":\n\n"
+  },
+  {
+   "t_ms": 1619,
+   "text": "$$"
+  },
+  {
+   "t_ms": 1619,
+   "text": "P"
+  },
+  {
+   "t_ms": 1619,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1619,
+   "text": "^"
+  },
+  {
+   "t_ms": 1683,
+   "text": "+)"
+  },
+  {
+   "t_ms": 1689,
+   "text": " ="
+  },
+  {
+   "t_ms": 1689,
+   "text": " P"
+  },
+  {
+   "t_ms": 1689,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1689,
+   "text": "^"
+  },
+  {
+   "t_ms": 1689,
+   "text": "+"
+  },
+  {
+   "t_ms": 1689,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1689,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1689,
+   "text": " D"
+  },
+  {
+   "t_ms": 1689,
+   "text": ")\\,"
+  },
+  {
+   "t_ms": 1689,
+   "text": "P"
+  },
+  {
+   "t_ms": 1689,
+   "text": "(D"
+  },
+  {
+   "t_ms": 1689,
+   "text": ")"
+  },
+  {
+   "t_ms": 1689,
+   "text": " +"
+  },
+  {
+   "t_ms": 1689,
+   "text": " P"
+  },
+  {
+   "t_ms": 1689,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1689,
+   "text": "^"
+  },
+  {
+   "t_ms": 1689,
+   "text": "+"
+  },
+  {
+   "t_ms": 1689,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1689,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1689,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1689,
+   "text": "text"
+  },
+  {
+   "t_ms": 1701,
+   "text": "{"
+  },
+  {
+   "t_ms": 1701,
+   "text": "no"
+  },
+  {
+   "t_ms": 1701,
+   "text": " }"
+  },
+  {
+   "t_ms": 1714,
+   "text": " D"
+  },
+  {
+   "t_ms": 1714,
+   "text": ")\\,"
+  },
+  {
+   "t_ms": 1714,
+   "text": "P"
+  },
+  {
+   "t_ms": 1714,
+   "text": "(\\"
+  },
+  {
+   "t_ms": 1728,
+   "text": "text"
+  },
+  {
+   "t_ms": 1728,
+   "text": "{"
+  },
+  {
+   "t_ms": 1728,
+   "text": "no"
+  },
+  {
+   "t_ms": 1728,
+   "text": " }"
+  },
+  {
+   "t_ms": 1728,
+   "text": " D"
+  },
+  {
+   "t_ms": 1728,
+   "text": ")"
+  },
+  {
+   "t_ms": 1738,
+   "text": "$$\n\n"
+  },
+  {
+   "t_ms": 1738,
+   "text": "The"
+  },
+  {
+   "t_ms": 1759,
+   "text": " second"
+  },
+  {
+   "t_ms": 1759,
+   "text": " term"
+  },
+  {
+   "t_ms": 1759,
+   "text": " is"
+  },
+  {
+   "t_ms": 1759,
+   "text": " where"
+  },
+  {
+   "t_ms": 1765,
+   "text": " the"
+  },
+  {
+   "t_ms": 1765,
+   "text": " **"
+  },
+  {
+   "t_ms": 1765,
+   "text": "false"
+  },
+  {
+   "t_ms": 1765,
+   "text": " positive"
+  },
+  {
+   "t_ms": 1765,
+   "text": " rate"
+  },
+  {
+   "t_ms": 1866,
+   "text": "**"
+  },
+  {
+   "t_ms": 1866,
+   "text": " enters"
+  },
+  {
+   "t_ms": 1866,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 1866,
+   "text": "##"
+  },
+  {
+   "t_ms": 1866,
+   "text": " The"
+  },
+  {
+   "t_ms": 1866,
+   "text": " Example"
+  },
+  {
+   "t_ms": 1866,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1867,
+   "text": "Suppose"
+  },
+  {
+   "t_ms": 1867,
+   "text": ":\n\n"
+  },
+  {
+   "t_ms": 1867,
+   "text": "|"
+  },
+  {
+   "t_ms": 1867,
+   "text": " Quantity"
+  },
+  {
+   "t_ms": 1867,
+   "text": " |"
+  },
+  {
+   "t_ms": 1867,
+   "text": " Value"
+  },
+  {
+   "t_ms": 1867,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 1867,
+   "text": "|---|---"
+  },
+  {
+   "t_ms": 1869,
+   "text": "|\n"
+  },
+  {
+   "t_ms": 1869,
+   "text": "|"
+  },
+  {
+   "t_ms": 1869,
+   "text": " Disease"
+  },
+  {
+   "t_ms": 1872,
+   "text": " prevalence"
+  },
+  {
+   "t_ms": 1872,
+   "text": " ("
+  },
+  {
+   "t_ms": 1893,
+   "text": "prior"
+  },
+  {
+   "t_ms": 1893,
+   "text": ")"
+  },
+  {
+   "t_ms": 1893,
+   "text": " |"
+  },
+  {
+   "t_ms": 1893,
+   "text": " $"
+  },
+  {
+   "t_ms": 1907,
+   "text": "P"
+  },
+  {
+   "t_ms": 1907,
+   "text": "(D"
+  },
+  {
+   "t_ms": 1907,
+   "text": ")"
+  },
+  {
+   "t_ms": 1907,
+   "text": " ="
+  },
+  {
+   "t_ms": 1907,
+   "text": " "
+  },
+  {
+   "t_ms": 1907,
+   "text": "1"
+  },
+  {
+   "t_ms": 1924,
+   "text": "\\%"
+  },
+  {
+   "t_ms": 1924,
+   "text": " ="
+  },
+  {
+   "t_ms": 1936,
+   "text": " "
+  },
+  {
+   "t_ms": 1936,
+   "text": "0"
+  },
+  {
+   "t_ms": 1936,
+   "text": "."
+  },
+  {
+   "t_ms": 1936,
+   "text": "01"
+  },
+  {
+   "t_ms": 1936,
+   "text": "$"
+  },
+  {
+   "t_ms": 1936,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 1950,
+   "text": "|"
+  },
+  {
+   "t_ms": 1950,
+   "text": " Test"
+  },
+  {
+   "t_ms": 1970,
+   "text": " sensitivity"
+  },
+  {
+   "t_ms": 1970,
+   "text": " |"
+  },
+  {
+   "t_ms": 1970,
+   "text": " $"
+  },
+  {
+   "t_ms": 1970,
+   "text": "P"
+  },
+  {
+   "t_ms": 1970,
+   "text": "(T"
+  },
+  {
+   "t_ms": 1995,
+   "text": "^"
+  },
+  {
+   "t_ms": 1995,
+   "text": "+"
+  },
+  {
+   "t_ms": 1995,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1995,
+   "text": "mid"
+  },
+  {
+   "t_ms": 1995,
+   "text": " D"
+  },
+  {
+   "t_ms": 1995,
+   "text": ")"
+  },
+  {
+   "t_ms": 1995,
+   "text": " ="
+  },
+  {
+   "t_ms": 1995,
+   "text": " "
+  },
+  {
+   "t_ms": 1995,
+   "text": "99"
+  },
+  {
+   "t_ms": 1995,
+   "text": "\\%"
+  },
+  {
+   "t_ms": 1995,
+   "text": "$"
+  },
+  {
+   "t_ms": 2018,
+   "text": " |\n"
+  },
+  {
+   "t_ms": 2018,
+   "text": "|"
+  },
+  {
+   "t_ms": 2018,
+   "text": " **"
+  },
+  {
+   "t_ms": 2018,
+   "text": "False"
+  },
+  {
+   "t_ms": 2018,
+   "text": " positive"
+  },
+  {
+   "t_ms": 2018,
+   "text": " rate"
+  },
+  {
+   "t_ms": 2038,
+   "text": "**"
+  },
+  {
+   "t_ms": 2038,
+   "text": " |"
+  },
+  {
+   "t_ms": 2038,
+   "text": " $"
+  },
+  {
+   "t_ms": 2038,
+   "text": "P"
+  },
+  {
+   "t_ms": 2038,
+   "text": "(T"
+  },
+  {
+   "t_ms": 2038,
+   "text": "^"
+  },
+  {
+   "t_ms": 2038,
+   "text": "+"
+  },
+  {
+   "t_ms": 2038,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2038,
+   "text": "mid"
+  },
+  {
+   "t_ms": 2062,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2062,
+   "text": "text"
+  },
+  {
+   "t_ms": 2062,
+   "text": "{"
+  },
+  {
+   "t_ms": 2062,
+   "text": "no"
+  },
+  {
+   "t_ms": 2062,
+   "text": " }"
+  },
+  {
+   "t_ms": 2069,
+   "text": " D"
+  },
+  {
+   "t_ms": 2069,
+   "text": ")"
+  },
+  {
+   "t_ms": 2069,
+   "text": " ="
+  },
+  {
+   "t_ms": 2069,
+   "text": " "
+  },
+  {
+   "t_ms": 2069,
+   "text": "5"
+  },
+  {
+   "t_ms": 2069,
+   "text": "\\%"
+  },
+  {
+   "t_ms": 2081,
+   "text": "$"
+  },
+  {
+   "t_ms": 2081,
+   "text": " |\n\n"
+  },
+  {
+   "t_ms": 2097,
+   "text": "You"
+  },
+  {
+   "t_ms": 2111,
+   "text": " test"
+  },
+  {
+   "t_ms": 2128,
+   "text": " positive"
+  },
+  {
+   "t_ms": 2128,
+   "text": "."
+  },
+  {
+   "t_ms": 2155,
+   "text": " What"
+  },
+  {
+   "t_ms": 2155,
+   "text": "'s"
+  },
+  {
+   "t_ms": 2157,
+   "text": " the"
+  },
+  {
+   "t_ms": 2157,
+   "text": " chance"
+  },
+  {
+   "t_ms": 2157,
+   "text": " you"
+  },
+  {
+   "t_ms": 2157,
+   "text": " actually"
+  },
+  {
+   "t_ms": 2194,
+   "text": " have"
+  },
+  {
+   "t_ms": 2194,
+   "text": " the"
+  },
+  {
+   "t_ms": 2194,
+   "text": " disease"
+  },
+  {
+   "t_ms": 2194,
+   "text": "?\n\n"
+  },
+  {
+   "t_ms": 2194,
+   "text": "##"
+  },
+  {
+   "t_ms": 2194,
+   "text": " Step"
+  },
+  {
+   "t_ms": 2194,
+   "text": " "
+  },
+  {
+   "t_ms": 2204,
+   "text": "1"
+  },
+  {
+   "t_ms": 2204,
+   "text": ":"
+  },
+  {
+   "t_ms": 2204,
+   "text": " Overall"
+  },
+  {
+   "t_ms": 2219,
+   "text": " probability"
+  },
+  {
+   "t_ms": 2219,
+   "text": " of"
+  },
+  {
+   "t_ms": 2219,
+   "text": " a"
+  },
+  {
+   "t_ms": 2234,
+   "text": " positive"
+  },
+  {
+   "t_ms": 2234,
+   "text": " test"
+  },
+  {
+   "t_ms": 2234,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 2234,
+   "text": "-"
+  },
+  {
+   "t_ms": 2262,
+   "text": " True"
+  },
+  {
+   "t_ms": 2277,
+   "text": " positives"
+  },
+  {
+   "t_ms": 2277,
+   "text": ":"
+  },
+  {
+   "t_ms": 2277,
+   "text": " $"
+  },
+  {
+   "t_ms": 2301,
+   "text": "0"
+  },
+  {
+   "t_ms": 2301,
+   "text": "."
+  },
+  {
+   "t_ms": 2301,
+   "text": "99"
+  },
+  {
+   "t_ms": 2301,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2301,
+   "text": "times"
+  },
+  {
+   "t_ms": 2301,
+   "text": " "
+  },
+  {
+   "t_ms": 2392,
+   "text": "0"
+  },
+  {
+   "t_ms": 2392,
+   "text": "."
+  },
+  {
+   "t_ms": 2392,
+   "text": "01"
+  },
+  {
+   "t_ms": 2392,
+   "text": " ="
+  },
+  {
+   "t_ms": 2392,
+   "text": " "
+  },
+  {
+   "t_ms": 2392,
+   "text": "0"
+  },
+  {
+   "t_ms": 2392,
+   "text": "."
+  },
+  {
+   "t_ms": 2392,
+   "text": "009"
+  },
+  {
+   "t_ms": 2392,
+   "text": "9"
+  },
+  {
+   "t_ms": 2392,
+   "text": "$\n"
+  },
+  {
+   "t_ms": 2392,
+   "text": "-"
+  },
+  {
+   "t_ms": 2392,
+   "text": " False"
+  },
+  {
+   "t_ms": 2392,
+   "text": " positives"
+  },
+  {
+   "t_ms": 2392,
+   "text": ":"
+  },
+  {
+   "t_ms": 2392,
+   "text": " $"
+  },
+  {
+   "t_ms": 2392,
+   "text": "0"
+  },
+  {
+   "t_ms": 2392,
+   "text": "."
+  },
+  {
+   "t_ms": 2392,
+   "text": "05"
+  },
+  {
+   "t_ms": 2392,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2392,
+   "text": "times"
+  },
+  {
+   "t_ms": 2392,
+   "text": " "
+  },
+  {
+   "t_ms": 2392,
+   "text": "0"
+  },
+  {
+   "t_ms": 2392,
+   "text": "."
+  },
+  {
+   "t_ms": 2392,
+   "text": "99"
+  },
+  {
+   "t_ms": 2394,
+   "text": " ="
+  },
+  {
+   "t_ms": 2394,
+   "text": " "
+  },
+  {
+   "t_ms": 2394,
+   "text": "0"
+  },
+  {
+   "t_ms": 2394,
+   "text": "."
+  },
+  {
+   "t_ms": 2394,
+   "text": "049"
+  },
+  {
+   "t_ms": 2394,
+   "text": "5"
+  },
+  {
+   "t_ms": 2394,
+   "text": "$\n\n"
+  },
+  {
+   "t_ms": 2394,
+   "text": "$$"
+  },
+  {
+   "t_ms": 2394,
+   "text": "P"
+  },
+  {
+   "t_ms": 2394,
+   "text": "(T"
+  },
+  {
+   "t_ms": 2408,
+   "text": "^"
+  },
+  {
+   "t_ms": 2408,
+   "text": "+)"
+  },
+  {
+   "t_ms": 2408,
+   "text": " ="
+  },
+  {
+   "t_ms": 2408,
+   "text": " "
+  },
+  {
+   "t_ms": 2408,
+   "text": "0"
+  },
+  {
+   "t_ms": 2408,
+   "text": "."
+  },
+  {
+   "t_ms": 2427,
+   "text": "009"
+  },
+  {
+   "t_ms": 2427,
+   "text": "9"
+  },
+  {
+   "t_ms": 2427,
+   "text": " +"
+  },
+  {
+   "t_ms": 2427,
+   "text": " "
+  },
+  {
+   "t_ms": 2427,
+   "text": "0"
+  },
+  {
+   "t_ms": 2427,
+   "text": "."
+  },
+  {
+   "t_ms": 2438,
+   "text": "049"
+  },
+  {
+   "t_ms": 2438,
+   "text": "5"
+  },
+  {
+   "t_ms": 2438,
+   "text": " ="
+  },
+  {
+   "t_ms": 2438,
+   "text": " "
+  },
+  {
+   "t_ms": 2438,
+   "text": "0"
+  },
+  {
+   "t_ms": 2438,
+   "text": "."
+  },
+  {
+   "t_ms": 2456,
+   "text": "059"
+  },
+  {
+   "t_ms": 2456,
+   "text": "4"
+  },
+  {
+   "t_ms": 2456,
+   "text": "$$\n\n"
+  },
+  {
+   "t_ms": 2456,
+   "text": "##"
+  },
+  {
+   "t_ms": 2456,
+   "text": " Step"
+  },
+  {
+   "t_ms": 2456,
+   "text": " "
+  },
+  {
+   "t_ms": 2470,
+   "text": "2"
+  },
+  {
+   "t_ms": 2470,
+   "text": ":"
+  },
+  {
+   "t_ms": 2470,
+   "text": " Apply"
+  },
+  {
+   "t_ms": 2470,
+   "text": " Bayes"
+  },
+  {
+   "t_ms": 2487,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 2503,
+   "text": "$$"
+  },
+  {
+   "t_ms": 2503,
+   "text": "P"
+  },
+  {
+   "t_ms": 2503,
+   "text": "(D"
+  },
+  {
+   "t_ms": 2503,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2513,
+   "text": "mid"
+  },
+  {
+   "t_ms": 2513,
+   "text": " T"
+  },
+  {
+   "t_ms": 2513,
+   "text": "^"
+  },
+  {
+   "t_ms": 2513,
+   "text": "+)"
+  },
+  {
+   "t_ms": 2513,
+   "text": " ="
+  },
+  {
+   "t_ms": 2513,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2527,
+   "text": "frac"
+  },
+  {
+   "t_ms": 2527,
+   "text": "{"
+  },
+  {
+   "t_ms": 2527,
+   "text": "0"
+  },
+  {
+   "t_ms": 2527,
+   "text": "."
+  },
+  {
+   "t_ms": 2527,
+   "text": "009"
+  },
+  {
+   "t_ms": 2527,
+   "text": "9"
+  },
+  {
+   "t_ms": 2541,
+   "text": "}{"
+  },
+  {
+   "t_ms": 2541,
+   "text": "0"
+  },
+  {
+   "t_ms": 2541,
+   "text": "."
+  },
+  {
+   "t_ms": 2541,
+   "text": "059"
+  },
+  {
+   "t_ms": 2541,
+   "text": "4"
+  },
+  {
+   "t_ms": 2541,
+   "text": "}"
+  },
+  {
+   "t_ms": 2551,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2551,
+   "text": "approx"
+  },
+  {
+   "t_ms": 2551,
+   "text": " "
+  },
+  {
+   "t_ms": 2551,
+   "text": "0"
+  },
+  {
+   "t_ms": 2551,
+   "text": "."
+  },
+  {
+   "t_ms": 2551,
+   "text": "167"
+  },
+  {
+   "t_ms": 2567,
+   "text": "$$\n\n"
+  },
+  {
+   "t_ms": 2567,
+   "text": "##"
+  },
+  {
+   "t_ms": 2567,
+   "text": " The"
+  },
+  {
+   "t_ms": 2581,
+   "text": " Sur"
+  },
+  {
+   "t_ms": 2595,
+   "text": "prising"
+  },
+  {
+   "t_ms": 2595,
+   "text": " Result"
+  },
+  {
+   "t_ms": 2611,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 2611,
+   "text": "**"
+  },
+  {
+   "t_ms": 2611,
+   "text": "A"
+  },
+  {
+   "t_ms": 2629,
+   "text": " positive"
+  },
+  {
+   "t_ms": 2629,
+   "text": " test"
+  },
+  {
+   "t_ms": 2629,
+   "text": " means"
+  },
+  {
+   "t_ms": 2658,
+   "text": " only"
+  },
+  {
+   "t_ms": 2658,
+   "text": " about"
+  },
+  {
+   "t_ms": 2658,
+   "text": " a"
+  },
+  {
+   "t_ms": 2670,
+   "text": " "
+  },
+  {
+   "t_ms": 2670,
+   "text": "16"
+  },
+  {
+   "t_ms": 2670,
+   "text": "."
+  },
+  {
+   "t_ms": 2670,
+   "text": "7"
+  },
+  {
+   "t_ms": 2670,
+   "text": "%"
+  },
+  {
+   "t_ms": 2670,
+   "text": " chance"
+  },
+  {
+   "t_ms": 2691,
+   "text": " you"
+  },
+  {
+   "t_ms": 2699,
+   "text": " have"
+  },
+  {
+   "t_ms": 2715,
+   "text": " the"
+  },
+  {
+   "t_ms": 2715,
+   "text": " disease"
+  },
+  {
+   "t_ms": 2715,
+   "text": "**"
+  },
+  {
+   "t_ms": 2715,
+   "text": " —"
+  },
+  {
+   "t_ms": 2715,
+   "text": " roughly"
+  },
+  {
+   "t_ms": 2715,
+   "text": " "
+  },
+  {
+   "t_ms": 2730,
+   "text": "1"
+  },
+  {
+   "t_ms": 2730,
+   "text": " in"
+  },
+  {
+   "t_ms": 2730,
+   "text": " "
+  },
+  {
+   "t_ms": 2730,
+   "text": "6"
+  },
+  {
+   "t_ms": 2730,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 2746,
+   "text": "##"
+  },
+  {
+   "t_ms": 2746,
+   "text": " Why"
+  },
+  {
+   "t_ms": 2746,
+   "text": " Is"
+  },
+  {
+   "t_ms": 2762,
+   "text": " This"
+  },
+  {
+   "t_ms": 2762,
+   "text": " Counter"
+  },
+  {
+   "t_ms": 2775,
+   "text": "int"
+  },
+  {
+   "t_ms": 2775,
+   "text": "uitive"
+  },
+  {
+   "t_ms": 2775,
+   "text": "?\n\n"
+  },
+  {
+   "t_ms": 2775,
+   "text": "Think"
+  },
+  {
+   "t_ms": 2792,
+   "text": " in"
+  },
+  {
+   "t_ms": 2792,
+   "text": " counts"
+  },
+  {
+   "t_ms": 2806,
+   "text": " per"
+  },
+  {
+   "t_ms": 2820,
+   "text": " "
+  },
+  {
+   "t_ms": 2820,
+   "text": "10"
+  },
+  {
+   "t_ms": 2918,
+   "text": ","
+  },
+  {
+   "t_ms": 2918,
+   "text": "000"
+  },
+  {
+   "t_ms": 2918,
+   "text": " people"
+  },
+  {
+   "t_ms": 2918,
+   "text": ":\n\n"
+  },
+  {
+   "t_ms": 2918,
+   "text": "-"
+  },
+  {
+   "t_ms": 2918,
+   "text": " **"
+  },
+  {
+   "t_ms": 2918,
+   "text": "100"
+  },
+  {
+   "t_ms": 2918,
+   "text": "**"
+  },
+  {
+   "t_ms": 2918,
+   "text": " have"
+  },
+  {
+   "t_ms": 2918,
+   "text": " the"
+  },
+  {
+   "t_ms": 2918,
+   "text": " disease"
+  },
+  {
+   "t_ms": 2918,
+   "text": " →"
+  },
+  {
+   "t_ms": 2918,
+   "text": " "
+  },
+  {
+   "t_ms": 2918,
+   "text": "99"
+  },
+  {
+   "t_ms": 2918,
+   "text": " test"
+  },
+  {
+   "t_ms": 2919,
+   "text": " positive"
+  },
+  {
+   "t_ms": 2919,
+   "text": " ("
+  },
+  {
+   "t_ms": 2919,
+   "text": "true"
+  },
+  {
+   "t_ms": 2925,
+   "text": " positives"
+  },
+  {
+   "t_ms": 2925,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 2925,
+   "text": "-"
+  },
+  {
+   "t_ms": 2925,
+   "text": " **"
+  },
+  {
+   "t_ms": 2925,
+   "text": "9"
+  },
+  {
+   "t_ms": 2943,
+   "text": ","
+  },
+  {
+   "t_ms": 2943,
+   "text": "900"
+  },
+  {
+   "t_ms": 2943,
+   "text": "**"
+  },
+  {
+   "t_ms": 2943,
+   "text": " don"
+  },
+  {
+   "t_ms": 2967,
+   "text": "'t"
+  },
+  {
+   "t_ms": 2967,
+   "text": " →"
+  },
+  {
+   "t_ms": 2967,
+   "text": " "
+  },
+  {
+   "t_ms": 2971,
+   "text": "495"
+  },
+  {
+   "t_ms": 2971,
+   "text": " test"
+  },
+  {
+   "t_ms": 2971,
+   "text": " positive"
+  },
+  {
+   "t_ms": 2971,
+   "text": " ("
+  },
+  {
+   "t_ms": 2971,
+   "text": "false"
+  },
+  {
+   "t_ms": 2971,
+   "text": " positives"
+  },
+  {
+   "t_ms": 2994,
+   "text": ")\n\n"
+  },
+  {
+   "t_ms": 2994,
+   "text": "So"
+  },
+  {
+   "t_ms": 2994,
+   "text": " of"
+  },
+  {
+   "t_ms": 3017,
+   "text": " **"
+  },
+  {
+   "t_ms": 3017,
+   "text": "594"
+  },
+  {
+   "t_ms": 3017,
+   "text": " positive"
+  },
+  {
+   "t_ms": 3017,
+   "text": " tests"
+  },
+  {
+   "t_ms": 3043,
+   "text": "**,"
+  },
+  {
+   "t_ms": 3043,
+   "text": " only"
+  },
+  {
+   "t_ms": 3043,
+   "text": " **"
+  },
+  {
+   "t_ms": 3054,
+   "text": "99"
+  },
+  {
+   "t_ms": 3054,
+   "text": "**"
+  },
+  {
+   "t_ms": 3054,
+   "text": " are"
+  },
+  {
+   "t_ms": 3054,
+   "text": " real"
+  },
+  {
+   "t_ms": 3070,
+   "text": "."
+  },
+  {
+   "t_ms": 3070,
+   "text": " The"
+  },
+  {
+   "t_ms": 3070,
+   "text": " false"
+  },
+  {
+   "t_ms": 3079,
+   "text": " positives"
+  },
+  {
+   "t_ms": 3079,
+   "text": " ("
+  },
+  {
+   "t_ms": 3094,
+   "text": "495"
+  },
+  {
+   "t_ms": 3111,
+   "text": ")"
+  },
+  {
+   "t_ms": 3111,
+   "text": " vastly"
+  },
+  {
+   "t_ms": 3122,
+   "text": " out"
+  },
+  {
+   "t_ms": 3122,
+   "text": "number"
+  },
+  {
+   "t_ms": 3122,
+   "text": " the"
+  },
+  {
+   "t_ms": 3122,
+   "text": " true"
+  },
+  {
+   "t_ms": 3141,
+   "text": " positives"
+  },
+  {
+   "t_ms": 3141,
+   "text": " because"
+  },
+  {
+   "t_ms": 3141,
+   "text": " the"
+  },
+  {
+   "t_ms": 3141,
+   "text": " disease"
+  },
+  {
+   "t_ms": 3154,
+   "text": " is"
+  },
+  {
+   "t_ms": 3154,
+   "text": " rare"
+  },
+  {
+   "t_ms": 3154,
+   "text": " —"
+  },
+  {
+   "t_ms": 3172,
+   "text": " even"
+  },
+  {
+   "t_ms": 3187,
+   "text": " though"
+  },
+  {
+   "t_ms": 3187,
+   "text": " the"
+  },
+  {
+   "t_ms": 3197,
+   "text": " test"
+  },
+  {
+   "t_ms": 3197,
+   "text": " is"
+  },
+  {
+   "t_ms": 3197,
+   "text": " "
+  },
+  {
+   "t_ms": 3216,
+   "text": "95"
+  },
+  {
+   "t_ms": 3216,
+   "text": "%"
+  },
+  {
+   "t_ms": 3216,
+   "text": " specific"
+  },
+  {
+   "t_ms": 3230,
+   "text": ","
+  },
+  {
+   "t_ms": 3230,
+   "text": " it"
+  },
+  {
+   "t_ms": 3249,
+   "text": "'s"
+  },
+  {
+   "t_ms": 3249,
+   "text": " applied"
+  },
+  {
+   "t_ms": 3260,
+   "text": " to"
+  },
+  {
+   "t_ms": 3260,
+   "text": " a"
+  },
+  {
+   "t_ms": 3260,
+   "text": " huge"
+  },
+  {
+   "t_ms": 3273,
+   "text": " healthy"
+  },
+  {
+   "t_ms": 3273,
+   "text": " population"
+  },
+  {
+   "t_ms": 3289,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 3289,
+   "text": "##"
+  },
+  {
+   "t_ms": 3289,
+   "text": " Key"
+  },
+  {
+   "t_ms": 3310,
+   "text": " Takeaways"
+  },
+  {
+   "t_ms": 3310,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 3310,
+   "text": "1"
+  },
+  {
+   "t_ms": 3310,
+   "text": "."
+  },
+  {
+   "t_ms": 3323,
+   "text": " **"
+  },
+  {
+   "t_ms": 3323,
+   "text": "Base"
+  },
+  {
+   "t_ms": 3442,
+   "text": " rates"
+  },
+  {
+   "t_ms": 3442,
+   "text": " matter"
+  },
+  {
+   "t_ms": 3442,
+   "text": " enormously"
+  },
+  {
+   "t_ms": 3442,
+   "text": ".**"
+  },
+  {
+   "t_ms": 3442,
+   "text": " A"
+  },
+  {
+   "t_ms": 3442,
+   "text": " \""
+  },
+  {
+   "t_ms": 3442,
+   "text": "99"
+  },
+  {
+   "t_ms": 3442,
+   "text": "%"
+  },
+  {
+   "t_ms": 3442,
+   "text": " accurate"
+  },
+  {
+   "t_ms": 3442,
+   "text": "\""
+  },
+  {
+   "t_ms": 3442,
+   "text": " test"
+  },
+  {
+   "t_ms": 3442,
+   "text": " on"
+  },
+  {
+   "t_ms": 3442,
+   "text": " a"
+  },
+  {
+   "t_ms": 3442,
+   "text": " rare"
+  },
+  {
+   "t_ms": 3442,
+   "text": " disease"
+  },
+  {
+   "t_ms": 3443,
+   "text": " produces"
+  },
+  {
+   "t_ms": 3454,
+   "text": " mostly"
+  },
+  {
+   "t_ms": 3471,
+   "text": " false"
+  },
+  {
+   "t_ms": 3471,
+   "text": " alarms"
+  },
+  {
+   "t_ms": 3484,
+   "text": ".\n"
+  },
+  {
+   "t_ms": 3484,
+   "text": "2"
+  },
+  {
+   "t_ms": 3484,
+   "text": "."
+  },
+  {
+   "t_ms": 3484,
+   "text": " **"
+  },
+  {
+   "t_ms": 3484,
+   "text": "The"
+  },
+  {
+   "t_ms": 3539,
+   "text": " false"
+  },
+  {
+   "t_ms": 3539,
+   "text": " positive"
+  },
+  {
+   "t_ms": 3539,
+   "text": " rate"
+  },
+  {
+   "t_ms": 3539,
+   "text": " interacts"
+  },
+  {
+   "t_ms": 3539,
+   "text": " with"
+  },
+  {
+   "t_ms": 3539,
+   "text": " prevalence"
+  },
+  {
+   "t_ms": 3539,
+   "text": ".**"
+  },
+  {
+   "t_ms": 3539,
+   "text": " Lower"
+  },
+  {
+   "t_ms": 3544,
+   "text": " prevalence"
+  },
+  {
+   "t_ms": 3559,
+   "text": " →"
+  },
+  {
+   "t_ms": 3559,
+   "text": " lower"
+  },
+  {
+   "t_ms": 3575,
+   "text": " posterior"
+  },
+  {
+   "t_ms": 3593,
+   "text": " probability"
+  },
+  {
+   "t_ms": 3593,
+   "text": " after"
+  },
+  {
+   "t_ms": 3608,
+   "text": " a"
+  },
+  {
+   "t_ms": 3608,
+   "text": " positive"
+  },
+  {
+   "t_ms": 3608,
+   "text": " test"
+  },
+  {
+   "t_ms": 3608,
+   "text": ".\n"
+  },
+  {
+   "t_ms": 3608,
+   "text": "3"
+  },
+  {
+   "t_ms": 3608,
+   "text": "."
+  },
+  {
+   "t_ms": 3625,
+   "text": " **"
+  },
+  {
+   "t_ms": 3625,
+   "text": "Bay"
+  },
+  {
+   "t_ms": 3625,
+   "text": "es"
+  },
+  {
+   "t_ms": 3637,
+   "text": " updates"
+  },
+  {
+   "t_ms": 3655,
+   "text": " belief"
+  },
+  {
+   "t_ms": 3687,
+   "text": " with"
+  },
+  {
+   "t_ms": 3687,
+   "text": " evidence"
+  },
+  {
+   "t_ms": 3710,
+   "text": ".**"
+  },
+  {
+   "t_ms": 3710,
+   "text": " The"
+  },
+  {
+   "t_ms": 3721,
+   "text": " prior"
+  },
+  {
+   "t_ms": 3721,
+   "text": " ("
+  },
+  {
+   "t_ms": 3731,
+   "text": "1"
+  },
+  {
+   "t_ms": 3731,
+   "text": "%)"
+  },
+  {
+   "t_ms": 3731,
+   "text": " is"
+  },
+  {
+   "t_ms": 3731,
+   "text": " revised"
+  },
+  {
+   "t_ms": 3744,
+   "text": " upward"
+  },
+  {
+   "t_ms": 3744,
+   "text": " to"
+  },
+  {
+   "t_ms": 3767,
+   "text": " "
+  },
+  {
+   "t_ms": 3767,
+   "text": "16"
+  },
+  {
+   "t_ms": 3767,
+   "text": "."
+  },
+  {
+   "t_ms": 3773,
+   "text": "7"
+  },
+  {
+   "t_ms": 3773,
+   "text": "%"
+  },
+  {
+   "t_ms": 3789,
+   "text": " —"
+  },
+  {
+   "t_ms": 3789,
+   "text": " a"
+  },
+  {
+   "t_ms": 3803,
+   "text": " big"
+  },
+  {
+   "t_ms": 3803,
+   "text": " jump"
+  },
+  {
+   "t_ms": 3816,
+   "text": ","
+  },
+  {
+   "t_ms": 3816,
+   "text": " but"
+  },
+  {
+   "t_ms": 3816,
+   "text": " still"
+  },
+  {
+   "t_ms": 3832,
+   "text": " far"
+  },
+  {
+   "t_ms": 3832,
+   "text": " from"
+  },
+  {
+   "t_ms": 3845,
+   "text": " certainty"
+  },
+  {
+   "t_ms": 3860,
+   "text": ".\n"
+  },
+  {
+   "t_ms": 3860,
+   "text": "4"
+  },
+  {
+   "t_ms": 3860,
+   "text": "."
+  },
+  {
+   "t_ms": 3860,
+   "text": " **"
+  },
+  {
+   "t_ms": 3860,
+   "text": "Practical"
+  },
+  {
+   "t_ms": 3966,
+   "text": " implication"
+  },
+  {
+   "t_ms": 3966,
+   "text": ":**"
+  },
+  {
+   "t_ms": 3966,
+   "text": " confirm"
+  },
+  {
+   "t_ms": 3966,
+   "text": "atory"
+  },
+  {
+   "t_ms": 3966,
+   "text": " testing"
+  },
+  {
+   "t_ms": 3966,
+   "text": " is"
+  },
+  {
+   "t_ms": 3966,
+   "text": " essential"
+  },
+  {
+   "t_ms": 3966,
+   "text": "."
+  },
+  {
+   "t_ms": 3966,
+   "text": " If"
+  },
+  {
+   "t_ms": 3966,
+   "text": " a"
+  },
+  {
+   "t_ms": 3966,
+   "text": " second"
+  },
+  {
+   "t_ms": 3966,
+   "text": " independent"
+  },
+  {
+   "t_ms": 3976,
+   "text": " test"
+  },
+  {
+   "t_ms": 3976,
+   "text": " is"
+  },
+  {
+   "t_ms": 3985,
+   "text": " also"
+  },
+  {
+   "t_ms": 3985,
+   "text": " positive"
+  },
+  {
+   "t_ms": 3985,
+   "text": ","
+  },
+  {
+   "t_ms": 3985,
+   "text": " the"
+  },
+  {
+   "t_ms": 4000,
+   "text": " posterior"
+  },
+  {
+   "t_ms": 4000,
+   "text": " from"
+  },
+  {
+   "t_ms": 4015,
+   "text": " the"
+  },
+  {
+   "t_ms": 4034,
+   "text": " first"
+  },
+  {
+   "t_ms": 4034,
+   "text": " ("
+  },
+  {
+   "t_ms": 4083,
+   "text": "16"
+  },
+  {
+   "t_ms": 4083,
+   "text": "."
+  },
+  {
+   "t_ms": 4083,
+   "text": "7"
+  },
+  {
+   "t_ms": 4083,
+   "text": "%)"
+  },
+  {
+   "t_ms": 4083,
+   "text": " becomes"
+  },
+  {
+   "t_ms": 4083,
+   "text": " the"
+  },
+  {
+   "t_ms": 4083,
+   "text": " new"
+  },
+  {
+   "t_ms": 4083,
+   "text": " prior"
+  },
+  {
+   "t_ms": 4083,
+   "text": ","
+  },
+  {
+   "t_ms": 4083,
+   "text": " and"
+  },
+  {
+   "t_ms": 4083,
+   "text": " the"
+  },
+  {
+   "t_ms": 4083,
+   "text": " probability"
+  },
+  {
+   "t_ms": 4097,
+   "text": " jumps"
+  },
+  {
+   "t_ms": 4112,
+   "text": " dramatically"
+  },
+  {
+   "t_ms": 4128,
+   "text": " ("
+  },
+  {
+   "t_ms": 4128,
+   "text": "to"
+  },
+  {
+   "t_ms": 4145,
+   "text": " roughly"
+  },
+  {
+   "t_ms": 4161,
+   "text": " "
+  },
+  {
+   "t_ms": 4161,
+   "text": "80"
+  },
+  {
+   "t_ms": 4210,
+   "text": "%"
+  },
+  {
+   "t_ms": 4210,
+   "text": " with"
+  },
+  {
+   "t_ms": 4210,
+   "text": " the"
+  },
+  {
+   "t_ms": 4217,
+   "text": " same"
+  },
+  {
+   "t_ms": 4217,
+   "text": " test"
+  },
+  {
+   "t_ms": 4241,
+   "text": " characteristics"
+  },
+  {
+   "t_ms": 4241,
+   "text": ")."
+  }
+ ]
+}

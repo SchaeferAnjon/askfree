@@ -218,9 +218,24 @@ final class AnswerBlocksTests: XCTestCase {
     func testStreamingKeepsPricesAndClosedFormulas() {
         XCTAssertEqual(parse("花了 $5 美元", streaming: true), [.paragraph("花了 $5 美元")])
         XCTAssertEqual(parse("$x$ 和 $y$", streaming: true), [.paragraph("$x$ 和 $y$")])
-        XCTAssertEqual(parse("`$HOME 没闭合", streaming: true), [.paragraph("`$HOME 没闭合")])
+        XCTAssertEqual(parse("`$HOME 没闭合", streaming: true), [.paragraph("`$HOME 没闭合`")])
         // 已经换行的那一行不算最后一行：照常显示
         XCTAssertEqual(parse("开了 $x\n下一行", streaming: true), [.paragraph("开了 $x\n下一行")])
+    }
+
+    /// 没闭合的 ** 和行内代码先按闭合的样子显示：收尾时字不变样、不重新折行
+    func testStreamingAutoClosesBoldAndInlineCode() {
+        XCTAssertEqual(parse("病很 **罕见", streaming: true), [.paragraph("病很 **罕见**")])
+        XCTAssertEqual(parse("病很 **罕见 词", streaming: true), [.paragraph("病很 **罕见 词**")])
+        XCTAssertEqual(parse("病很 **", streaming: true), [.paragraph("病很 ")])
+        XCTAssertEqual(parse("病很 *", streaming: true), [.paragraph("病很 ")])
+        XCTAssertEqual(parse("**已经** 闭合", streaming: true), [.paragraph("**已经** 闭合")])
+        XCTAssertEqual(parse("- **重点", streaming: true), [.bullet("**重点**")])
+        XCTAssertEqual(parse("运行 `npm inst", streaming: true), [.paragraph("运行 `npm inst`")])
+        XCTAssertEqual(parse("运行 `", streaming: true), [.paragraph("运行 ")])
+        XCTAssertEqual(parse("公式 $a**b$ 不算 **粗", streaming: true), [.paragraph("公式 $a**b$ 不算 **粗**")])
+        // 答完时不补
+        XCTAssertEqual(parse("病很 **罕见"), [.paragraph("病很 **罕见")])
     }
 
     func testStreamingGivesUpAfter200HiddenCharacters() {

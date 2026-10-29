@@ -2,6 +2,9 @@ import AppKit
 #if canImport(AskFreeCore)
 import AskFreeCore
 #endif
+#if canImport(AnswerRender)
+import AnswerRender
+#endif
 import SwiftUI
 
 /// 问 AI 的回答面板（design/panels 方向 A「右上对话卡」）：贴右上角的一张卡，从屏幕右缘滑入，
@@ -1163,7 +1166,7 @@ struct TurnsView: View {
             }
             .padding(.vertical, 4)
         case .streaming, .answered:
-            AnswerText(text: turn.answer)
+            AnswerText(text: turn.answer, streaming: turn.state == .streaming)
         case .failed:
             if let failure = turn.failure {
                 FailureCard(failure: failure, provider: model.providerName, onAction: onAction)
@@ -1290,84 +1293,15 @@ struct AskImagesRow: View {
     }
 }
 
-/// 回答正文：轻量 Markdown —— 空行分段、「### 」小标题、「- 」「1. 」条目（悬挂缩进）、**加粗**；正文 14 号
+/// 回答正文：轻量 Markdown（空行分段、「### 」小标题、「- 」「1. 」条目、**加粗**）加代码块和公式，正文 14 号。
+/// 排版在 AnswerRender 的 AnswerBody（规则见 AskFreeCore 的 AnswerBlocks）；流式中途没收尾的公式、围栏行先不显示
 struct AnswerText: View {
     let text: String
-    private let body14 = Font.system(size: 14)
-
-    private enum Block { case heading(String), paragraph(String), bullet(String), numbered(String, String) }
-
-    private var blocks: [Block] {
-        var out: [Block] = []
-        var para: [String] = []
-        func flush() {
-            if !para.isEmpty { out.append(.paragraph(para.joined(separator: "\n"))); para.removeAll() }
-        }
-        for raw in text.components(separatedBy: "\n") {
-            let line = raw.trimmingCharacters(in: .whitespaces)
-            if line.isEmpty { flush(); continue }
-            if line.hasPrefix("#") {
-                flush()
-                let title = line.drop(while: { $0 == "#" }).trimmingCharacters(in: .whitespaces)
-                if !title.isEmpty { out.append(.heading(title)) }
-                continue
-            }
-            if let r = line.range(of: #"^(?:[-•·*]|\d+[.、)）])\s+"#, options: .regularExpression) {
-                flush()
-                let marker = String(line[r.lowerBound..<r.upperBound]).trimmingCharacters(in: .whitespaces)
-                let body = String(line[r.upperBound...])
-                if marker.first?.isNumber == true {
-                    let num = marker.trimmingCharacters(in: CharacterSet(charactersIn: ".、)）")) + "."
-                    out.append(.numbered(num, body))
-                } else {
-                    out.append(.bullet(body))
-                }
-            } else {
-                para.append(line)
-            }
-        }
-        flush()
-        return out
-    }
-
-    /// 行内 Markdown（加粗/斜体）→ Text；解析失败或流式中途符号不配对时按纯文本显示
-    private func inline(_ s: String) -> Text {
-        if s.contains("*") || s.contains("`"),
-           let attr = try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
-            return Text(attr)
-        }
-        return Text(s)
-    }
+    var streaming = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
-                switch block {
-                case .heading(let s):
-                    inline(s).font(.system(size: 14, weight: .semibold))
-                        .padding(.top, index == 0 ? 0 : 6)
-                        .fixedSize(horizontal: false, vertical: true)
-                case .paragraph(let s):
-                    inline(s).font(body14).lineSpacing(5)
-                        .fixedSize(horizontal: false, vertical: true)
-                case .bullet(let s):
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Circle().fill(Theme.text3).frame(width: 4, height: 4).alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
-                        inline(s).font(body14).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.leading, 3)
-                case .numbered(let n, let s):
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(n).font(body14).foregroundStyle(Theme.text2).monospacedDigit()
-                            .frame(minWidth: 18, alignment: .trailing)
-                        inline(s).font(body14).lineSpacing(5).fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
-        }
-        .foregroundStyle(Theme.text)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .environment(\.openURL, .safe)
+        AnswerBody(markdown: text, streaming: streaming, style: .panel).equatable()
+            .environment(\.openURL, .answerLink)
     }
 }
 

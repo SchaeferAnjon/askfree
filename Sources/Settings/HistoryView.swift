@@ -9,6 +9,9 @@ import AppKit
 #if canImport(AskFreeCore)
 import AskFreeCore
 #endif
+#if canImport(AnswerRender)
+import AnswerRender
+#endif
 
 extension Notification.Name {
     /// 历史里多了一轮问答（答完一题、补图时发）
@@ -532,54 +535,12 @@ private struct LocalThumb: View {
     }
 }
 
-/// 回答正文：和回答面板同一套轻量 Markdown（小标题、条目、**加粗**、`代码`），能选中复制
+/// 回答正文：和回答面板同一套排版（AnswerBody：小标题、条目、**加粗**、`代码`、代码块、公式），13.5 号，能选中复制
 struct HistoryAnswerText: View {
     let markdown: String
-    var size: CGFloat = 13.5
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                switch line {
-                case .heading(let text):
-                    inline(text).font(.system(size: size, weight: .semibold)).padding(.top, 2)
-                case .bullet(let marker, let text):
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(marker).font(.system(size: size)).foregroundStyle(Theme.text2).frame(minWidth: 12, alignment: .trailing)
-                        inline(text).font(.system(size: size))
-                    }
-                case .paragraph(let text):
-                    inline(text).font(.system(size: size))
-                }
-            }
-        }
-        .foregroundStyle(Theme.text)
-        .lineSpacing(3)
-        .textSelection(.enabled)
-        .fixedSize(horizontal: false, vertical: true)
-        .environment(\.openURL, .safe)
-    }
-
-    private enum Line { case heading(String), bullet(String, String), paragraph(String) }
-
-    private var lines: [Line] {
-        markdown.components(separatedBy: "\n").compactMap { raw in
-            let line = raw.trimmingCharacters(in: .whitespaces)
-            guard !line.isEmpty else { return nil }
-            if line.hasPrefix("#") { return .heading(line.drop { $0 == "#" }.trimmingCharacters(in: .whitespaces)) }
-            if let r = line.range(of: #"^(?:[-•·*]|\d+[.、)）])\s+"#, options: .regularExpression) {
-                let marker = line[r].trimmingCharacters(in: .whitespaces)
-                let shown = marker.first?.isNumber == true ? marker.trimmingCharacters(in: CharacterSet(charactersIn: ".、)）")) + "." : "•"
-                return .bullet(shown, String(line[r.upperBound...]))
-            }
-            return .paragraph(line)
-        }
-    }
-
-    private func inline(_ s: String) -> Text {
-        if let parsed = try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
-            return Text(parsed)
-        }
-        return Text(s)
+        AnswerBody(markdown: markdown, streaming: false, style: .history).equatable()
+            .environment(\.openURL, .answerLink)
     }
 }

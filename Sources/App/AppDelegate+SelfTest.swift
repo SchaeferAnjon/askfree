@@ -2,6 +2,9 @@ import AppKit
 #if canImport(AskFreeCore)
 import AskFreeCore
 #endif
+#if canImport(AnswerRender)
+import AnswerRender
+#endif
 
 /// 两个不用人看着的启动方式（参数说明见 DevLaunchOptions）：
 /// - `-selfTest`：CI 在正式包上跑，九页和欢迎引导都打开一遍，菜单栏图标、主窗口、引导都出来了就退出（退出码 0），少一样退出码 1
@@ -45,6 +48,8 @@ extension AppDelegate {
             if statusBar?.isShowing != true { failures.append("菜单栏图标没出来") }
             if mainWindow?.isVisible != true || (mainWindow?.contentView?.subviews.isEmpty ?? true) { failures.append("主窗口没出来") }
             if OnboardingWindowController.shared?.window?.isVisible != true { failures.append("欢迎引导没出来") }
+            // 回答里的公式：字体资源打包错了（scripts/trim_math_fonts.sh 删多了）这里就排不出来
+            if !MathGlyphs.selfCheck() { failures.append("公式排不出来") }
             // 不关窗口直接退：关引导会记成「看过引导」
             Self.finishSelfTest(failures: failures)
         }

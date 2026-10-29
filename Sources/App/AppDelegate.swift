@@ -3,6 +3,9 @@ import AVFoundation
 #if canImport(AskFreeCore)
 import AskFreeCore
 #endif
+#if canImport(AnswerRender)
+import AnswerRender
+#endif
 
 /// 集中管理外部链接，换地址只改这里。
 enum AppLinks {
@@ -249,6 +252,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         installDevWindowShots()
         MainThreadStallMonitor.start { [weak self] in self?.debugLog($0) }
+        // 进程里第一条公式要读字体（几十毫秒）：启动后 1 秒先排一条，第一次回答时不卡
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            let ms = MainActor.assumeIsolated { MathGlyphs.warmUp() }
+            self?.debugLog(String(format: "math warm-up %.0f ms", ms))
+        }
         // 第一次打开出欢迎引导；看过引导但还没填 Key：打开主窗口的「开始」，不填用不了
         if let directory = DevLaunchOptions.snapshotPagesDirectory {
             runPageSnapshots(into: directory)

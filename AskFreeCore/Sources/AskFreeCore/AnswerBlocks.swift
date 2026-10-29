@@ -99,13 +99,8 @@ public enum AnswerBlocks {
 
             if t.isEmpty { flush(); i += 1; continue }
 
-            // 流式时最后一行：没收尾的行内公式先不显示
-            let visible = streaming && isLast ? streamingVisible(t) : t
-            // 只剩 1、2 个反引号的最后一行：可能是围栏的开头，先不显示
-            if streaming && isLast && !visible.isEmpty && visible.count < 3 && visible.allSatisfy({ $0 == "`" }) {
-                i += 1
-                continue
-            }
+            // 流式时最后一行：没收尾的行内公式先不显示；没闭合的 ** 和行内代码先按闭合的样子显示
+            let visible = streaming && isLast ? autoCloseMarks(streamingVisible(t)) : t
 
             if visible.hasPrefix("#") {
                 flush()
@@ -279,6 +274,59 @@ public enum AnswerBlocks {
             i += 1
         }
         return line
+    }
+
+    /// 流式时最后一行：没闭合的 **加粗** 和 `行内代码` 先按闭合的样子显示，收尾那一下不再从「**词」变成粗体「词」、
+    /// 字宽一变整段折行跟着变（高度会缩一行）。刚打出来、后面还没有字的 **、`、单独的 * 先不显示（可能是 ** 或围栏的前半截）。
+    /// 公式和已经闭合的行内代码里的 * 不算
+    static func autoCloseMarks(_ line: String) -> String {
+        let s = Array(line)
+        var i = 0
+        var bold: [Int] = []
+        var openCode: (start: Int, count: Int)?
+        scan: while i < s.count {
+            switch s[i] {
+            case "`":
+                let n = runLength(s, from: i, of: "`")
+                guard let close = findBacktickClose(s, from: i + n, count: n) else { openCode = (i, n); break scan }
+                i = close + n
+            case "\\":
+                if i + 1 < s.count, s[i + 1] == "(", let close = findSequence(s, from: i + 2, ["\\", ")"], sameLine: true) { i = close + 2 } else { i += 2 }
+            case "$":
+                if i + 1 < s.count, s[i + 1] == "$" {
+                    if let close = findSequence(s, from: i + 2, ["$", "$"], sameLine: true), close > i + 2 { i = close + 2 } else { i += 2 }
+                } else if case .close(let close) = findDollarClose(s, from: i) {
+                    i = close + 1
+                } else {
+                    i += 1
+                }
+            case "*":
+                if i + 1 < s.count, s[i + 1] == "*" { bold.append(i); i += 2 } else { i += 1 }
+            default:
+                i += 1
+            }
+        }
+        var out = s
+        var tail: [Character] = []
+        if let code = openCode {
+            if code.start + code.count >= s.count {
+                out = Array(s[..<code.start])
+            } else {
+                tail = Array(repeating: "`", count: code.count)
+            }
+        }
+        if bold.count % 2 == 1, let last = bold.last, openCode == nil {
+            if out[(last + 2)...].allSatisfy(\.isWhitespace) {
+                out = Array(out[..<last])
+            } else {
+                var end = out.count
+                while end > 0, out[end - 1].isWhitespace { end -= 1 }
+                out.insert(contentsOf: ["*", "*"], at: end)
+            }
+        } else if bold.count % 2 == 0, openCode == nil, out.last == "*", out.count < 2 || out[out.count - 2] != "*" {
+            out.removeLast()
+        }
+        return String(out + tail)
     }
 
     // MARK: - 围栏、独立公式的判断（AnswerMarkdown 也用）

@@ -1,0 +1,2435 @@
+{
+ "question": "How do I debounce a search field in SwiftUI? Show code",
+ "prompt": "latex",
+ "model": "deepseek-chat",
+ "chunks": [
+  {
+   "t_ms": 698,
+   "text": "Use"
+  },
+  {
+   "t_ms": 737,
+   "text": " a"
+  },
+  {
+   "t_ms": 750,
+   "text": " **"
+  },
+  {
+   "t_ms": 768,
+   "text": "Combine"
+  },
+  {
+   "t_ms": 781,
+   "text": "**"
+  },
+  {
+   "t_ms": 781,
+   "text": " pipeline"
+  },
+  {
+   "t_ms": 798,
+   "text": " with"
+  },
+  {
+   "t_ms": 798,
+   "text": " `."
+  },
+  {
+   "t_ms": 798,
+   "text": "deb"
+  },
+  {
+   "t_ms": 812,
+   "text": "ounce"
+  },
+  {
+   "t_ms": 812,
+   "text": "`"
+  },
+  {
+   "t_ms": 812,
+   "text": " on"
+  },
+  {
+   "t_ms": 812,
+   "text": " the"
+  },
+  {
+   "t_ms": 828,
+   "text": " text"
+  },
+  {
+   "t_ms": 841,
+   "text": " binding"
+  },
+  {
+   "t_ms": 841,
+   "text": ","
+  },
+  {
+   "t_ms": 841,
+   "text": " then"
+  },
+  {
+   "t_ms": 856,
+   "text": " trigger"
+  },
+  {
+   "t_ms": 871,
+   "text": " the"
+  },
+  {
+   "t_ms": 887,
+   "text": " search"
+  },
+  {
+   "t_ms": 887,
+   "text": " from"
+  },
+  {
+   "t_ms": 904,
+   "text": " the"
+  },
+  {
+   "t_ms": 904,
+   "text": " deb"
+  },
+  {
+   "t_ms": 935,
+   "text": "ounced"
+  },
+  {
+   "t_ms": 935,
+   "text": " value"
+  },
+  {
+   "t_ms": 935,
+   "text": ".\n\n"
+  },
+  {
+   "t_ms": 935,
+   "text": "###"
+  },
+  {
+   "t_ms": 935,
+   "text": " Basic"
+  },
+  {
+   "t_ms": 1042,
+   "text": " approach"
+  },
+  {
+   "t_ms": 1042,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1042,
+   "text": "```"
+  },
+  {
+   "t_ms": 1042,
+   "text": "sw"
+  },
+  {
+   "t_ms": 1042,
+   "text": "ift"
+  },
+  {
+   "t_ms": 1042,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1042,
+   "text": "import"
+  },
+  {
+   "t_ms": 1042,
+   "text": " Swift"
+  },
+  {
+   "t_ms": 1042,
+   "text": "UI"
+  },
+  {
+   "t_ms": 1042,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1042,
+   "text": "import"
+  },
+  {
+   "t_ms": 1042,
+   "text": " Combine"
+  },
+  {
+   "t_ms": 1042,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1042,
+   "text": "struct"
+  },
+  {
+   "t_ms": 1042,
+   "text": " Search"
+  },
+  {
+   "t_ms": 1042,
+   "text": "View"
+  },
+  {
+   "t_ms": 1042,
+   "text": ":"
+  },
+  {
+   "t_ms": 1042,
+   "text": " View"
+  },
+  {
+   "t_ms": 1042,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 1042,
+   "text": "   "
+  },
+  {
+   "t_ms": 1042,
+   "text": " @"
+  },
+  {
+   "t_ms": 1042,
+   "text": "State"
+  },
+  {
+   "t_ms": 1042,
+   "text": " private"
+  },
+  {
+   "t_ms": 1042,
+   "text": " var"
+  },
+  {
+   "t_ms": 1042,
+   "text": " query"
+  },
+  {
+   "t_ms": 1042,
+   "text": " ="
+  },
+  {
+   "t_ms": 1042,
+   "text": " \"\"\n"
+  },
+  {
+   "t_ms": 1042,
+   "text": "   "
+  },
+  {
+   "t_ms": 1042,
+   "text": " @"
+  },
+  {
+   "t_ms": 1042,
+   "text": "State"
+  },
+  {
+   "t_ms": 1042,
+   "text": " private"
+  },
+  {
+   "t_ms": 1042,
+   "text": " var"
+  },
+  {
+   "t_ms": 1042,
+   "text": " results"
+  },
+  {
+   "t_ms": 1057,
+   "text": ":"
+  },
+  {
+   "t_ms": 1057,
+   "text": " ["
+  },
+  {
+   "t_ms": 1057,
+   "text": "String"
+  },
+  {
+   "t_ms": 1057,
+   "text": "]"
+  },
+  {
+   "t_ms": 1057,
+   "text": " ="
+  },
+  {
+   "t_ms": 1072,
+   "text": " []\n\n"
+  },
+  {
+   "t_ms": 1072,
+   "text": "   "
+  },
+  {
+   "t_ms": 1072,
+   "text": " var"
+  },
+  {
+   "t_ms": 1072,
+   "text": " body"
+  },
+  {
+   "t_ms": 1088,
+   "text": ":"
+  },
+  {
+   "t_ms": 1088,
+   "text": " some"
+  },
+  {
+   "t_ms": 1088,
+   "text": " View"
+  },
+  {
+   "t_ms": 1088,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 1088,
+   "text": "       "
+  },
+  {
+   "t_ms": 1088,
+   "text": " List"
+  },
+  {
+   "t_ms": 1102,
+   "text": "(results"
+  },
+  {
+   "t_ms": 1119,
+   "text": ","
+  },
+  {
+   "t_ms": 1134,
+   "text": " id"
+  },
+  {
+   "t_ms": 1134,
+   "text": ":"
+  },
+  {
+   "t_ms": 1134,
+   "text": " \\"
+  },
+  {
+   "t_ms": 1134,
+   "text": "."
+  },
+  {
+   "t_ms": 1134,
+   "text": "self"
+  },
+  {
+   "t_ms": 1134,
+   "text": ")"
+  },
+  {
+   "t_ms": 1147,
+   "text": " {"
+  },
+  {
+   "t_ms": 1147,
+   "text": " Text"
+  },
+  {
+   "t_ms": 1147,
+   "text": "($"
+  },
+  {
+   "t_ms": 1147,
+   "text": "0"
+  },
+  {
+   "t_ms": 1147,
+   "text": ")"
+  },
+  {
+   "t_ms": 1163,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 1163,
+   "text": "           "
+  },
+  {
+   "t_ms": 1163,
+   "text": " ."
+  },
+  {
+   "t_ms": 1163,
+   "text": "search"
+  },
+  {
+   "t_ms": 1179,
+   "text": "able"
+  },
+  {
+   "t_ms": 1179,
+   "text": "(text"
+  },
+  {
+   "t_ms": 1179,
+   "text": ":"
+  },
+  {
+   "t_ms": 1179,
+   "text": " $"
+  },
+  {
+   "t_ms": 1192,
+   "text": "query"
+  },
+  {
+   "t_ms": 1192,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 1192,
+   "text": "           "
+  },
+  {
+   "t_ms": 1192,
+   "text": " ."
+  },
+  {
+   "t_ms": 1192,
+   "text": "on"
+  },
+  {
+   "t_ms": 1193,
+   "text": "Change"
+  },
+  {
+   "t_ms": 1208,
+   "text": "(of"
+  },
+  {
+   "t_ms": 1208,
+   "text": ":"
+  },
+  {
+   "t_ms": 1208,
+   "text": " query"
+  },
+  {
+   "t_ms": 1208,
+   "text": ")"
+  },
+  {
+   "t_ms": 1208,
+   "text": " {"
+  },
+  {
+   "t_ms": 1208,
+   "text": " _,"
+  },
+  {
+   "t_ms": 1230,
+   "text": " new"
+  },
+  {
+   "t_ms": 1230,
+   "text": "Value"
+  },
+  {
+   "t_ms": 1240,
+   "text": " in"
+  },
+  {
+   "t_ms": 1240,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1240,
+   "text": "               "
+  },
+  {
+   "t_ms": 1240,
+   "text": " //"
+  },
+  {
+   "t_ms": 1254,
+   "text": " optional"
+  },
+  {
+   "t_ms": 1269,
+   "text": ":"
+  },
+  {
+   "t_ms": 1269,
+   "text": " cancel"
+  },
+  {
+   "t_ms": 1284,
+   "text": " in"
+  },
+  {
+   "t_ms": 1300,
+   "text": "-flight"
+  },
+  {
+   "t_ms": 1300,
+   "text": " work"
+  },
+  {
+   "t_ms": 1318,
+   "text": " here"
+  },
+  {
+   "t_ms": 1318,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1331,
+   "text": "           "
+  },
+  {
+   "t_ms": 1331,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 1331,
+   "text": "           "
+  },
+  {
+   "t_ms": 1344,
+   "text": " ."
+  },
+  {
+   "t_ms": 1344,
+   "text": "task"
+  },
+  {
+   "t_ms": 1344,
+   "text": "(id"
+  },
+  {
+   "t_ms": 1344,
+   "text": ":"
+  },
+  {
+   "t_ms": 1361,
+   "text": " query"
+  },
+  {
+   "t_ms": 1361,
+   "text": ")"
+  },
+  {
+   "t_ms": 1361,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 1361,
+   "text": "               "
+  },
+  {
+   "t_ms": 1361,
+   "text": " //"
+  },
+  {
+   "t_ms": 1376,
+   "text": " simple"
+  },
+  {
+   "t_ms": 1392,
+   "text": " modern"
+  },
+  {
+   "t_ms": 1407,
+   "text": " alternative"
+  },
+  {
+   "t_ms": 1423,
+   "text": ","
+  },
+  {
+   "t_ms": 1436,
+   "text": " see"
+  },
+  {
+   "t_ms": 1436,
+   "text": " below"
+  },
+  {
+   "t_ms": 1436,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1436,
+   "text": "           "
+  },
+  {
+   "t_ms": 1454,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 1454,
+   "text": "   "
+  },
+  {
+   "t_ms": 1454,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 1454,
+   "text": "}\n"
+  },
+  {
+   "t_ms": 1454,
+   "text": "```\n\n"
+  },
+  {
+   "t_ms": 1454,
+   "text": "###"
+  },
+  {
+   "t_ms": 1468,
+   "text": " Deb"
+  },
+  {
+   "t_ms": 1567,
+   "text": "ounce"
+  },
+  {
+   "t_ms": 1567,
+   "text": " with"
+  },
+  {
+   "t_ms": 1567,
+   "text": " Combine"
+  },
+  {
+   "t_ms": 1567,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1567,
+   "text": "```"
+  },
+  {
+   "t_ms": 1567,
+   "text": "sw"
+  },
+  {
+   "t_ms": 1567,
+   "text": "ift"
+  },
+  {
+   "t_ms": 1567,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1567,
+   "text": "import"
+  },
+  {
+   "t_ms": 1567,
+   "text": " Swift"
+  },
+  {
+   "t_ms": 1567,
+   "text": "UI"
+  },
+  {
+   "t_ms": 1567,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1567,
+   "text": "import"
+  },
+  {
+   "t_ms": 1567,
+   "text": " Combine"
+  },
+  {
+   "t_ms": 1567,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 1567,
+   "text": "final"
+  },
+  {
+   "t_ms": 1567,
+   "text": " class"
+  },
+  {
+   "t_ms": 1567,
+   "text": " Search"
+  },
+  {
+   "t_ms": 1567,
+   "text": "ViewModel"
+  },
+  {
+   "t_ms": 1567,
+   "text": ":"
+  },
+  {
+   "t_ms": 1567,
+   "text": " Observable"
+  },
+  {
+   "t_ms": 1567,
+   "text": "Object"
+  },
+  {
+   "t_ms": 1567,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 1567,
+   "text": "   "
+  },
+  {
+   "t_ms": 1567,
+   "text": " @"
+  },
+  {
+   "t_ms": 1581,
+   "text": "Published"
+  },
+  {
+   "t_ms": 1581,
+   "text": " var"
+  },
+  {
+   "t_ms": 1581,
+   "text": " query"
+  },
+  {
+   "t_ms": 1581,
+   "text": " ="
+  },
+  {
+   "t_ms": 1581,
+   "text": " \"\"\n"
+  },
+  {
+   "t_ms": 1581,
+   "text": "   "
+  },
+  {
+   "t_ms": 1590,
+   "text": " @"
+  },
+  {
+   "t_ms": 1590,
+   "text": "Published"
+  },
+  {
+   "t_ms": 1590,
+   "text": " private"
+  },
+  {
+   "t_ms": 1605,
+   "text": "(set"
+  },
+  {
+   "t_ms": 1605,
+   "text": ")"
+  },
+  {
+   "t_ms": 1605,
+   "text": " var"
+  },
+  {
+   "t_ms": 1605,
+   "text": " results"
+  },
+  {
+   "t_ms": 1605,
+   "text": ":"
+  },
+  {
+   "t_ms": 1605,
+   "text": " ["
+  },
+  {
+   "t_ms": 1620,
+   "text": "String"
+  },
+  {
+   "t_ms": 1620,
+   "text": "]"
+  },
+  {
+   "t_ms": 1620,
+   "text": " ="
+  },
+  {
+   "t_ms": 1620,
+   "text": " []\n\n"
+  },
+  {
+   "t_ms": 1620,
+   "text": "   "
+  },
+  {
+   "t_ms": 1620,
+   "text": " private"
+  },
+  {
+   "t_ms": 1635,
+   "text": " var"
+  },
+  {
+   "t_ms": 1635,
+   "text": " cancell"
+  },
+  {
+   "t_ms": 1635,
+   "text": "ables"
+  },
+  {
+   "t_ms": 1654,
+   "text": " ="
+  },
+  {
+   "t_ms": 1654,
+   "text": " Set"
+  },
+  {
+   "t_ms": 1654,
+   "text": "<"
+  },
+  {
+   "t_ms": 1654,
+   "text": "Any"
+  },
+  {
+   "t_ms": 1654,
+   "text": "Canc"
+  },
+  {
+   "t_ms": 1669,
+   "text": "ell"
+  },
+  {
+   "t_ms": 1669,
+   "text": "able"
+  },
+  {
+   "t_ms": 1669,
+   "text": ">"
+  },
+  {
+   "t_ms": 1681,
+   "text": "()\n\n"
+  },
+  {
+   "t_ms": 1681,
+   "text": "   "
+  },
+  {
+   "t_ms": 1681,
+   "text": " init"
+  },
+  {
+   "t_ms": 1681,
+   "text": "()"
+  },
+  {
+   "t_ms": 1696,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 1696,
+   "text": "       "
+  },
+  {
+   "t_ms": 1696,
+   "text": " $"
+  },
+  {
+   "t_ms": 1696,
+   "text": "query"
+  },
+  {
+   "t_ms": 1696,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1696,
+   "text": "           "
+  },
+  {
+   "t_ms": 1712,
+   "text": " ."
+  },
+  {
+   "t_ms": 1712,
+   "text": "deb"
+  },
+  {
+   "t_ms": 1712,
+   "text": "ounce"
+  },
+  {
+   "t_ms": 1712,
+   "text": "(for"
+  },
+  {
+   "t_ms": 1728,
+   "text": ":"
+  },
+  {
+   "t_ms": 1728,
+   "text": " ."
+  },
+  {
+   "t_ms": 1728,
+   "text": "mill"
+  },
+  {
+   "t_ms": 1728,
+   "text": "iseconds"
+  },
+  {
+   "t_ms": 1728,
+   "text": "("
+  },
+  {
+   "t_ms": 1741,
+   "text": "300"
+  },
+  {
+   "t_ms": 1741,
+   "text": "),"
+  },
+  {
+   "t_ms": 1741,
+   "text": " scheduler"
+  },
+  {
+   "t_ms": 1759,
+   "text": ":"
+  },
+  {
+   "t_ms": 1760,
+   "text": " Run"
+  },
+  {
+   "t_ms": 1771,
+   "text": "Loop"
+  },
+  {
+   "t_ms": 1771,
+   "text": ".main"
+  },
+  {
+   "t_ms": 1771,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 1771,
+   "text": "           "
+  },
+  {
+   "t_ms": 1771,
+   "text": " ."
+  },
+  {
+   "t_ms": 1771,
+   "text": "remove"
+  },
+  {
+   "t_ms": 1787,
+   "text": "Du"
+  },
+  {
+   "t_ms": 1787,
+   "text": "plicates"
+  },
+  {
+   "t_ms": 1787,
+   "text": "()\n"
+  },
+  {
+   "t_ms": 1787,
+   "text": "           "
+  },
+  {
+   "t_ms": 1787,
+   "text": " ."
+  },
+  {
+   "t_ms": 1787,
+   "text": "s"
+  },
+  {
+   "t_ms": 1802,
+   "text": "ink"
+  },
+  {
+   "t_ms": 1802,
+   "text": " {"
+  },
+  {
+   "t_ms": 1802,
+   "text": " ["
+  },
+  {
+   "t_ms": 1818,
+   "text": "weak"
+  },
+  {
+   "t_ms": 1818,
+   "text": " self"
+  },
+  {
+   "t_ms": 1818,
+   "text": "]"
+  },
+  {
+   "t_ms": 1818,
+   "text": " text"
+  },
+  {
+   "t_ms": 1835,
+   "text": " in"
+  },
+  {
+   "t_ms": 1835,
+   "text": "\n"
+  },
+  {
+   "t_ms": 1835,
+   "text": "               "
+  },
+  {
+   "t_ms": 1835,
+   "text": " self"
+  },
+  {
+   "t_ms": 1850,
+   "text": "?."
+  },
+  {
+   "t_ms": 1850,
+   "text": "search"
+  },
+  {
+   "t_ms": 1850,
+   "text": "(text"
+  },
+  {
+   "t_ms": 1850,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 1850,
+   "text": "           "
+  },
+  {
+   "t_ms": 1850,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 1866,
+   "text": "           "
+  },
+  {
+   "t_ms": 1866,
+   "text": " ."
+  },
+  {
+   "t_ms": 1866,
+   "text": "store"
+  },
+  {
+   "t_ms": 1866,
+   "text": "(in"
+  },
+  {
+   "t_ms": 1866,
+   "text": ":"
+  },
+  {
+   "t_ms": 1866,
+   "text": " &"
+  },
+  {
+   "t_ms": 1881,
+   "text": "c"
+  },
+  {
+   "t_ms": 1881,
+   "text": "anc"
+  },
+  {
+   "t_ms": 1881,
+   "text": "ell"
+  },
+  {
+   "t_ms": 1881,
+   "text": "ables"
+  },
+  {
+   "t_ms": 1881,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 1881,
+   "text": "   "
+  },
+  {
+   "t_ms": 1898,
+   "text": " }\n\n"
+  },
+  {
+   "t_ms": 1898,
+   "text": "   "
+  },
+  {
+   "t_ms": 1898,
+   "text": " private"
+  },
+  {
+   "t_ms": 1898,
+   "text": " func"
+  },
+  {
+   "t_ms": 1898,
+   "text": " search"
+  },
+  {
+   "t_ms": 1898,
+   "text": "(_"
+  },
+  {
+   "t_ms": 1914,
+   "text": " text"
+  },
+  {
+   "t_ms": 1914,
+   "text": ":"
+  },
+  {
+   "t_ms": 1914,
+   "text": " String"
+  },
+  {
+   "t_ms": 1914,
+   "text": ")"
+  },
+  {
+   "t_ms": 1914,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 1914,
+   "text": "       "
+  },
+  {
+   "t_ms": 1942,
+   "text": " guard"
+  },
+  {
+   "t_ms": 1942,
+   "text": " !"
+  },
+  {
+   "t_ms": 1942,
+   "text": "text"
+  },
+  {
+   "t_ms": 1942,
+   "text": ".isEmpty"
+  },
+  {
+   "t_ms": 1942,
+   "text": " else"
+  },
+  {
+   "t_ms": 1942,
+   "text": " {"
+  },
+  {
+   "t_ms": 1942,
+   "text": " results"
+  },
+  {
+   "t_ms": 1942,
+   "text": " ="
+  },
+  {
+   "t_ms": 1942,
+   "text": " ["
+  },
+  {
+   "t_ms": 1943,
+   "text": "];"
+  },
+  {
+   "t_ms": 1943,
+   "text": " return"
+  },
+  {
+   "t_ms": 1943,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 1954,
+   "text": "       "
+  },
+  {
+   "t_ms": 1954,
+   "text": " //"
+  },
+  {
+   "t_ms": 1954,
+   "text": " replace"
+  },
+  {
+   "t_ms": 1971,
+   "text": " with"
+  },
+  {
+   "t_ms": 1971,
+   "text": " real"
+  },
+  {
+   "t_ms": 1983,
+   "text": " async"
+  },
+  {
+   "t_ms": 1983,
+   "text": " call"
+  },
+  {
+   "t_ms": 1983,
+   "text": "\n"
+  },
+  {
+   "t_ms": 2000,
+   "text": "       "
+  },
+  {
+   "t_ms": 2000,
+   "text": " results"
+  },
+  {
+   "t_ms": 2000,
+   "text": " ="
+  },
+  {
+   "t_ms": 2000,
+   "text": " [\""
+  },
+  {
+   "t_ms": 2092,
+   "text": "result"
+  },
+  {
+   "t_ms": 2092,
+   "text": " for"
+  },
+  {
+   "t_ms": 2092,
+   "text": " \\("
+  },
+  {
+   "t_ms": 2092,
+   "text": "text"
+  },
+  {
+   "t_ms": 2092,
+   "text": ")\""
+  },
+  {
+   "t_ms": 2092,
+   "text": "]\n"
+  },
+  {
+   "t_ms": 2092,
+   "text": "   "
+  },
+  {
+   "t_ms": 2092,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 2092,
+   "text": "}\n\n"
+  },
+  {
+   "t_ms": 2092,
+   "text": "struct"
+  },
+  {
+   "t_ms": 2092,
+   "text": " Search"
+  },
+  {
+   "t_ms": 2093,
+   "text": "View"
+  },
+  {
+   "t_ms": 2093,
+   "text": ":"
+  },
+  {
+   "t_ms": 2093,
+   "text": " View"
+  },
+  {
+   "t_ms": 2093,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 2093,
+   "text": "   "
+  },
+  {
+   "t_ms": 2093,
+   "text": " @"
+  },
+  {
+   "t_ms": 2094,
+   "text": "State"
+  },
+  {
+   "t_ms": 2094,
+   "text": "Object"
+  },
+  {
+   "t_ms": 2094,
+   "text": " private"
+  },
+  {
+   "t_ms": 2094,
+   "text": " var"
+  },
+  {
+   "t_ms": 2094,
+   "text": " vm"
+  },
+  {
+   "t_ms": 2094,
+   "text": " ="
+  },
+  {
+   "t_ms": 2094,
+   "text": " Search"
+  },
+  {
+   "t_ms": 2094,
+   "text": "ViewModel"
+  },
+  {
+   "t_ms": 2094,
+   "text": "()\n\n"
+  },
+  {
+   "t_ms": 2094,
+   "text": "   "
+  },
+  {
+   "t_ms": 2094,
+   "text": " var"
+  },
+  {
+   "t_ms": 2108,
+   "text": " body"
+  },
+  {
+   "t_ms": 2108,
+   "text": ":"
+  },
+  {
+   "t_ms": 2108,
+   "text": " some"
+  },
+  {
+   "t_ms": 2108,
+   "text": " View"
+  },
+  {
+   "t_ms": 2108,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 2108,
+   "text": "       "
+  },
+  {
+   "t_ms": 2124,
+   "text": " List"
+  },
+  {
+   "t_ms": 2124,
+   "text": "(v"
+  },
+  {
+   "t_ms": 2124,
+   "text": "m"
+  },
+  {
+   "t_ms": 2124,
+   "text": ".res"
+  },
+  {
+   "t_ms": 2140,
+   "text": "ults"
+  },
+  {
+   "t_ms": 2140,
+   "text": ","
+  },
+  {
+   "t_ms": 2140,
+   "text": " id"
+  },
+  {
+   "t_ms": 2140,
+   "text": ":"
+  },
+  {
+   "t_ms": 2140,
+   "text": " \\"
+  },
+  {
+   "t_ms": 2140,
+   "text": "."
+  },
+  {
+   "t_ms": 2154,
+   "text": "self"
+  },
+  {
+   "t_ms": 2154,
+   "text": ")"
+  },
+  {
+   "t_ms": 2154,
+   "text": " {"
+  },
+  {
+   "t_ms": 2154,
+   "text": " Text"
+  },
+  {
+   "t_ms": 2170,
+   "text": "($"
+  },
+  {
+   "t_ms": 2171,
+   "text": "0"
+  },
+  {
+   "t_ms": 2171,
+   "text": ")"
+  },
+  {
+   "t_ms": 2171,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 2171,
+   "text": "           "
+  },
+  {
+   "t_ms": 2171,
+   "text": " ."
+  },
+  {
+   "t_ms": 2183,
+   "text": "search"
+  },
+  {
+   "t_ms": 2183,
+   "text": "able"
+  },
+  {
+   "t_ms": 2183,
+   "text": "(text"
+  },
+  {
+   "t_ms": 2183,
+   "text": ":"
+  },
+  {
+   "t_ms": 2183,
+   "text": " $"
+  },
+  {
+   "t_ms": 2200,
+   "text": "vm"
+  },
+  {
+   "t_ms": 2200,
+   "text": ".query"
+  },
+  {
+   "t_ms": 2200,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 2200,
+   "text": "   "
+  },
+  {
+   "t_ms": 2200,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 2232,
+   "text": "}\n"
+  },
+  {
+   "t_ms": 2232,
+   "text": "```\n\n"
+  },
+  {
+   "t_ms": 2232,
+   "text": "###"
+  },
+  {
+   "t_ms": 2232,
+   "text": " Modern"
+  },
+  {
+   "t_ms": 2232,
+   "text": " alternative"
+  },
+  {
+   "t_ms": 2232,
+   "text": " ("
+  },
+  {
+   "t_ms": 2232,
+   "text": "no"
+  },
+  {
+   "t_ms": 2265,
+   "text": " Combine"
+  },
+  {
+   "t_ms": 2265,
+   "text": ")\n\n"
+  },
+  {
+   "t_ms": 2265,
+   "text": "`."
+  },
+  {
+   "t_ms": 2275,
+   "text": "task"
+  },
+  {
+   "t_ms": 2275,
+   "text": "(id"
+  },
+  {
+   "t_ms": 2275,
+   "text": ":)"
+  },
+  {
+   "t_ms": 2275,
+   "text": "`"
+  },
+  {
+   "t_ms": 2332,
+   "text": " canc"
+  },
+  {
+   "t_ms": 2332,
+   "text": "els"
+  },
+  {
+   "t_ms": 2332,
+   "text": " the"
+  },
+  {
+   "t_ms": 2332,
+   "text": " previous"
+  },
+  {
+   "t_ms": 2332,
+   "text": " task"
+  },
+  {
+   "t_ms": 2332,
+   "text": " when"
+  },
+  {
+   "t_ms": 2332,
+   "text": " `"
+  },
+  {
+   "t_ms": 2332,
+   "text": "query"
+  },
+  {
+   "t_ms": 2337,
+   "text": "`"
+  },
+  {
+   "t_ms": 2337,
+   "text": " changes"
+  },
+  {
+   "t_ms": 2337,
+   "text": ","
+  },
+  {
+   "t_ms": 2337,
+   "text": " so"
+  },
+  {
+   "t_ms": 2337,
+   "text": " a"
+  },
+  {
+   "t_ms": 2352,
+   "text": " `"
+  },
+  {
+   "t_ms": 2352,
+   "text": "Task"
+  },
+  {
+   "t_ms": 2352,
+   "text": ".sleep"
+  },
+  {
+   "t_ms": 2367,
+   "text": "`"
+  },
+  {
+   "t_ms": 2367,
+   "text": " gives"
+  },
+  {
+   "t_ms": 2367,
+   "text": " you"
+  },
+  {
+   "t_ms": 2381,
+   "text": " deb"
+  },
+  {
+   "t_ms": 2412,
+   "text": "ounce"
+  },
+  {
+   "t_ms": 2412,
+   "text": " for"
+  },
+  {
+   "t_ms": 2412,
+   "text": " free"
+  },
+  {
+   "t_ms": 2412,
+   "text": ":\n\n"
+  },
+  {
+   "t_ms": 2412,
+   "text": "```"
+  },
+  {
+   "t_ms": 2412,
+   "text": "sw"
+  },
+  {
+   "t_ms": 2412,
+   "text": "ift"
+  },
+  {
+   "t_ms": 2412,
+   "text": "\n"
+  },
+  {
+   "t_ms": 2412,
+   "text": ".search"
+  },
+  {
+   "t_ms": 2430,
+   "text": "able"
+  },
+  {
+   "t_ms": 2430,
+   "text": "(text"
+  },
+  {
+   "t_ms": 2430,
+   "text": ":"
+  },
+  {
+   "t_ms": 2430,
+   "text": " $"
+  },
+  {
+   "t_ms": 2444,
+   "text": "query"
+  },
+  {
+   "t_ms": 2444,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 2444,
+   "text": ".task"
+  },
+  {
+   "t_ms": 2444,
+   "text": "(id"
+  },
+  {
+   "t_ms": 2459,
+   "text": ":"
+  },
+  {
+   "t_ms": 2459,
+   "text": " query"
+  },
+  {
+   "t_ms": 2459,
+   "text": ")"
+  },
+  {
+   "t_ms": 2459,
+   "text": " {\n"
+  },
+  {
+   "t_ms": 2459,
+   "text": "   "
+  },
+  {
+   "t_ms": 2459,
+   "text": " guard"
+  },
+  {
+   "t_ms": 2474,
+   "text": " !"
+  },
+  {
+   "t_ms": 2474,
+   "text": "query"
+  },
+  {
+   "t_ms": 2474,
+   "text": ".isEmpty"
+  },
+  {
+   "t_ms": 2474,
+   "text": " else"
+  },
+  {
+   "t_ms": 2474,
+   "text": " {"
+  },
+  {
+   "t_ms": 2491,
+   "text": " results"
+  },
+  {
+   "t_ms": 2491,
+   "text": " ="
+  },
+  {
+   "t_ms": 2491,
+   "text": " ["
+  },
+  {
+   "t_ms": 2491,
+   "text": "];"
+  },
+  {
+   "t_ms": 2491,
+   "text": " return"
+  },
+  {
+   "t_ms": 2491,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 2505,
+   "text": "   "
+  },
+  {
+   "t_ms": 2505,
+   "text": " try"
+  },
+  {
+   "t_ms": 2505,
+   "text": "?"
+  },
+  {
+   "t_ms": 2520,
+   "text": " await"
+  },
+  {
+   "t_ms": 2520,
+   "text": " Task"
+  },
+  {
+   "t_ms": 2520,
+   "text": ".sleep"
+  },
+  {
+   "t_ms": 2520,
+   "text": "(for"
+  },
+  {
+   "t_ms": 2615,
+   "text": ":"
+  },
+  {
+   "t_ms": 2615,
+   "text": " ."
+  },
+  {
+   "t_ms": 2615,
+   "text": "mill"
+  },
+  {
+   "t_ms": 2615,
+   "text": "iseconds"
+  },
+  {
+   "t_ms": 2615,
+   "text": "("
+  },
+  {
+   "t_ms": 2615,
+   "text": "300"
+  },
+  {
+   "t_ms": 2615,
+   "text": "))\n"
+  },
+  {
+   "t_ms": 2615,
+   "text": "   "
+  },
+  {
+   "t_ms": 2615,
+   "text": " guard"
+  },
+  {
+   "t_ms": 2615,
+   "text": " !"
+  },
+  {
+   "t_ms": 2615,
+   "text": "Task"
+  },
+  {
+   "t_ms": 2615,
+   "text": ".is"
+  },
+  {
+   "t_ms": 2615,
+   "text": "Canc"
+  },
+  {
+   "t_ms": 2615,
+   "text": "elled"
+  },
+  {
+   "t_ms": 2615,
+   "text": " else"
+  },
+  {
+   "t_ms": 2615,
+   "text": " {"
+  },
+  {
+   "t_ms": 2615,
+   "text": " return"
+  },
+  {
+   "t_ms": 2615,
+   "text": " }\n"
+  },
+  {
+   "t_ms": 2615,
+   "text": "   "
+  },
+  {
+   "t_ms": 2615,
+   "text": " results"
+  },
+  {
+   "t_ms": 2615,
+   "text": " ="
+  },
+  {
+   "t_ms": 2615,
+   "text": " await"
+  },
+  {
+   "t_ms": 2615,
+   "text": " perform"
+  },
+  {
+   "t_ms": 2615,
+   "text": "Search"
+  },
+  {
+   "t_ms": 2615,
+   "text": "(query"
+  },
+  {
+   "t_ms": 2615,
+   "text": ")\n"
+  },
+  {
+   "t_ms": 2616,
+   "text": "}\n"
+  },
+  {
+   "t_ms": 2616,
+   "text": "```\n\n"
+  },
+  {
+   "t_ms": 2616,
+   "text": "###"
+  },
+  {
+   "t_ms": 2616,
+   "text": " Key"
+  },
+  {
+   "t_ms": 2630,
+   "text": " points"
+  },
+  {
+   "t_ms": 2630,
+   "text": "\n\n"
+  },
+  {
+   "t_ms": 2630,
+   "text": "-"
+  },
+  {
+   "t_ms": 2630,
+   "text": " **"
+  },
+  {
+   "t_ms": 2630,
+   "text": "`."
+  },
+  {
+   "t_ms": 2630,
+   "text": "deb"
+  },
+  {
+   "t_ms": 2649,
+   "text": "ounce"
+  },
+  {
+   "t_ms": 2649,
+   "text": "`"
+  },
+  {
+   "t_ms": 2649,
+   "text": "**"
+  },
+  {
+   "t_ms": 2649,
+   "text": " delays"
+  },
+  {
+   "t_ms": 2656,
+   "text": " emission"
+  },
+  {
+   "t_ms": 2673,
+   "text": " until"
+  },
+  {
+   "t_ms": 2673,
+   "text": " the"
+  },
+  {
+   "t_ms": 2673,
+   "text": " user"
+  },
+  {
+   "t_ms": 2686,
+   "text": " pauses"
+  },
+  {
+   "t_ms": 2703,
+   "text": " typing"
+  },
+  {
+   "t_ms": 2703,
+   "text": ";"
+  },
+  {
+   "t_ms": 2720,
+   "text": " **"
+  },
+  {
+   "t_ms": 2720,
+   "text": "`."
+  },
+  {
+   "t_ms": 2734,
+   "text": "remove"
+  },
+  {
+   "t_ms": 2734,
+   "text": "Du"
+  },
+  {
+   "t_ms": 2734,
+   "text": "plicates"
+  },
+  {
+   "t_ms": 2734,
+   "text": "()`"
+  },
+  {
+   "t_ms": 2749,
+   "text": "**"
+  },
+  {
+   "t_ms": 2749,
+   "text": " avoids"
+  },
+  {
+   "t_ms": 2749,
+   "text": " repeat"
+  },
+  {
+   "t_ms": 2765,
+   "text": " searches"
+  },
+  {
+   "t_ms": 2765,
+   "text": " for"
+  },
+  {
+   "t_ms": 2778,
+   "text": " the"
+  },
+  {
+   "t_ms": 2778,
+   "text": " same"
+  },
+  {
+   "t_ms": 2778,
+   "text": " text"
+  },
+  {
+   "t_ms": 2793,
+   "text": ".\n"
+  },
+  {
+   "t_ms": 2793,
+   "text": "-"
+  },
+  {
+   "t_ms": 2793,
+   "text": " **"
+  },
+  {
+   "t_ms": 2793,
+   "text": "`"
+  },
+  {
+   "t_ms": 2793,
+   "text": "Run"
+  },
+  {
+   "t_ms": 2809,
+   "text": "Loop"
+  },
+  {
+   "t_ms": 2809,
+   "text": ".main"
+  },
+  {
+   "t_ms": 2809,
+   "text": "`"
+  },
+  {
+   "t_ms": 2809,
+   "text": "**"
+  },
+  {
+   "t_ms": 2809,
+   "text": " or"
+  },
+  {
+   "t_ms": 2825,
+   "text": " `"
+  },
+  {
+   "t_ms": 2841,
+   "text": "Dispatch"
+  },
+  {
+   "t_ms": 2841,
+   "text": "Queue"
+  },
+  {
+   "t_ms": 2841,
+   "text": ".main"
+  },
+  {
+   "t_ms": 2841,
+   "text": "`"
+  },
+  {
+   "t_ms": 2854,
+   "text": " as"
+  },
+  {
+   "t_ms": 2870,
+   "text": " scheduler"
+  },
+  {
+   "t_ms": 2885,
+   "text": " keeps"
+  },
+  {
+   "t_ms": 2885,
+   "text": " UI"
+  },
+  {
+   "t_ms": 2899,
+   "text": " updates"
+  },
+  {
+   "t_ms": 2899,
+   "text": " on"
+  },
+  {
+   "t_ms": 2915,
+   "text": " the"
+  },
+  {
+   "t_ms": 2915,
+   "text": " main"
+  },
+  {
+   "t_ms": 2915,
+   "text": " thread"
+  },
+  {
+   "t_ms": 2915,
+   "text": ".\n"
+  },
+  {
+   "t_ms": 2915,
+   "text": "-"
+  },
+  {
+   "t_ms": 2915,
+   "text": " For"
+  },
+  {
+   "t_ms": 2931,
+   "text": " network"
+  },
+  {
+   "t_ms": 2946,
+   "text": " calls"
+  },
+  {
+   "t_ms": 2946,
+   "text": ","
+  },
+  {
+   "t_ms": 2946,
+   "text": " add"
+  },
+  {
+   "t_ms": 2946,
+   "text": " **"
+  },
+  {
+   "t_ms": 2962,
+   "text": "`."
+  },
+  {
+   "t_ms": 2962,
+   "text": "flat"
+  },
+  {
+   "t_ms": 2962,
+   "text": "Map"
+  },
+  {
+   "t_ms": 2978,
+   "text": "(max"
+  },
+  {
+   "t_ms": 2995,
+   "text": "P"
+  },
+  {
+   "t_ms": 3008,
+   "text": "ubl"
+  },
+  {
+   "t_ms": 3008,
+   "text": "ishers"
+  },
+  {
+   "t_ms": 3008,
+   "text": ":"
+  },
+  {
+   "t_ms": 3008,
+   "text": " ."
+  },
+  {
+   "t_ms": 3022,
+   "text": "max"
+  },
+  {
+   "t_ms": 3140,
+   "text": "("
+  },
+  {
+   "t_ms": 3140,
+   "text": "1"
+  },
+  {
+   "t_ms": 3140,
+   "text": "))"
+  },
+  {
+   "t_ms": 3140,
+   "text": "`"
+  },
+  {
+   "t_ms": 3140,
+   "text": "**"
+  },
+  {
+   "t_ms": 3140,
+   "text": " with"
+  },
+  {
+   "t_ms": 3140,
+   "text": " `"
+  },
+  {
+   "t_ms": 3140,
+   "text": "switch"
+  },
+  {
+   "t_ms": 3140,
+   "text": "To"
+  },
+  {
+   "t_ms": 3140,
+   "text": "Latest"
+  },
+  {
+   "t_ms": 3140,
+   "text": "`"
+  },
+  {
+   "t_ms": 3140,
+   "text": "-"
+  },
+  {
+   "t_ms": 3140,
+   "text": "style"
+  },
+  {
+   "t_ms": 3140,
+   "text": " handling"
+  },
+  {
+   "t_ms": 3140,
+   "text": ","
+  },
+  {
+   "t_ms": 3144,
+   "text": " or"
+  },
+  {
+   "t_ms": 3144,
+   "text": " prefer"
+  },
+  {
+   "t_ms": 3160,
+   "text": " the"
+  },
+  {
+   "t_ms": 3174,
+   "text": " `"
+  },
+  {
+   "t_ms": 3194,
+   "text": "task"
+  },
+  {
+   "t_ms": 3194,
+   "text": "(id"
+  },
+  {
+   "t_ms": 3209,
+   "text": ":)"
+  },
+  {
+   "t_ms": 3209,
+   "text": "`"
+  },
+  {
+   "t_ms": 3209,
+   "text": " version"
+  },
+  {
+   "t_ms": 3209,
+   "text": " so"
+  },
+  {
+   "t_ms": 3220,
+   "text": " cancellation"
+  },
+  {
+   "t_ms": 3220,
+   "text": " is"
+  },
+  {
+   "t_ms": 3235,
+   "text": " automatic"
+  },
+  {
+   "t_ms": 3235,
+   "text": ".\n"
+  },
+  {
+   "t_ms": 3235,
+   "text": "-"
+  },
+  {
+   "t_ms": 3235,
+   "text": " `"
+  },
+  {
+   "t_ms": 3252,
+   "text": "Task"
+  },
+  {
+   "t_ms": 3266,
+   "text": ".sleep"
+  },
+  {
+   "t_ms": 3266,
+   "text": "`"
+  },
+  {
+   "t_ms": 3266,
+   "text": " throws"
+  },
+  {
+   "t_ms": 3281,
+   "text": " on"
+  },
+  {
+   "t_ms": 3297,
+   "text": " cancellation"
+  },
+  {
+   "t_ms": 3331,
+   "text": ","
+  },
+  {
+   "t_ms": 3331,
+   "text": " so"
+  },
+  {
+   "t_ms": 3331,
+   "text": " `"
+  },
+  {
+   "t_ms": 3331,
+   "text": "try"
+  },
+  {
+   "t_ms": 3331,
+   "text": "?"
+  },
+  {
+   "t_ms": 3344,
+   "text": "`"
+  },
+  {
+   "t_ms": 3344,
+   "text": " plus"
+  },
+  {
+   "t_ms": 3359,
+   "text": " a"
+  },
+  {
+   "t_ms": 3376,
+   "text": " `"
+  },
+  {
+   "t_ms": 3376,
+   "text": "Task"
+  },
+  {
+   "t_ms": 3376,
+   "text": ".is"
+  },
+  {
+   "t_ms": 3376,
+   "text": "Canc"
+  },
+  {
+   "t_ms": 3376,
+   "text": "elled"
+  },
+  {
+   "t_ms": 3376,
+   "text": "`"
+  },
+  {
+   "t_ms": 3426,
+   "text": " check"
+  },
+  {
+   "t_ms": 3426,
+   "text": " is"
+  },
+  {
+   "t_ms": 3426,
+   "text": " the"
+  },
+  {
+   "t_ms": 3426,
+   "text": " safe"
+  },
+  {
+   "t_ms": 3426,
+   "text": " pattern"
+  },
+  {
+   "t_ms": 3426,
+   "text": "."
+  }
+ ]
+}

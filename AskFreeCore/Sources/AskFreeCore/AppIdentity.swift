@@ -11,7 +11,14 @@ public enum AppIdentity {
     public static let devBundleID = "io.github.schaeferanjon.askfree.dev"
 
     /// 当前进程是不是开发版。单元测试（xctest）里为 false，行为与正式版一致。
-    public static let isDevBuild: Bool = Bundle.main.bundleIdentifier == devBundleID
+    public static let isDevBuild: Bool = isDevBundleID(Bundle.main.bundleIdentifier)
+
+    /// 开发版的 bundle id：`….askfree.dev`，或者再往后接一段的副本（`….askfree.dev.latex`），
+    /// 副本和 Ask Free Dev 各用各的偏好设置，配置、密钥照样只走开发版那套，不碰正式版的数据和钥匙串
+    public static func isDevBundleID(_ id: String?) -> Bool {
+        guard let id else { return false }
+        return id == devBundleID || id.hasPrefix(devBundleID + ".")
+    }
 
     /// 带 -selfTest 启动的启动自测（CI 在正式包上跑）
     public static let isSelfTest: Bool = ProcessInfo.processInfo.arguments.contains("-selfTest")
@@ -53,9 +60,11 @@ public enum AppIdentity {
         return freshDataDirectory ?? demoDataDirectory ?? homeConfigDirectory
     }
 
-    /// 调试日志：正式版 ~/Library/Logs/AskFree.log，开发版 AskFree-dev.log
+    /// 调试日志：正式版 ~/Library/Logs/AskFree.log，开发版 AskFree-dev.log；开发版带 -demoData 时写进那个目录，
+    /// 几份开发版同时跑时日志不混在一起
     public static var debugLogFileURL: URL {
         if usesTemporaryData { return temporaryDataDirectory.appendingPathComponent("AskFree-selftest.log") }
+        if let demoDataDirectory { return demoDataDirectory.appendingPathComponent("AskFree-dev.log") }
         return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(isDevBuild ? "Library/Logs/AskFree-dev.log" : "Library/Logs/AskFree.log")
     }

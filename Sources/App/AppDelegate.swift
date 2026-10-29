@@ -44,12 +44,13 @@ enum AppLinks {
 ///   可以给几个，后面的等前一句答完 4 秒后当追问接着问
 /// - `-freshData <目录>`：配置、历史、密钥（含会员令牌）全换到这个目录，像刚装好；快捷键照常收，只在开发版生效。实测新装、会员用
 /// - `-demoData <目录>`：配置和历史换到这个目录，Key 照旧读开发版的；不收全局快捷键（不会误开麦），只在开发版生效。
-///   拍 README 截图用（scripts/readme-shots.mjs）
+///   拍 README 截图用（scripts/readme-shots.mjs）；调试日志也写进这个目录（AskFree-dev.log）
 /// - `-demoScreen <png> -demoPointer x,y [-demoWindow x,y,w,h]`：看屏幕问时不截真屏幕，把这张图当成整个屏幕，
 ///   指针和指针所在的窗口按图上的点算（图是 2 倍像素），只在开发版生效。截图、发给模型的图、历史里存的图都只有这张图
 /// - `-pretendScreenGrantedLater`：当作屏幕录制是启动后才给的（权限页出「重新打开 Ask Free」），只在开发版生效
 /// - `-updateFeedURL <地址>`：查这个地址的 appcast.xml 而不是正式版的，开发版本来不更新、带了才更新，实测自动更新用
 /// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导七步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
+/// - `-stallLog`：主线程一次连续忙超过 16 毫秒就在调试日志里记一行 `stall <ms> ms`（MainThreadStallMonitor），只在开发版生效
 /// - `-selfTest`：启动自测，正式版也认（CI 用）：菜单栏图标和主窗口出来就退出，退出码 0；
 ///   配置和密钥换到临时目录（AppIdentity.usesTemporaryData），不读写你的设置、钥匙串，不弹授权框，不登记开机启动
 enum DevLaunchOptions {
@@ -247,6 +248,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         installDevWindowShots()
+        MainThreadStallMonitor.start { [weak self] in self?.debugLog($0) }
         // 第一次打开出欢迎引导；看过引导但还没填 Key：打开主窗口的「开始」，不填用不了
         if let directory = DevLaunchOptions.snapshotPagesDirectory {
             runPageSnapshots(into: directory)

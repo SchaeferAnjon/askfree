@@ -99,11 +99,11 @@ code, .mono { font-family: var(--mono); font-size: .92em; }
 .sec { padding: 110px 0 0; }
 .sec-head { text-align: center; margin-bottom: 48px; }
 .eyebrow { font-size: 13px; color: var(--text-2); }
-.h2 { font-family: var(--sans); font-weight: 600; letter-spacing: -.01em; font-size: 46px; line-height: 1.3; margin: 12px 0 0; letter-spacing: 0; }
+.h2 { font-family: var(--sans); font-weight: 600; letter-spacing: -.01em; font-size: 46px; line-height: 1.3; margin: 12px 0 0; letter-spacing: 0; text-wrap: balance; }
 .sec-head p { max-width: 620px; margin: 16px auto 0; color: var(--text-2); font-size: 16px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
-.more { display: block; text-align: center; margin-top: 26px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; }
-.more:hover { text-decoration: underline; text-underline-offset: 3px; }
+.more { display: block; text-align: center; margin-top: 26px; font-size: 14px; color: var(--text); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; cursor: pointer; }
+.more:hover { text-decoration-color: var(--text); }
 /* 四格事实 */
 .facts { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .facts > div { padding: 30px 20px 30px; border-left: 1px solid var(--line); }
@@ -365,6 +365,7 @@ h3, h4 { font-weight: 600; }
 .pc h3 { margin-top: 10px; }
 .pn { font-family: var(--sans); font-weight: 600; font-size: 26px; color: var(--text-3); line-height: 1; }
 .pc ul, .plan .pc-list { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
+.plan .pc-list li { text-wrap: pretty; }
 .pc li::before, .plan .pc-list li::before { content: "✓"; color: var(--ok); margin-right: 8px; }
 .pc li.no { color: var(--text-2); }
 .pc li.no::before { content: "×"; color: var(--text-3); }
@@ -792,7 +793,7 @@ h3, h4 { font-weight: 600; }
     <div class="card pc"><div class="pn">1</div><h3>一台 Mac</h3><div class="mac"><svg viewBox="0 0 120 80" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="18" y="8" width="84" height="54" rx="5"/><path d="M6 68h108l-6 6H12z"/><text x="60" y="41" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor" stroke="none" font-family="-apple-system, sans-serif">macOS 14+</text></svg></div><ul><li>Apple 芯片和 Intel 芯片都行</li><li>macOS 14 Sonoma 或更新</li></ul></div>
     <div class="card pc"><div class="pn">2</div><h3>选一种用法</h3>
       <div class="keyrow"><span class="kt">会员</span><b>不用填 Key</b><span class="kd">前 100 位新用户免费问 30 个问题，之后每月 ¥9.9 或每年 ¥99</span></div>
-      <div class="keyrow"><span class="kt">自带 Key，永久免费</span><b>火山引擎 <i>加</i> DeepSeek 或千问</b><span class="kd">火山每个识别版本送 20 小时；百炼每个模型送 100 万 Token</span></div>
+      <div class="keyrow"><span class="kt">自带 Key，永久免费</span><b>火山引擎和 DeepSeek（或千问）</b><span class="kd">火山每个识别版本送 20 小时；百炼每个模型送 100&nbsp;万&nbsp;Token</span></div>
       <a class="more left" data-go="home#price">两种用法怎么选</a></div>
     <div class="card pc"><div class="pn">3</div><h3>三项系统权限</h3>
       <div class="perm-demo" id="permA" aria-hidden="true">
@@ -809,7 +810,7 @@ h3, h4 { font-weight: 600; }
   <div class="plans">
     <div class="card plan feat"><div class="pt">会员</div><h3>不用填任何 Key</h3>
       <div class="pr">¥9.9<small>每月</small></div><p class="ps">每年 ¥99；美元每月 $1.99，每年 $19.9</p>
-      <ul class="pc-list"><li>前 100 位新用户免费问 30 个问题，不过期</li><li>每天最多 200 个问题，北京时间早上 8 点重置</li><li>Stripe 自动续费，随时取消，用到这一期结束</li><li>人民币也能用微信一次买 1 个月 ¥9.9 或 1 年 ¥99，不自动续费</li><li>一个授权码最多用在 2 台 Mac 上</li></ul>
+      <ul class="pc-list"><li>前 100 位新用户免费问 30 个问题，不过期</li><li>每天最多 200 个问题，北京时间早上 8 点重置</li><li>Stripe 自动续费，随时取消，用到这一期结束</li><li>人民币也能用微信一次买 1&nbsp;个月 ¥9.9 或 1&nbsp;年 ¥99，不自动续费</li><li>一个授权码最多用在 2 台 Mac 上</li></ul>
       <p class="pnote">语音、问题和截图经我们的服务器转给火山引擎和 DeepSeek，服务器不存这些内容。</p>
       <a class="more" data-go="privacy#pv-member">会员发什么、发给谁</a></div>
     <div class="card plan"><div class="pt">自带 Key</div><h3>永久免费</h3>
@@ -873,7 +874,7 @@ h3, h4 { font-weight: 600; }
   <div class="sec-head"><div class="eyebrow">常见问题</div><h2 class="h2">装之前常问的</h2></div>
   <div class="faq">
     <details><summary>要花钱吗？</summary><p>软件免费，用法二选一。<b>会员</b>：前 100 位新用户免费问 30 个问题，不过期；之后每月 ¥9.9 或每年 ¥99（美元每月 $1.99、每年 $19.9），每天最多 200 个问题。人民币也能用微信一次买 1 个月或 1 年，不自动续费。<b>自带 Key</b>：永久免费，识别和回答按服务商的价格从你自己的账户扣，火山引擎每个识别版本送 20 小时，阿里百炼每个模型送 100 万 Token，以服务商的页面为准（<a href="https://www.volcengine.com/docs/6561/1359370" target="_blank" rel="noopener">火山引擎价格</a>、<a href="https://api-docs.deepseek.com/zh-cn/quick_start/pricing" target="_blank" rel="noopener">DeepSeek 价格</a>、<a href="https://help.aliyun.com/zh/model-studio/model-pricing" target="_blank" rel="noopener">百炼价格</a>）。</p></details>
-    <details><summary>怎么取消，怎么管理订阅？</summary><p>Ask Free 主窗口的会员页点<b>管理订阅</b>，在 Stripe 的页面里换卡、改月付年付或取消；取消后用到这一期结束，不再扣钱。没装 Ask Free 或换了电脑，打开 <a href="https://billing.stripe.com/p/login/28EaEQ7Ia9ir3ohabR2Nq00" target="_blank" rel="noopener">管理订阅的登录页</a>，填付款时的邮箱，收一封登录信。微信一次买的到期就停，不会自动扣款。</p></details>
+    <details><summary>怎么取消，怎么管理订阅？</summary><p>Ask Free 主窗口的会员页点<b>管理订阅</b>，在 Stripe 的页面里换卡、改月付年付或取消；取消后用到这一期结束，不再扣钱。没装 Ask Free 或换了电脑，打开<a href="https://billing.stripe.com/p/login/28EaEQ7Ia9ir3ohabR2Nq00" target="_blank" rel="noopener">管理订阅的登录页</a>，填付款时的邮箱，收一封登录信。微信一次买的到期就停，不会自动扣款。</p></details>
     <details><summary>能在两台 Mac 上用一个会员吗？</summary><p>能。一个授权码最多用在 2 台 Mac 上：在另一台的会员页输入授权码就行，每天 200 个问题两台合起来算。授权码在付款成功页和会员页上都能看到。</p></details>
     <details><summary>为什么装好后没有快捷键？</summary><p>每台 Mac 的键盘不一样，顺手的键也不一样，所以默认不设。在设置的<b>快捷键</b>页里选一个平时少用的键，比如右 Option、右 Command。</p></details>
     <details><summary>第一次打开提示无法验证，怎么办？</summary><p>Ask Free 有开发者签名，没有经过苹果公证。打开<b>系统设置</b>的<b>隐私与安全性</b>，在底部点<b>仍要打开</b>，只需要一次。</p></details>
@@ -915,7 +916,7 @@ h3, h4 { font-weight: 600; }
           </div>
           <div class="permstate" id="permState"></div></div></div>
 
-      <div class="step" id="s3"><div class="st-t"><div class="st-n">3</div><h3>选用法：会员或自带 Key</h3><p><b>会员</b>不用填 Key：欢迎引导里选会员，点<b>领取免费试用</b>，前 100 位新用户能免费问 30 个问题，之后每月 ¥9.9 或每年 ¥99。选会员的这一步到这里就好了。</p><p><b>自带 Key</b>永久免费，要两个 Key：识别语音用火山引擎（豆包）；回答选 DeepSeek（最快）或阿里百炼千问（自带联网搜索）。Key 存进系统钥匙串，只发给这一家服务商。右边能先试着填一下。</p><p class="g">火山引擎每个识别版本送 20 小时，百炼每个模型送 100 万 Token 免费额度。</p></div>
+      <div class="step" id="s3"><div class="st-t"><div class="st-n">3</div><h3>选用法：会员或自带 Key</h3><p><b>会员</b>不用填 Key：欢迎引导里选会员，点<b>领取免费试用</b>，前 100 位新用户能免费问 30 个问题，之后每月 ¥9.9 或每年 ¥99。选会员的话，这一步到这里就完成了。</p><p><b>自带 Key</b>永久免费，要两个 Key：识别语音用火山引擎（豆包）；回答选 DeepSeek（最快）或阿里百炼千问（自带联网搜索）。Key 存进系统钥匙串，只发给这一家服务商。右边能先试着填一下。</p><p class="g">火山引擎每个识别版本送 20 小时，百炼每个模型送 100 万 Token 免费额度。</p></div>
         <div class="st-w"><div class="keys">
           <label>识别语音 · 火山引擎（豆包）<a href="https://console.volcengine.com/speech/app" target="_blank" rel="noopener">去拿 Key</a></label>
           <input id="k1" placeholder="粘贴豆包 API Key" autocomplete="off">
@@ -997,7 +998,7 @@ h3, h4 { font-weight: 600; }
       <li><b>第一次领试用时</b>：发一个设备标识给我们的服务器。它是这台 Mac 的硬件编号加上软件名算出的哈希，看不出硬件编号本身；服务器收到后再加一道盐哈希才存。同时发平台、芯片和版本号，服务器只存平台。服务器还记下你的网络段（IPv4 的前三段、IPv6 的前 48 位），只用来限制同一个网络一天能领几份试用，不存完整的 IP 地址。</li>
       <li><b>每次提问</b>：录音、问题文字和截图发到我们的服务器，服务器原样转给火山引擎（语音识别）和 DeepSeek（回答、联网搜索），拿到结果就回给你。服务器不存录音、截图、问题和回答，只记这个问题用了多少：算不算一次、用了多少 token、识别了多长、联网查了几次。火山引擎和 DeepSeek 看到的是我们的服务器，看不到你的 IP 地址。</li>
       <li><b>付款</b>：由 Stripe 处理，卡号和微信付款信息只在 Stripe 那里，我们拿不到。Stripe 告诉我们付款邮箱、Stripe 的客户编号、订阅和付款的状态，我们用它们发授权码、算会员到哪天。</li>
-      <li><b>管理订阅</b>：点会员页的<b>管理订阅</b>，或打开 <a href="https://billing.stripe.com/p/login/28EaEQ7Ia9ir3ohabR2Nq00" target="_blank" rel="noopener">管理订阅的登录页</a>，都是在 Stripe 的页面里操作，按 <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 的隐私政策</a>处理。</li>
+      <li><b>管理订阅</b>：点会员页的<b>管理订阅</b>，或打开<a href="https://billing.stripe.com/p/login/28EaEQ7Ia9ir3ohabR2Nq00" target="_blank" rel="noopener">管理订阅的登录页</a>，都是在 Stripe 的页面里操作，按 <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 的隐私政策</a>处理。</li>
     </ul>
     <h2 id="pv-stats">匿名使用统计</h2>
     <p><b>我们会给前 100 位用户免费额度，所以需要统计有多少人在用。统计是匿名的。</b></p>

@@ -10,12 +10,17 @@ public enum AnswerMarkdown {
     public static func plainText(_ md: String) -> String { convert(md, preview: false).joined(separator: "\n") }
 
     /// 追问时折起来的上一轮、上个话题、历史列表的摘要用：再去掉 ``` 那一行，代码去掉首尾空格；公式写成普通字符、`\$` 写成 `$`。
-    /// 各段、各行用一个空格接成一段：折起来只给两三行，段落中间的空行会占掉一行、行尾也出不了「…」
+    /// 各段、各行用一个空格接成一段：折起来只给两三行，段落中间的空行会占掉一行、行尾也出不了「…」。
+    /// 前一行以中文标点（：，。）结尾时不加空格：全角标点自己带着空，再加一个看着像空了两格
     public static func preview(_ md: String) -> String {
         previewLock.lock()
         if let hit = previewCache[md] { previewLock.unlock(); return hit }
         previewLock.unlock()
-        let made = convert(md, preview: true).filter { !$0.isEmpty }.joined(separator: " ")
+        var made = ""
+        for line in convert(md, preview: true) where !line.isEmpty {
+            if let last = made.last, !fullwidthPunctuation.contains(last) { made += " " }
+            made += line
+        }
         previewLock.lock()
         if previewCache.count >= previewCacheLimit { previewCache.removeAll() }
         previewCache[md] = made
@@ -27,6 +32,7 @@ public enum AnswerMarkdown {
     private static var previewCache: [String: String] = [:]
     private static let previewCacheLimit = 64
     private static let previewLock = NSLock()
+    private static let fullwidthPunctuation: Set<Character> = ["，", "。", "：", "；", "！", "？", "、", "）", "」", "』", "》", "】", "…"]
 
     private static func convert(_ md: String, preview: Bool) -> [String] {
         var source = AnswerBlocks.splitLines(md)

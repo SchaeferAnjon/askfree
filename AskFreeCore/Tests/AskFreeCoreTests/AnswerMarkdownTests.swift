@@ -46,12 +46,12 @@ final class AnswerMarkdownTests: XCTestCase {
     func testInlineBackticksOutsideBlockStrippedInsideKept() {
         let md = "跑 `date` 看时间：\n```\necho `date`\n```"
         XCTAssertEqual(AnswerMarkdown.plainText(md), "跑 date 看时间：\n```\necho `date`\n```")
-        XCTAssertEqual(AnswerMarkdown.preview(md), "跑 date 看时间： echo `date`")
+        XCTAssertEqual(AnswerMarkdown.preview(md), "跑 date 看时间：echo `date`")
     }
 
     func testPreviewDropsCodeFenceLinesButKeepsCode() {
         let md = "装一下：\n\n```bash\n  npm install sharp\n\n```\n\n再跑一次。"
-        XCTAssertEqual(AnswerMarkdown.preview(md), "装一下： npm install sharp 再跑一次。")
+        XCTAssertEqual(AnswerMarkdown.preview(md), "装一下：npm install sharp 再跑一次。")
     }
 
     func testTrimsLeadingAndTrailingBlankLines() {
@@ -88,19 +88,19 @@ final class AnswerMarkdownTests: XCTestCase {
 
     func testPreviewFlattensDisplayFormulasOnTheirOwnLine() {
         XCTAssertEqual(AnswerMarkdown.preview("配方：\n\n$$\n(x+\\frac{b}{2a})^2\n$$\n\n\\[E=mc^2\\] 是质能"),
-                       "配方： (x+b/(2a))² E=mc² 是质能")
+                       "配方：(x+b/(2a))² E=mc² 是质能")
     }
 
     func testPreviewStillDropsFences() {
-        XCTAssertEqual(AnswerMarkdown.preview("跑：\n\n```python\n  print($x$)\n```\n完"), "跑： print($x$) 完")
+        XCTAssertEqual(AnswerMarkdown.preview("跑：\n\n```python\n  print($x$)\n```\n完"), "跑：print($x$) 完")
     }
 
     // MARK: - 评审修正（task-lue8s）
 
-    /// 折起来的那一轮只给两行：各段接成一段，中间一个空格，不留空行（设计评审 5）
+    /// 折起来的那一轮只给两行：各段接成一段，中间一个空格（中文标点后面不加），不留空行（设计评审 5）
     func testPreviewIsOneParagraph() {
         let md = "用 pandas 最省事：\n\n```python\nimport pandas as pd\n\ndf = pd.read_csv(\"a.csv\")\n```\n\n跑一下就行。"
-        XCTAssertEqual(AnswerMarkdown.preview(md), "用 pandas 最省事： import pandas as pd df = pd.read_csv(\"a.csv\") 跑一下就行。")
+        XCTAssertEqual(AnswerMarkdown.preview(md), "用 pandas 最省事：import pandas as pd df = pd.read_csv(\"a.csv\") 跑一下就行。")
         XCTAssertFalse(AnswerMarkdown.preview(md).contains("\n"))
         XCTAssertFalse(AnswerMarkdown.preview(md).contains("  "))
     }

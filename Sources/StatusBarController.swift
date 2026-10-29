@@ -55,6 +55,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         if !status.allDone {
             menu.addItem(ClosureMenuItem("继续设置…") { OnboardingWindowController.show() })
         }
+        // 会员：剩几个问题、到期、欠费，点开会员页
+        if UsageModeStore.isMember {
+            let line = MemberSummary.line(MemberClient.shared.status, error: MemberClient.shared.error)
+            let item = ClosureMenuItem("会员…") { SettingsWindowController.show(page: .member) }
+            item.attributedTitle = trailing("会员", "\(line.title) · \(line.detail)")
+            menu.addItem(item)
+        }
         // 新版本后台下好了：点一下重启装上（不点也行，退出时装）
         if let version = AppUpdater.shared.phase.readyVersion {
             menu.addItem(ClosureMenuItem("重启更新到 \(version)") { AppUpdater.shared.installAndRelaunch() })

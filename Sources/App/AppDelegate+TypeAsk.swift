@@ -25,10 +25,15 @@ extension AppDelegate {
             return
         }
         guard askAI.isConfigured() else {
-            overlayWindow.showHint("请先在「模型」页填入问答模型的 API Key")
-            showModelSettings()
+            if UsageModeStore.isMember {
+                overlayWindow.showHint(MemberAPIError.noServer.message)
+            } else {
+                overlayWindow.showHint("请先在「模型」页填入问答模型的 API Key")
+                showModelSettings()
+            }
             return
         }
+        if MainActor.assumeIsolated({ blockedByMembership() }) { return }
         let point = CGEvent(source: nil)?.location ?? .zero
         askTiming.reset(trigger: "hotkey-type", mode: "type")
         startAskScreenCapture(at: point)

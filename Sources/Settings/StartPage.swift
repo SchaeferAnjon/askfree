@@ -37,6 +37,13 @@ struct StartPage: View {
                     PermissionRows(compact: true, highlightNext: current == .permissions)
                 }
                 Hairline()
+                if UsageMode.current() == .member {
+                    // 会员不用填 Key：这一步写现在的用法，点开会员页
+                    step(2, item: .keys, title: "用会员，不用填 Key",
+                         detail: "前 100 位新用户免费问 30 个问题，之后每月 ¥9.9 或每年 ¥99。想用自己的 Key（永久免费）也行。") {
+                        Button("看看会员") { model.page = .member }.buttonStyle(SecondaryButtonStyle())
+                    } below: { EmptyView() }
+                } else {
                 step(2, item: .keys, title: "填两个 Key",
                      detail: "一个把你说的话听成文字，一个回答问题。推荐火山引擎加 DeepSeek，都有免费额度。") {
                     if status.keysReady {
@@ -47,6 +54,7 @@ struct StartPage: View {
                         Button("去填写") { model.page = .models }.buttonStyle(SecondaryButtonStyle())
                     }
                 } below: { EmptyView() }
+                }
                 Hairline()
                 step(3, item: .hotkey, title: "选一个提问键",
                      detail: "每台键盘不一样，Ask Free 不替你定。按住它说话，松开就问。") {

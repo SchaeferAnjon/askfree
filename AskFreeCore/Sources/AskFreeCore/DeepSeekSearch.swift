@@ -46,21 +46,34 @@ public enum DeepSeekSearch {
         return lines.joined(separator: "\n")
     }
 
-    public static func search(query: String, apiKey: String,
-                              completion: @escaping (Swift.Result<[Result], Error>) -> Void) {
-        guard let url = endpoint,
-              let body = try? JSONSerialization.data(withJSONObject: requestBody(query: query)) else {
-            completion(.failure(AskAI.AskError.apiError("DeepSeek 搜索地址无效")))
-            return
-        }
-        var request = URLRequest(url: url, timeoutInterval: timeout)
+    /// 会员模式下发到后台的搜索转发（POST /v1/askfree/search，请求、返回和 DeepSeek 的一样），带设备令牌和用量号
+    static func request(query: String, apiKey: String, member: AskMember?) -> URLRequest? {
+        guard let url = member.map({ MemberEndpoint.url($0.credentials.base, MemberEndpoint.searchPath) }) ?? endpoint,
+              let body = try? JSONSerialization.data(withJSONObject: requestBody(query: query)) else { return nil }
+        var request = URLRequest(url: url, timeoutInterval: member == nil ? timeout : 20)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        for (name, value) in member?.headers ?? [:] { request.setValue(value, forHTTPHeaderField: name) }
         request.httpBody = body
+        return request
+    }
+
+    public static func search(query: String, apiKey: String, member: AskMember? = nil,
+                              completion: @escaping (Swift.Result<[Result], Error>) -> Void) {
+        guard let request = request(query: query, apiKey: apiKey, member: member) else {
+            completion(.failure(AskAI.AskError.apiError("DeepSeek 搜索地址无效")))
+            return
+        }
         URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error { completion(.failure(error)); return }
-            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if let error { completion(.failure(member != nil ? MemberAPIError.network(error) : error)); return }
+            let http = response as? HTTPURLResponse
+            let status = http?.statusCode ?? 0
+            if let member, let http, status == 200, let headers = MemberUseHeaders(http) { member.onUse(headers) }
+            if member != nil, status != 200 {
+                completion(.failure(MemberAPIError.from(status: status, data: data, response: http)))
+                return
+            }
             guard status == 200, let data, let results = parseResults(data) else {
                 completion(.failure(AskAI.AskError.apiError("DeepSeek 搜索失败（\(status)）")))
                 return

@@ -1,8 +1,8 @@
 import Foundation
 
-/// 主窗口侧栏的九页，从上到下就是这个顺序（「显示」菜单的 ⌘1 到 ⌘9、侧栏 ↑↓ 都按它走）。
+/// 主窗口侧栏的十页，从上到下就是这个顺序（「显示」菜单的 ⌘1 到 ⌘9、⌘0，侧栏 ↑↓ 都按它走）。
 public enum MainPage: String, CaseIterable, Identifiable {
-    case start, history, hotkeys, models, answer, recording, permissions, general, about
+    case start, history, member, hotkeys, models, answer, recording, permissions, general, about
     public var id: String { rawValue }
 
     /// 侧栏「设置」小标题下面那七页
@@ -12,6 +12,7 @@ public enum MainPage: String, CaseIterable, Identifiable {
         switch self {
         case .start: return "开始"
         case .history: return "历史"
+        case .member: return "会员"
         case .hotkeys: return "快捷键"
         case .models: return "语音与模型"
         case .answer: return "回答方式"
@@ -26,6 +27,7 @@ public enum MainPage: String, CaseIterable, Identifiable {
         switch self {
         case .start: return "flag"
         case .history: return "clock"
+        case .member: return "sparkles"
         case .hotkeys: return "keyboard"
         case .models: return "waveform"
         case .answer: return "text.bubble"
@@ -51,6 +53,7 @@ public enum MainPage: String, CaseIterable, Identifiable {
         case "home", "start": self = .start
         case "model", "models": self = .models
         case "settings", "general": self = .general
+        case "members", "pricing", "membership": self = .member
         default:
             guard let page = MainPage(rawValue: argument.lowercased()) else { return nil }
             self = page
@@ -64,9 +67,9 @@ public enum MainPage: String, CaseIterable, Identifiable {
         return pages[max(0, min(pages.count - 1, i + delta))]
     }
 
-    /// 「显示」菜单的快捷键：第 1 到第 9 页是 ⌘1 到 ⌘9
+    /// 「显示」菜单的快捷键：第 1 到第 9 页是 ⌘1 到 ⌘9，第 10 页 ⌘0
     public var menuKeyEquivalent: String {
         let i = Self.allCases.firstIndex(of: self) ?? 0
-        return i < 9 ? "\(i + 1)" : ""
+        return i < 9 ? "\(i + 1)" : (i == 9 ? "0" : "")
     }
 }

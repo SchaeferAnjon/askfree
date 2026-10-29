@@ -55,6 +55,10 @@ final class AnswerPanel {
     var onRetry: ((_ question: String) -> Void)?
     /// 报错卡「去填 Key」「去换一家」
     var onOpenModels: (() -> Void)?
+    /// 报错卡「订阅会员」「续订」
+    var onOpenMembership: (() -> Void)?
+    /// 报错卡「管理订阅」（欠费换卡）
+    var onOpenPortal: (() -> Void)?
     /// 「这次没看屏幕」那条的「去授权」
     var onGrantScreen: (() -> Void)?
 
@@ -315,6 +319,12 @@ final class AnswerPanel {
         switch action {
         case .openModels:
             onOpenModels?()
+        case .openMembership:
+            onOpenMembership?()
+        case .openPortal:
+            onOpenPortal?()
+        case .typeInstead:
+            onType?()
         case .retry:
             guard let last = model.turns.last, last.state == .failed else { return }
             model.turns.removeLast()
@@ -384,7 +394,8 @@ final class AnswerPanel {
         let typing = TypeAskHotkey.isActive() ? TypeAskHotkey.current().map(\.symbol) : nil
         if model.voiceKey != voice { model.voiceKey = voice }
         if model.typeKey != typing { model.typeKey = typing }
-        let provider = Self.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
+        // 会员模式下回答是我们的后台给的，状态条写「会员」
+        let provider = UsageMode.current() == .member ? "会员" : Self.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
         if model.providerName != provider { model.providerName = provider }
     }
 
@@ -1031,11 +1042,14 @@ struct TurnsView: View {
                     if multi && index > 0 {
                         Text("追问").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
                     }
-                    Text(turn.question)
-                        .font(.system(size: compact ? 13 : 15, weight: .semibold))
-                        .foregroundStyle(compact ? Theme.text2 : Theme.text)
-                        .lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                    // 问题是空的：还没问出来就被会员后台拦下了（试用用完……），只放报错卡
+                    if !turn.question.isEmpty {
+                        Text(turn.question)
+                            .font(.system(size: compact ? 13 : 15, weight: .semibold))
+                            .foregroundStyle(compact ? Theme.text2 : Theme.text)
+                            .lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if let shot = turn.screenshot, !compact { ScreenThumb(shot: shot) }

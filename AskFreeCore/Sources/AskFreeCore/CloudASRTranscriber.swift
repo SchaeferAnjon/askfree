@@ -109,8 +109,10 @@ public final class CloudASRTranscriber {
 
     public init() {}
 
+    /// 会员模式下不用 Key（识别走后台转给火山极速版），连得到后台就算配好了
     public func isConfigured() -> Bool {
-        isConfigured(version: currentVersion())
+        if UsageMode.current() == .member { return MemberEndpoint.current != nil }
+        return isConfigured(version: currentVersion())
     }
 
     /// 当前版本对应服务商的凭证是否已配置。
@@ -211,6 +213,71 @@ public final class CloudASRTranscriber {
             debugLog?("Cloud ASR: version=\(version.rawValue) provider=bailian model=\(Self.bailianModel) audio=\(audioFormat)/\(audioData.count / 1024)KB budget=\(Int(budget))s")
             transcribeBailian(audioData: audioData, format: audioFormat, apiKey: apiKey, budgetSeconds: budget, completion: completion)
         }
+    }
+
+    // MARK: - 会员（后台转给火山极速版）
+
+    /// 会员模式：录音压成 m4a（编不出来用 wav）原样传给后台 POST /v1/askfree/asr，后台用我们的火山 Key 调极速版（§4.8）。
+    /// 带这一问的用量号：识别成功那一刻就算了这一次，后面问答失败、点重试（同一个号）不再算。
+    /// 后台说「识别服务忙」（火山 55000031 → 503 upstream）原地再试一次，同一个号。
+    public func transcribeMember(samples: [Float], sampleRate: Int = 16000, credentials: MemberCredentials, useId: String,
+                                 onUse: ((MemberUseHeaders) -> Void)? = nil,
+                                 completion: @escaping (Result<String, Error>) -> Void) {
+        let audio: Data
+        let format: String
+        if let m4a = M4AEncoder.makeM4AData(from: samples, sampleRate: sampleRate), !m4a.isEmpty {
+            (audio, format) = (m4a, "m4a")
+        } else if let wav = WAVEncoder.makeWAVData(from: samples, sampleRate: sampleRate), !wav.isEmpty {
+            (audio, format) = (wav, "wav")
+        } else {
+            completion(.failure(TranscriptionError.invalidAudio))
+            return
+        }
+        let seconds = Double(samples.count) / Double(max(sampleRate, 1))
+        let request = Self.memberRequest(audio: audio, format: format, seconds: seconds, credentials: credentials, useId: useId)
+        debugLog?("Cloud ASR: member audio=\(format)/\(audio.count / 1024)KB seconds=\(Int(seconds))")
+        func attempt(_ n: Int) {
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error {
+                    completion(.failure(MemberAPIError.network(error)))
+                    return
+                }
+                let http = response as? HTTPURLResponse
+                let result = Self.parseMemberResponse(status: http?.statusCode ?? 0, data: data, response: http)
+                // 剩几次只在识别出字时改：没听到话、出错的这一问后台不算（返回头里的数是还没作废时的）
+                if case .success = result, let http, let headers = MemberUseHeaders(http) { onUse?(headers) }
+                if case .failure(let e as MemberAPIError) = result, e.status == 503, e.code == "upstream", n == 0 {
+                    self.debugLog?("Cloud ASR: member upstream busy → retry once")
+                    attempt(1)
+                    return
+                }
+                completion(result)
+            }.resume()
+        }
+        attempt(0)
+    }
+
+    /// 发给后台的识别请求：请求体就是音频字节，Content-Type 说是 m4a 还是 wav，X-Audio-Seconds 让后台先拦超长的。
+    /// 极速版一次请求直接出字，后台给火山 120 秒，这边等 150 秒
+    static func memberRequest(audio: Data, format: String, seconds: Double, credentials: MemberCredentials, useId: String) -> URLRequest {
+        var request = URLRequest(url: MemberEndpoint.url(credentials.base, MemberEndpoint.asrPath), timeoutInterval: 150)
+        request.httpMethod = "POST"
+        request.setValue(format == "m4a" ? "audio/mp4" : "audio/wav", forHTTPHeaderField: "Content-Type")
+        request.setValue(String(format: "%.1f", seconds), forHTTPHeaderField: "X-Audio-Seconds")
+        for (name, value) in credentials.headers(useId: useId) { request.setValue(value, forHTTPHeaderField: name) }
+        request.httpBody = audio
+        return request
+    }
+
+    /// 后台的识别返回：200 {text, noSpeech}；没听到话是 noSpeech（不算次数）；其余按后台的错误码
+    static func parseMemberResponse(status: Int, data: Data?, response: HTTPURLResponse? = nil) -> Result<String, Error> {
+        guard status == 200 else { return .failure(MemberAPIError.from(status: status, data: data, response: response)) }
+        guard let data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return .failure(TranscriptionError.parseError)
+        }
+        let text = (json["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if (json["noSpeech"] as? Bool) == true || text.isEmpty { return .failure(TranscriptionError.noSpeech) }
+        return .success(text)
     }
 
     /// 按音频时长给出识别等待预算：基础 60s + 时长×0.5，封顶 600s（10 分钟）。

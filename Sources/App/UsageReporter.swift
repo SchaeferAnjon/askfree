@@ -27,8 +27,8 @@ final class UsageReporter {
             file: AppIdentity.configDirectory.appendingPathComponent("usage-ping.json"),
             api: api,
             enabled: { UsageConsent.load().allowsPing },
-            // 还没有会员：都算自带 Key。界面只有中文
-            info: { UsagePing.Info(version: version, plan: "own", lang: "zh") },
+            // 用会员还是自带 Key 每次报到时现读；界面只有中文
+            info: { UsagePing.Info(version: version, plan: UsageMode.current() == .member ? "member" : "own", lang: "zh") },
             log: { line in
                 DispatchQueue.main.async { (NSApp.delegate as? AppDelegate)?.debugLog(line) }
             })

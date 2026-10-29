@@ -19,6 +19,8 @@ final class MainWindowModel: ObservableObject {
     var arrivedByArrowKey = false
     /// 主窗口上问一次匿名使用统计（UsageConsentSheet）
     @Published var asksUsageConsent = false
+    /// 收费页（会员页、报错卡「订阅会员」、菜单栏打开）
+    @Published var showsPricing = false
 }
 
 // MARK: - 窗口
@@ -109,6 +111,8 @@ struct MainWindowView: View {
     @ObservedObject var model: MainWindowModel
     @ObservedObject private var status = SetupStatus.shared
     @ObservedObject private var store = SettingsStore.shared
+    @ObservedObject private var member = MemberClient.shared
+    @State private var usageMode = UsageMode.current()
     @State private var historyCount = AskHistoryStore.shared.threads().count
     /// 侧栏有键盘焦点时 ↑↓ 换页（点一下侧栏、或 Tab 进来）；历史列表、输入框有焦点时 ↑↓ 归它们
     @FocusState private var sidebarFocused: Bool
@@ -140,6 +144,15 @@ struct MainWindowView: View {
         }
         // 别处答过了（比如引导里），不用再问
         .onChange(of: store.usageConsent) { _, now in if !now.needsAsking { model.asksUsageConsent = false } }
+        .sheet(isPresented: $model.showsPricing) {
+            PricingSheet(close: { model.showsPricing = false }, openModels: { model.page = .models })
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .askFreeUsageModeDidChange)) { _ in usageMode = UsageMode.current() }
+    }
+
+    /// 会员模式下侧栏状态卡和「会员」那一行的橙点：试用用完、到期、欠费、今天的用完了
+    private var memberLine: MemberSummary.Line? {
+        usageMode == .member ? MemberSummary.line(member.status, error: member.error) : nil
     }
 
     private var startTitle: String { MainPage.start.title(setupDone: status.allDone) }
@@ -151,6 +164,7 @@ struct MainWindowView: View {
             Color.clear.frame(height: 40)   // 让过红绿灯
             sidebarRow(.start, title: startTitle, symbol: MainPage.start.symbol(setupDone: status.allDone))
             sidebarRow(.history, trailing: historyCount > 0 ? "\(historyCount)" : nil)
+            sidebarRow(.member, trailing: usageMode == .member ? nil : "自带 Key")
             Text("设置").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
                 .padding(.leading, 10).padding(.top, 14).padding(.bottom, 4)
             ForEach(MainPage.settings) { sidebarRow($0) }
@@ -207,18 +221,24 @@ struct MainWindowView: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private func needsAttention(_ page: MainPage) -> Bool { status.checklist.needsAttention(page) }
+    private func needsAttention(_ page: MainPage) -> Bool {
+        if page == .member { return memberLine?.warn == true && member.status != nil }
+        return status.checklist.needsAttention(page)
+    }
 
-    /// 还差几步 / 一切就绪：和「开始」三步、菜单栏第一行说同一件事
+    /// 还差几步 / 一切就绪：和「开始」三步、菜单栏第一行说同一件事。
+    /// 会员模式下设好了就换成会员的一句：免费试用 · 还剩 27 个问题，点开会员页
     private var statusCard: some View {
-        Button { model.page = .start } label: {
+        let memberCard = status.allDone ? memberLine : nil
+        return Button { model.page = memberCard == nil ? .start : .member } label: {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
-                    Circle().fill(status.allDone ? Theme.ok : Theme.warn).frame(width: 7, height: 7)
-                    Text(status.checklist.statusTitle)
+                    Circle().fill(memberCard.map { $0.warn ? Theme.warn : Theme.ok } ?? (status.allDone ? Theme.ok : Theme.warn))
+                        .frame(width: 7, height: 7)
+                    Text(memberCard?.title ?? status.checklist.statusTitle)
                         .font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.text)
                 }
-                Text(status.allDone ? status.providerSummary : status.checklist.missingSummary)
+                Text(memberCard?.detail ?? (status.allDone ? status.providerSummary : status.checklist.missingSummary))
                     .font(.system(size: 11.5)).foregroundStyle(Theme.text2)
                     .lineLimit(2)
             }
@@ -269,6 +289,7 @@ struct MainWindowView: View {
         switch model.page {
         case .start: StartPage(model: model)
         case .history: EmptyView()
+        case .member: MemberPage(model: model)
         case .hotkeys: HotkeysPage()
         case .models: ModelsPage()
         case .answer: AnswerPage()

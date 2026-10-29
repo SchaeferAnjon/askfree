@@ -33,6 +33,14 @@ public enum AppIdentity {
         return URL(fileURLWithPath: (arguments[i + 1] as NSString).expandingTildeInPath, isDirectory: true)
     }()
 
+    /// 开发版带 -freshData <目录> 启动（实测「新装」用）：配置、历史和密钥（含会员的设备令牌）全放这个目录，
+    /// 像一台刚装好的 Mac：看不到开发版平时填的 Key，也不带它的会员令牌
+    public static let freshDataDirectory: URL? = {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard isDevBuild, let i = arguments.firstIndex(of: "-freshData"), i + 1 < arguments.count else { return nil }
+        return URL(fileURLWithPath: (arguments[i + 1] as NSString).expandingTildeInPath, isDirectory: true)
+    }()
+
     /// 平时的配置目录：正式版 ~/.config/askfree，开发版 ~/.config/askfree-dev
     private static var homeConfigDirectory: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -42,7 +50,7 @@ public enum AppIdentity {
     /// 配置目录：正式版 ~/.config/askfree，开发版 ~/.config/askfree-dev（-demoData 时是那个目录）
     public static var configDirectory: URL {
         if usesTemporaryData { return temporaryDataDirectory.appendingPathComponent("config", isDirectory: true) }
-        return demoDataDirectory ?? homeConfigDirectory
+        return freshDataDirectory ?? demoDataDirectory ?? homeConfigDirectory
     }
 
     /// 调试日志：正式版 ~/Library/Logs/AskFree.log，开发版 AskFree-dev.log
@@ -57,6 +65,9 @@ public enum AppIdentity {
     public static func defaultSecretStore() -> SecretStoring {
         if usesTemporaryData {
             return FileSecretStore(fileURL: configDirectory.appendingPathComponent("dev_secrets.json"))
+        }
+        if let freshDataDirectory {
+            return FileSecretStore(fileURL: freshDataDirectory.appendingPathComponent("dev_secrets.json"))
         }
         if isDevBuild {
             return FileSecretStore(fileURL: homeConfigDirectory.appendingPathComponent("dev_secrets.json"))

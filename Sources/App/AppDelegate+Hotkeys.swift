@@ -72,6 +72,8 @@ extension AppDelegate {
         answerPanel.onType = { [weak self] in self?.toggleTypeAsk() }
         answerPanel.onRetry = { [weak self] question in self?.retryAsk(question) }
         answerPanel.onOpenModels = { [weak self] in self?.showModelSettings() }
+        answerPanel.onOpenMembership = { [weak self] in MainActor.assumeIsolated { self?.openMembership() } }
+        answerPanel.onOpenPortal = { [weak self] in MainActor.assumeIsolated { self?.openMemberPortal() } }
         answerPanel.onGrantScreen = {
             MainActor.assumeIsolated { SetupStatus.shared.requestScreenRecording() }
         }

@@ -225,36 +225,36 @@ extension AppDelegate {
         let run: (AskMember?, @escaping (Result<String, Error>) -> Void) -> Void = { [weak self] member, completion in
             guard let self else { return }
             self.askAI.answer(question: question, history: history, screen: screen, member: member, onPartial: { [weak self] partial in
-            guard let self, self.askRound == round else { return }
-            self.askSlowHintWork?.cancel()
-            self.answerPanel.updatePartial(partial)
-        }, onImages: { [weak self] images in
-            self?.recordHistoryImages(images, draft: draft)
-            // 只挂在还是这一话题、这一轮的浮窗上；用户已经问了下一题就丢掉
-            guard let self, self.askRound == round, self.answerPanel.threadID == thread else { return }
-            self.answerPanel.setImages(images)
-        }, onScreenUsed: { [weak self] in
-            draft.screenUsed = true
-            // 追问时模型不一定看屏幕：真发给它了才挂截图，没挂就是只按前面的对话答的
-            guard let self, let screen, self.askRound == round else { return }
-            self.answerPanel.setScreenshot(overviewJPEG: screen.overviewJPEG, closeUpJPEG: screen.closeUpJPEG)
-        }, onRouteNote: { [weak self] note in
-            // 这一问转去联网了：「正在联网查…」→ 出字后换成「已联网查询」；状态条答完写「联网」
-            draft.searched = true
-            guard let self else { return }
-            DispatchQueue.main.async {
-                guard self.askRound == round else { return }
-                self.answerPanel.markSearched()
-                self.answerPanel.setNote(note)
-            }
-        }, onThinking: { [weak self] in
-            // 模型真的开始吐思考内容（关思考没生效）会先沉默一阵：告诉用户它在想，不是卡住了
-            guard let self, self.askRound == round else { return }
-            self.answerPanel.setNote(AskVision.thinkingNotice)
-        }, onStats: { [weak self] stats in
-            guard let self, self.askRound == round else { return }
-            self.askTiming.modelStats = stats
-        }, completion: completion)
+                guard let self, self.askRound == round else { return }
+                self.askSlowHintWork?.cancel()
+                self.answerPanel.updatePartial(partial)
+            }, onImages: { [weak self] images in
+                self?.recordHistoryImages(images, draft: draft)
+                // 只挂在还是这一话题、这一轮的浮窗上；用户已经问了下一题就丢掉
+                guard let self, self.askRound == round, self.answerPanel.threadID == thread else { return }
+                self.answerPanel.setImages(images)
+            }, onScreenUsed: { [weak self] in
+                draft.screenUsed = true
+                // 追问时模型不一定看屏幕：真发给它了才挂截图，没挂就是只按前面的对话答的
+                guard let self, let screen, self.askRound == round else { return }
+                self.answerPanel.setScreenshot(overviewJPEG: screen.overviewJPEG, closeUpJPEG: screen.closeUpJPEG)
+            }, onRouteNote: { [weak self] note in
+                // 这一问转去联网了：「正在联网查…」→ 出字后换成「已联网查询」；状态条答完写「联网」
+                draft.searched = true
+                guard let self else { return }
+                DispatchQueue.main.async {
+                    guard self.askRound == round else { return }
+                    self.answerPanel.markSearched()
+                    self.answerPanel.setNote(note)
+                }
+            }, onThinking: { [weak self] in
+                // 模型真的开始吐思考内容（关思考没生效）会先沉默一阵：告诉用户它在想，不是卡住了
+                guard let self, self.askRound == round else { return }
+                self.answerPanel.setNote(AskVision.thinkingNotice)
+            }, onStats: { [weak self] stats in
+                guard let self, self.askRound == round else { return }
+                self.askTiming.modelStats = stats
+            }, completion: completion)
         }
         guard UsageModeStore.isMember else {
             run(nil, finish)

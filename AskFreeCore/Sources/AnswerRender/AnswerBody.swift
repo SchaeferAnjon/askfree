@@ -119,18 +119,29 @@ struct DisplayMathView: View {
 /// 一张单独成行的公式图：放得下就直接放；放不下进横向 ScrollView（只有这时才有内层滚动）
 struct DisplayGlyph: View {
     let glyph: MathGlyph
+    /// 跟在公式后面的标点（从段落里拆出来的宽行内公式才有）
+    var trailing = ""
+    var font: Font = .body
 
-    var body: some View {
-        let image = Image(nsImage: glyph.image).renderingMode(.template)
-        ViewThatFits(in: .horizontal) {
-            image
+    /// 公式图；带标点时图和标点拼成一行字（标点落在公式的基线上）
+    @ViewBuilder private var content: some View {
+        if trailing.isEmpty {
+            Image(nsImage: glyph.image).renderingMode(.template)
                 .padding(.vertical, 4)
                 .frame(height: glyph.size.height + 8)
+        } else {
+            (Text(Image(nsImage: glyph.image).renderingMode(.template)).baselineOffset(-glyph.descent) + Text(trailing).font(font))
+                .fixedSize()
+                .padding(.vertical, 4)
+        }
+    }
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            content
             // 高度等于内容；系统设成「始终显示滚动条」时 SwiftUI 自己给横向滚动条多留一条高度（实测 57 → 72），公式不被盖住
-            ScrollView(.horizontal, showsIndicators: true) {
-                image.padding(.vertical, 4).frame(height: glyph.size.height + 8)
-            }
-            .fixedSize(horizontal: false, vertical: true)
+            ScrollView(.horizontal, showsIndicators: true) { content }
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -13,8 +13,8 @@ enum InlineText {
 
     enum Part {
         case text(Text)
-        /// 太宽的行内公式：照独立公式的样子单独一行
-        case wideMath(MathGlyph)
+        /// 太宽的行内公式：照独立公式的样子单独一行；紧跟着的标点（「，」「.」）跟它留在同一行，不落到下一行行首
+        case wideMath(MathGlyph, trailing: String)
     }
 
     struct Rendered {
@@ -31,6 +31,8 @@ enum InlineText {
     private static var order: [Key] = []
 
     static func resetCache() { cache.removeAll(); order.removeAll() }
+
+    static let trailingPunctuation: Set<Character> = [".", ",", ";", ":", "!", "?", ")", "。", "，", "、", "；", "：", "！", "？", "）", "」", "』", "”", "’"]
 
     static func render(_ source: String, style: AnswerStyle) -> Rendered {
         let key = Key(source: source, style: style)
@@ -87,7 +89,18 @@ enum InlineText {
             if let glyph = MathGlyphs.glyph(tex, display: false, size: style.mathSize) {
                 if glyph.size.width > wideMathWidth {
                     flush()
-                    parts.append(.wideMath(glyph))
+                    var trailing = ""
+                    var j = next
+                    while j < attributed.endIndex, trailing.count < 3, Self.trailingPunctuation.contains(chars[j]) {
+                        trailing.append(chars[j])
+                        j = chars.index(after: j)
+                    }
+                    while j < attributed.endIndex, chars[j] == " " { j = chars.index(after: j) }
+                    spoken += trailing
+                    parts.append(.wideMath(glyph, trailing: trailing))
+                    i = j
+                    segmentStart = j
+                    continue
                 } else {
                     append(Text(Image(nsImage: glyph.image).renderingMode(.template)).baselineOffset(-glyph.descent))
                 }
@@ -147,8 +160,8 @@ struct RichText: View {
                     switch part {
                     case .text(let text):
                         text.font(font).lineSpacing(lineSpacing).fixedSize(horizontal: false, vertical: true)
-                    case .wideMath(let glyph):
-                        DisplayGlyph(glyph: glyph)
+                    case .wideMath(let glyph, let trailing):
+                        DisplayGlyph(glyph: glyph, trailing: trailing, font: font)
                     }
                 }
             }

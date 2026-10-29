@@ -27,8 +27,11 @@ targets:
         product: AnswerRender
       - package: Sparkle
     postBuildScripts:
+      # 输入写上拷进来的资源包：等它拷完再删（不写的话两步可能同时跑，删完又被拷回来）
       - name: 只留公式用的那套字体
         script: bash "$SRCROOT/scripts/trim_math_fonts.sh"
+        inputFiles:
+          - $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/SwiftMath_SwiftMath.bundle
         basedOnDependencyAnalysis: false
       - name: 重签 Sparkle 的辅助程序
         script: bash "$SRCROOT/scripts/sign_sparkle.sh"

@@ -50,6 +50,10 @@ HARDENED_RUNTIME=YES
 # 安全时间戳要连苹果的时间戳服务器，ad hoc 签名不支持
 SIGN_FLAGS=""
 [ "$SIGN_IDENTITY" != "-" ] && SIGN_FLAGS="--timestamp"
+# 签名一律 Manual、团队号照证书给：Swift 包里的资源包（公式字体那个 SwiftMath_SwiftMath）默认走自动签名，
+# 不给团队号会报「requires a development team」
+SIGN_TEAM=""
+[ "$SIGN_IDENTITY" != "-" ] && SIGN_TEAM="$TEAM_ID"
 # 发版先清掉上次的编译结果再编：包里的东西全部出自这次的代码，换过目录的检出也不会撞上旧的编译记录
 ACTIONS=(build)
 [ "$RELEASE" = "1" ] && ACTIONS=(clean build)
@@ -66,6 +70,8 @@ xcodebuild \
     ARCHS="arm64 x86_64" \
     ONLY_ACTIVE_ARCH=NO \
     CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
+    CODE_SIGN_STYLE=Manual \
+    DEVELOPMENT_TEAM="$SIGN_TEAM" \
     CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
     OTHER_CODE_SIGN_FLAGS="$SIGN_FLAGS" \
     ENABLE_HARDENED_RUNTIME="$HARDENED_RUNTIME" \

@@ -384,6 +384,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/SwiftMath_SwiftMath.bundle",
 			);
 			name = "只留公式用的那套字体";
 			outputFileListPaths = (

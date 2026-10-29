@@ -161,9 +161,9 @@ struct OnboardingView: View {
         .onChange(of: step) { _, now in OnboardingProgress.step = now }
     }
 
-    /// 还没填过回答的 Key：推荐的 DeepSeek 先选好
+    /// 还没填过回答的 Key：推荐的 DeepSeek 先选好（会员模式下 askReady 是真的，所以看框里有没有 Key，以后换成自带 Key 时默认就是它）
     private func prepare() {
-        if !status.askReady && models.ask != "deepseek" { models.selectAsk("deepseek") }
+        if !models.askKeyFilled && models.ask != "deepseek" { models.selectAsk("deepseek") }
     }
 
     // MARK: 侧栏

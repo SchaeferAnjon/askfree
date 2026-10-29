@@ -55,21 +55,27 @@ extension AppDelegate {
     func blockedByMembership(voice: Bool) -> Bool {
         guard UsageModeStore.isMember else { return false }
         let member = MemberClient.shared
-        // 计量接口回过的、/status 里看不出来的上限（这张授权今天的成本、识别分钟）：到重置那一刻为止
+        // 这张授权今天的成本、识别分钟（/status 的 limitBy、voice，或计量接口回过的）：到重置那一刻为止
         if let block = member.usageBlock(voice: voice) {
-            debugLog("Member: blocked before asking reason=\(block.code) (remembered)")
+            debugLog("Member: blocked before asking reason=\(block.code) (limit)")
             showMemberNotice(block)
             return true
         }
         guard let s = member.status, !s.canUse, let reason = s.reason else { return false }
-        if reason == "daily-limit", let reset = s.today?.resetAt, Date().timeIntervalSince1970 * 1000 >= reset {
+        let reset = s.resetAt ?? s.today?.resetAt
+        if reason == "daily-limit", let reset, Date().timeIntervalSince1970 * 1000 >= reset {
             Task { await member.refresh() }
             return false
         }
-        let message = reason == "daily-limit" ? "今天的 \(s.today?.limit ?? 200) 个问题用完了，北京时间早上 8 点重置" : MemberSummary.line(s).detail
+        let message: String
+        if reason == "daily-limit" {
+            message = s.limitBy == "cost" ? "今天的用量到上限了，北京时间早上 8 点重置" : "今天的 \(s.today?.limit ?? 200) 个问题用完了，北京时间早上 8 点重置"
+        } else {
+            message = MemberSummary.line(s).detail
+        }
         debugLog("Member: blocked before asking reason=\(reason)")
         showMemberNotice(MemberAPIError(status: reason == "daily-limit" ? 429 : 402, code: reason, message: message,
-                                        resetAt: s.today?.resetAt))
+                                        resetAt: reason == "daily-limit" ? reset : nil))
         Task { await member.refresh() }
         return true
     }
@@ -78,7 +84,8 @@ extension AppDelegate {
     /// 右上角正在看一段对话：卡片接在它后面，对话和追问都留着；上一问还在出字：不碰它，只在指针旁边提示一句；
     /// 浮窗不在：右上角只放这一张卡
     func showMemberNotice(_ error: MemberAPIError) {
-        let failure = AskFailure(error: error).withoutRetry
+        let trialResult = MainActor.assumeIsolated { MemberClient.shared.status?.trialResult }
+        let failure = AskFailure(error: error, trialResult: trialResult).withoutRetry
         if askInFlight {
             overlayWindow.showHint(failure.title(provider: "会员"))
             return

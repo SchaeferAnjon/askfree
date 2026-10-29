@@ -223,7 +223,8 @@ extension AppDelegate {
                         // 后台说这个号过了重试窗口：卡片上的「重新问」换新号
                         if member.code == "use-expired", self.lastAskUse?.id == use.id { self.lastAskUse = nil }
                     }
-                    self.answerPanel.fail(AskFailure(error: err))
+                    let trialResult = MainActor.assumeIsolated { MemberClient.shared.status?.trialResult }
+                    self.answerPanel.fail(AskFailure(error: err, trialResult: trialResult))
                 }
             }
         }

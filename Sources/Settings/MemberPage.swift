@@ -180,6 +180,14 @@ struct MemberPage: View {
                     SettingsRow(title: "今天还能问 \(today.left) 个", detail: "每天 \(today.limit) 个问题，\(MemberFormat.resetLine(today.resetAt))重置。",
                                 icon: "calendar")
                 }
+                if let v = s?.voice, s?.canUse == true, v.reason == "asr-limit" {
+                    // 识别分钟用完只停语音：打字问照常
+                    Hairline(inset: 46)
+                    SettingsRow(title: v.resetAt == nil ? "试用的语音识别用完了" : "今天的语音识别用完了",
+                                detail: v.resetAt.map { "\(v.limitMinutes) 分钟用完了，\(MemberFormat.resetLine($0))重置；打字提问照常。" }
+                                    ?? "试用一共 \(v.limitMinutes) 分钟，已经用完了；打字提问照常。",
+                                icon: "waveform")
+                }
                 Hairline()
                 HStack(spacing: 10) {
                     Button(primaryTitle(s)) { model.showsPricing = true }
@@ -233,7 +241,7 @@ struct MemberPage: View {
         }
         if s.isMember, let until = s.memberUntil { return "用到 \(MemberFormat.day(until))。" }
         switch s.reason {
-        case "trial-closed": return "免费试用只发前 100 份，同一个网络里领得多了也会发不到。订阅以后每天能问 200 个，或者改用自带 Key。"
+        case "trial-closed": return MemberTrialResult.reason(s.trialResult) + "订阅以后每天能问 200 个，或者改用自带 Key。"
         case "sub-ended": return "续订或再买一段就能接着问；没用完的试用次数也还在。"
         case "trial-used-up": return "免费的 \(s.trial.total) 个问题用完了。订阅以后每天能问 200 个，或者改用自带 Key。"
         default: return "前 100 位新用户各 \(s.trial.total) 个问题，不过期。已经用了 \(s.trial.used) 个。"

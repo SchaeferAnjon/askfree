@@ -19,9 +19,9 @@ public enum AskFailure: Equatable {
         case useOwnKeys
     }
 
-    /// 回答失败的原因分成几类；认不出的原样写出来
-    public init(error: Error) {
-        if let member = error as? MemberAPIError { self = .member(MemberProblem(member)); return }
+    /// 回答失败的原因分成几类；认不出的原样写出来。trialResult：这台注册时领试用的结果（/status），没领到试用的卡片照它写原因
+    public init(error: Error, trialResult: String? = nil) {
+        if let member = error as? MemberAPIError { self = .member(MemberProblem(member, trialResult: trialResult)); return }
         if case AskAI.AskError.noAPIKey = error { self = .noKey; return }
         if case AskAI.AskError.quotaExhausted = error { self = .quota; return }
         if let url = error as? URLError {
@@ -140,7 +140,7 @@ public struct MemberProblem: Equatable, Sendable {
                       isError: isError, symbol: symbol)
     }
 
-    public init(_ e: MemberAPIError, timeZone: TimeZone = .current) {
+    public init(_ e: MemberAPIError, trialResult: String? = nil, timeZone: TimeZone = .current) {
         let subscribe = Button(title: "订阅会员", action: .openMembership)
         let ownKeys = Button(title: "改用自带 Key", action: .useOwnKeys)
         let retry = Button(title: "再试一次", action: .retry)
@@ -157,9 +157,9 @@ public struct MemberProblem: Equatable, Sendable {
             self.init(code: e.code, title: "免费试用用完了", detail: "订阅会员就能接着问：每天 200 个问题，每月 ¥9.9 或每年 ¥99。" + orOwnKeys,
                       actions: [subscribe, ownKeys], isError: false, symbol: "gift")
         case "trial-closed":
-            // 后台对「名额发完」和「同一网段 / 当天领的太多、没发」都回这个码，分不出是哪种：照实说没领到
-            self.init(code: e.code, title: "这台电脑没有领到免费试用",
-                      detail: "免费试用只发前 100 份，同一个网络里领得多了也会发不到。订阅会员就能问：每天 200 个问题，每月 ¥9.9 或每年 ¥99。" + orOwnKeys,
+            // 后台对「名额发完」和「同一网段 / 当天领的太多、没发」都回这个码；具体是哪种看 /status 的 trialResult
+            self.init(code: e.code, title: MemberTrialResult.title(trialResult),
+                      detail: MemberTrialResult.reason(trialResult) + "订阅会员就能问：每天 200 个问题，每月 ¥9.9 或每年 ¥99。" + orOwnKeys,
                       actions: [subscribe, ownKeys], isError: false, symbol: "gift")
         case "sub-ended":
             self.init(code: e.code, title: "会员到期了", detail: "续订或再买一段，就能接着问。" + orOwnKeys,
@@ -170,6 +170,10 @@ public struct MemberProblem: Equatable, Sendable {
         case "daily-limit":
             self.init(code: e.code, title: "今天的额度用完了", detail: e.message + localReset,
                       actions: [], isError: false, symbol: "calendar")
+        case "re-register-limit":
+            // 同一台电脑 24 小时里重新注册太多次（后台防一个设备标识在多台电脑上共用会员）：message 写了要等多久
+            self.init(code: e.code, title: "这台电脑重新注册太多次了", detail: e.message,
+                      actions: [], isError: true, symbol: "clock")
         case "asr-limit":
             let trial = e.status == 402
             self.init(code: e.code, title: trial ? "试用的语音识别用完了" : "今天的语音识别用完了",
@@ -237,7 +241,7 @@ public enum MemberSummary {
             if !registered { return Line(title: "会员", detail: "还没领免费试用", warn: false) }
             return Line(title: "会员", detail: "正在连接会员服务器…", warn: false)
         }
-        if block?.code == "daily-limit" {
+        if block?.code == "daily-limit" || (s.reason == "daily-limit" && s.limitBy == "cost") {
             return Line(title: s.isMember ? "会员" : "免费试用", detail: "今天的用量到上限了", warn: true)
         }
         if s.isMember {
@@ -252,7 +256,7 @@ public enum MemberSummary {
         }
         if s.plan == "trial" { return Line(title: "免费试用", detail: "还剩 \(s.trial.left) 个问题", warn: false) }
         switch s.reason {
-        case "trial-closed": return Line(title: "会员", detail: "没有领到免费试用", warn: true)
+        case "trial-closed": return Line(title: "会员", detail: s.trialResult == "closed" ? "免费试用已经发完了" : "没有领到免费试用", warn: true)
         case "sub-ended": return Line(title: "会员", detail: "已经到期了", warn: true)
         case "payment-failed": return Line(title: "会员", detail: "续费没扣成，要换卡", warn: true)
         default: return Line(title: "免费试用", detail: "\(s.trial.total) 个问题用完了", warn: true)
@@ -266,10 +270,10 @@ public enum MemberSummary {
         case "existing":
             guard let status else { return nil }
             if status.isMember { return "这台电脑已经是会员了。" }
+            if !status.trial.granted { return MemberTrialResult.reason(status.trialResult) + "可以订阅会员，或者改用自带 Key（永久免费）。" }
             return status.trial.left > 0 ? "这台电脑以前领过试用，还剩 \(status.trial.left) 个问题。" : "这台电脑以前领过试用，已经用完了。"
-        case "closed": return "前 100 位新用户的免费名额已经发完了。可以订阅会员，或者改用自带 Key（永久免费）。"
-        case "ip-limit": return "这台电脑没有领到免费试用：同一个网络里领过的电脑太多了。可以订阅会员，或者改用自带 Key（永久免费）。"
-        case "daily-limit": return "这台电脑没有领到免费试用：领的人太多了。可以订阅会员，或者改用自带 Key（永久免费）。"
+        case "closed", "ip-limit", "daily-limit":
+            return MemberTrialResult.reason(trial) + "可以订阅会员，或者改用自带 Key（永久免费）。"
         default: return nil
         }
     }

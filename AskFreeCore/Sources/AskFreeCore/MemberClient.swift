@@ -18,8 +18,8 @@ public final class MemberClient: ObservableObject {
     @Published public private(set) var pendingCheckout: PendingCheckout?
     /// 正在问 /status
     @Published public private(set) var isRefreshing = false
-    /// 计量接口回的、/status 里看不出来的上限：这张授权今天的成本到了（429 daily-limit）、识别分钟用完了（429 / 402 asr-limit）。
-    /// 记到重置那一刻，按键时先看它（usageBlock），免得每按一次都白录一遍、上传一遍
+    /// 计量接口回过的上限：这张授权今天的成本到了（429 daily-limit）、识别分钟用完了（429 / 402 asr-limit）。
+    /// /status 里也有（reason + limitBy、voice），这里另记一份到重置那一刻：402 / 429 之后问 /status 没问成也照样拦，免得每按一次都白录一遍
     @Published public private(set) var dailyBlock: MemberAPIError?
     @Published public private(set) var asrBlock: MemberAPIError?
 
@@ -176,7 +176,7 @@ public final class MemberClient: ObservableObject {
     }
 
     /// 计量接口回了 402 / 429（试用用完、每天上限……）：马上问一次 /status，卡片和会员页跟后台对齐。
-    /// 成本上限和识别分钟 /status 里没有：另外记下来，到重置那一刻为止
+    /// 成本上限和识别分钟另外记一份，到重置那一刻为止（/status 没问成也照样拦）
     public func noteUsageError(_ e: MemberAPIError) {
         if e.code == "daily-limit", e.resetAt != nil { dailyBlock = e }
         if e.code == "asr-limit" { asrBlock = e }
@@ -185,7 +185,8 @@ public final class MemberClient: ObservableObject {
     }
 
     /// 按键时还拦着的那个：今天的用量到上限了（打字、语音都拦），voice 时再看识别分钟。
-    /// 过了重置时刻的不算；试用的识别分钟（402，没有重置时刻）成了会员就不算了（会员有自己每天的分钟）
+    /// 先看 /status（成本上限是 reason daily-limit + limitBy cost，识别分钟在 voice 里），再看计量接口回过的。
+    /// 过了重置时刻的不算；试用的识别分钟（没有重置时刻）成了会员就不算了（会员有自己每天的分钟）
     public func usageBlock(voice: Bool) -> MemberAPIError? {
         let nowMs = now().timeIntervalSince1970 * 1000
         func active(_ e: MemberAPIError?) -> MemberAPIError? {
@@ -193,8 +194,21 @@ public final class MemberClient: ObservableObject {
             if let reset = e.resetAt { return nowMs < reset ? e : nil }
             return status?.isMember == true ? nil : e
         }
+        if let s = status, s.reason == "daily-limit", s.limitBy == "cost", let reset = s.resetAt, nowMs < reset {
+            return MemberAPIError(status: 429, code: "daily-limit", message: "今天的用量到上限了，北京时间早上 8 点重置", resetAt: reset)
+        }
         if let e = active(dailyBlock) { return e }
-        return voice ? active(asrBlock) : nil
+        guard voice else { return nil }
+        if let s = status, s.canUse, let v = s.voice, v.reason == "asr-limit" {
+            if let reset = v.resetAt {
+                if nowMs < reset {
+                    return MemberAPIError(status: 429, code: "asr-limit", message: "今天的语音识别用到 \(v.limitMinutes) 分钟了，北京时间早上 8 点重置；打字提问照常", resetAt: reset)
+                }
+            } else if !s.isMember {
+                return MemberAPIError(status: 402, code: "asr-limit", message: "试用的语音识别一共 \(v.limitMinutes) 分钟，已经用完了；打字提问照常，订阅会员每天另有识别分钟")
+            }
+        }
+        return active(asrBlock)
     }
 
     /// 侧栏状态卡、菜单栏、会员页第一行的一句（带上 /status 里没有的成本上限；没注册的写还没领试用）
@@ -232,7 +246,20 @@ public final class MemberClient: ObservableObject {
     /// 回 Stripe 结账页的网址（调用方用浏览器打开），之后每 3 秒问一次付了没有，最多等 30 分钟
     public func checkout(plan: String, currency: String, mode: String) async throws -> URL {
         try await ensureDevice()
-        let data = try await request("POST", "/checkout", body: ["plan": plan, "currency": currency, "mode": mode])
+        let data: Data
+        do {
+            data = try await request("POST", "/checkout", body: ["plan": plan, "currency": currency, "mode": mode])
+        } catch let e as MemberAPIError where e.code == "already-paid" {
+            // 上一个付款页其实已经付好了（后台刚落库）：问一次状态，是会员就当付款成功，再把后台那句话交给收费页
+            await refresh()
+            if let s = status, s.isMember {
+                pendingCheckout = nil
+                pollTask?.cancel()
+                pollTask = nil
+                onPaid?(s)
+            }
+            throw e
+        }
         guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let urlText = obj["url"] as? String, let url = URL(string: urlText),
               let claim = obj["claim"] as? String else {

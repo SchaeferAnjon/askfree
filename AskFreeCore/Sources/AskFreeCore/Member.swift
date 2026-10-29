@@ -213,6 +213,17 @@ public struct MemberStatus: Decodable, Equatable, Sendable {
         public var resetAt: Double
     }
 
+    /// 语音识别的分钟（会员每张授权每天的，试用一共的）。用完了只停语音，打字照常，所以外面的 canUse 不变
+    public struct Voice: Decodable, Equatable, Sendable {
+        public var canUse: Bool
+        /// asr-limit | nil
+        public var reason: String?
+        public var usedMinutes: Int
+        public var limitMinutes: Int
+        /// 会员是下一个 UTC 0 点（毫秒）；试用的分钟不重置，是 nil
+        public var resetAt: Double?
+    }
+
     /// 金额是最小单位（分、美分）
     public struct Price: Decodable, Equatable, Sendable {
         public var cny: Int?
@@ -247,6 +258,14 @@ public struct MemberStatus: Decodable, Equatable, Sendable {
     public var canUse: Bool
     /// canUse 为 false 时：trial-used-up / trial-closed / sub-ended / payment-failed / daily-limit
     public var reason: String?
+    /// reason 是 daily-limit 时：uses（今天的次数用完）| cost（这张授权今天的用量到上限，试用也会有）。旧后台没有这个字段
+    public var limitBy: String?
+    /// reason 是 daily-limit 时的重置时刻（毫秒，下一个 UTC 0 点）
+    public var resetAt: Double?
+    /// 这台电脑注册时领试用的结果：granted / closed / ip-limit / daily-limit / none（后台没记下原因）。旧后台没有这个字段
+    public var trialResult: String?
+    /// 语音识别的分钟（旧后台没有）
+    public var voice: Voice?
     public var prices: Prices?
     public var passPrices: Prices?
     public var now: Double?
@@ -283,11 +302,29 @@ public struct MemberStatus: Decodable, Equatable, Sendable {
             today.used = max(0, today.limit - headers.left)
             if let reset = headers.reset { today.resetAt = reset }
             self.today = today
-            if headers.left <= 0 { canUse = false; reason = "daily-limit" }
+            if headers.left <= 0 { canUse = false; reason = "daily-limit"; limitBy = "uses"; resetAt = today.resetAt }
         } else if headers.kind == "trial" {
             trial.left = headers.left
             trial.used = max(0, trial.total - headers.left)
             if headers.left <= 0 && !isMember { canUse = false; reason = "trial-used-up"; plan = "none" }
+        }
+    }
+}
+
+/// 没领到试用的原因（/status 的 trialResult），卡片、会员页、引导里写的都是这一句
+public enum MemberTrialResult {
+    /// 一句标题：名额真发完了写发完了，其余写这台没领到
+    public static func title(_ result: String?) -> String {
+        result == "closed" ? "免费试用已经发完了" : "这台电脑没有领到免费试用"
+    }
+
+    /// 为什么：按注册那一刻后台记下的原因照实写（同一台以后再注册也不会补发）
+    public static func reason(_ result: String?) -> String {
+        switch result {
+        case "closed": return "前 100 位新用户的免费试用已经发完了。"
+        case "ip-limit": return "这台电脑注册那天，同一个网络里领试用的电脑太多了，这台没领到，以后也不会再发。"
+        case "daily-limit": return "这台电脑注册那天，领试用的人太多，当天的份数发完了，这台没领到，以后也不会再发。"
+        default: return "免费试用只发前 100 份，同一个网络里领得多了也会发不到。"
         }
     }
 }

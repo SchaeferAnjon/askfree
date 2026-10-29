@@ -2,9 +2,14 @@ import AppKit
 import AskFreeCore
 import SwiftUI
 
-/// 一段行内源码做成 Text：加粗、行内代码走系统的行内 Markdown，公式换成嵌在字里的模板图（跟字一个颜色）。
+/// 一段行内源码做成 Text：加粗、行内代码、链接走系统的行内 Markdown，公式换成嵌在字里的模板图（跟字一个颜色）。
 /// 公式源码从头到尾不经过 Markdown：每条公式先换成一个私用区占位字（U+E000 起），整段交给 AttributedString(markdown:)，
-/// 再按占位字拆开、把图放回去。跨过公式的 **加粗** 不会断开，公式里的 \%、\\、*、_ 也不会被吃掉
+/// 再按占位字拆开、把图放回去。跨过公式的 **加粗** 不会断开，公式里的 \%、\\、*、_ 也不会被吃掉。
+/// 两处绕开 SwiftUI Text 的毛病（task-lue8s 设计评审 6、2）：
+/// - 公式图后面不许折行（图后面跟一个 U+2060，紧跟着的空格换成不折行空格）：图后面就是折行点、行宽又刚好卡在某个范围时，
+///   SwiftUI 量出来是两行、画的时候只画第一行加「…」，下面空一大块。U+2060 每张图后面都跟（后面的字还没来也跟），
+///   流式出字时这一行的高度不会因为后面来了字而变
+/// - 往下挪图的那一小段字用 1 点的字号：baselineOffset 会把这一段字自己的字框也挪下去算进行高，用正文字号时每条带下沉的公式让行高多出 4 点
 @MainActor
 enum InlineText {
     /// 行内公式排出来比这宽，就单独成一行（多轮时栏宽 338 的六成左右），不然一行字被它撑得很难看
@@ -13,7 +18,8 @@ enum InlineText {
 
     enum Part {
         case text(Text)
-        /// 太宽的行内公式：照独立公式的样子单独一行；紧跟着的标点（「，」「.」）跟它留在同一行，不落到下一行行首
+        /// 太宽的行内公式、带矩阵和 cases 这类环境的行内公式：照独立公式的样子单独一行（不把一行字撑得很高）；
+        /// 紧跟着的标点（「，」「.」）跟它留在同一行，不落到下一行行首
         case wideMath(MathGlyph, trailing: String)
     }
 
@@ -68,8 +74,16 @@ enum InlineText {
         var parts: [Part] = []
         var current: Text?
         var spoken = ""
+        /// 上一样是嵌在字里的公式图：接下来的字开头不许折行
+        var glue = false
         func append(_ t: Text) { current = current.map { $0 + t } ?? t }
-        func flush() { if let c = current { parts.append(.text(c)); current = nil } }
+        func appendText(_ piece: AttributedSubstring) {
+            var text = AttributedString(piece)
+            if glue { text = Self.glued(text) }
+            glue = false
+            append(Text(text))
+        }
+        func flush() { if let c = current { parts.append(.text(c)); current = nil }; glue = false }
 
         let chars = attributed.characters
         var segmentStart = attributed.startIndex
@@ -82,12 +96,13 @@ enum InlineText {
                 i = next
                 continue
             }
-            if segmentStart < i { append(Text(AttributedString(attributed[segmentStart..<i]))) }
+            if segmentStart < i { appendText(attributed[segmentStart..<i]) }
             let k = Int(first.value - 0xE000)
             let tex = k < maths.count ? maths[k] : ""
+            let glyph = MathGlyphs.glyph(tex, display: false, size: style.mathSize)
             spoken += TeXFlatten.plain(tex)
-            if let glyph = MathGlyphs.glyph(tex, display: false, size: style.mathSize) {
-                if glyph.size.width > wideMathWidth {
+            if let glyph {
+                if glyph.size.width > wideMathWidth || tex.contains("\\begin{") {
                     flush()
                     var trailing = ""
                     var j = next
@@ -102,24 +117,36 @@ enum InlineText {
                     segmentStart = j
                     continue
                 } else {
-                    append(Text(Image(nsImage: glyph.image).renderingMode(.template)).baselineOffset(-glyph.descent))
+                    append(Text(Image(nsImage: glyph.image).renderingMode(.template)).font(.system(size: 1)).baselineOffset(-glyph.descent)
+                        + Text("\u{2060}"))
+                    glue = true
                 }
             } else {
                 // 排不出来：显示源码（去掉分隔符），等宽、次要色
                 append(Text(tex).font(.system(size: style.codeSize, design: .monospaced)).foregroundStyle(style.text2))
+                glue = false
             }
             i = next
             segmentStart = next
         }
-        if segmentStart < attributed.endIndex { append(Text(AttributedString(attributed[segmentStart..<attributed.endIndex]))) }
+        if segmentStart < attributed.endIndex { appendText(attributed[segmentStart..<attributed.endIndex]) }
         flush()
         if parts.isEmpty { parts = [.text(Text(""))] }
         return Rendered(parts: parts, spoken: spoken)
     }
 
-    /// 行内 Markdown（和原来一样：只有含 * 或反引号才解析，解析不了按纯文本），再把不是 https 的链接去掉，只留字
+    /// 公式图后面那段字开头的空格换成不折行空格（U+2060 已经跟在图后面）
+    static func glued(_ text: AttributedString) -> AttributedString {
+        guard text.characters.first == " " else { return text }
+        var out = text
+        out.characters.replaceSubrange(out.startIndex..<out.characters.index(after: out.startIndex), with: "\u{00A0}")
+        return out
+    }
+
+    /// 行内 Markdown（含 *、反引号、链接的 [ 和 <、反斜杠转义才解析，解析不了按纯文本），再把不是 https 的链接去掉，只留字。
+    /// 不含这些记号的字不解析：和原来的面板逐像素一样
     static func markdown(_ s: String) -> AttributedString? {
-        guard s.contains("*") || s.contains("`"),
+        guard s.contains(where: { "*`[<\\".contains($0) }),
               var attributed = try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) else {
             return nil
         }

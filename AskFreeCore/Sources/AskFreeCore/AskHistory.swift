@@ -123,11 +123,22 @@ public final class AskHistoryStore {
         lock.lock(); defer { lock.unlock() }
         let all = loadTurns()
         try rewrite(all.filter { $0.thread != id })
-        DayNotesStore(directory: notesDirectory).forget(thread: id)
-        let removed = Set(all.filter { $0.thread == id }.map(\.id))
+        let gone = all.filter { $0.thread == id }
+        // 笔记里有这个问题的那几天，和它问过的那几天：导出过的网页里有问题原文和内嵌的截图，一起删
+        let days = Set(DayNotesStore(directory: notesDirectory).forget(thread: id) + gone.map { HistoryDay.key(for: $0.at) })
+        removeExportedPages(days: days)
+        let removed = Set(gone.map(\.id))
         let files = (try? FileManager.default.contentsOfDirectory(atPath: imagesDirectory.path)) ?? []
         for name in files where removed.contains(where: { name.hasPrefix($0 + "-") }) {
             try FileManager.default.removeItem(at: imagesDirectory.appendingPathComponent(name))
+        }
+    }
+
+    /// 导出的笔记页叫「<日期> …」：这几天的都删掉（同一页里还有别的问题，下次导出会按剩下的重新写）
+    private func removeExportedPages(days: Set<String>) {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: exportedNotesDirectory.path)) ?? []
+        for name in names where days.contains(where: { name.hasPrefix($0 + " ") }) {
+            try? FileManager.default.removeItem(at: exportedNotesDirectory.appendingPathComponent(name))
         }
     }
 

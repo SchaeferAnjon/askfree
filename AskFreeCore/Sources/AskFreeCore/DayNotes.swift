@@ -122,6 +122,23 @@ public struct DayNotes: Codable, Equatable, Sendable {
         items.first { $0.id == threadID }
     }
 
+    /// 历史里已经删掉的话题：它们的条目和记录去掉。去掉过条目时，小结和「记住这几条」一起清空：
+    /// 它们是跨问题写的，可能复述了被删问题的内容；清空后这一天显示「接着整理」，只补小结
+    public func removing(threads gone: Set<String>) -> DayNotes {
+        guard items.contains(where: { gone.contains($0.id) }) || covered.contains(where: { gone.contains($0.thread) }) else { return self }
+        var copy = self
+        let droppedItem = items.contains { gone.contains($0.id) }
+        copy.items.removeAll { gone.contains($0.id) }
+        copy.covered.removeAll { gone.contains($0.thread) }
+        if droppedItem { copy.summary = ""; copy.keep = [] }
+        return copy
+    }
+
+    /// 只留历史里还有的话题（整理途中用户删了历史，存盘前先过一遍，不把删掉的写回去）
+    public func keeping(existing: Set<String>) -> DayNotes {
+        removing(threads: Set(covered.map(\.thread) + items.map(\.id)).subtracting(existing))
+    }
+
     /// 和历史现在的样子比：整理好几个、有没有小结、又问了几个新问题、几个问题又追问了
     public func status(against day: HistoryDay) -> DayNotesStatus {
         let current = Dictionary(uniqueKeysWithValues: day.threads.map { ($0.id, $0.turns.count) })
@@ -212,21 +229,25 @@ public final class DayNotesStore: @unchecked Sendable {
 
     // MARK: 删
 
-    /// 历史里删了一个话题：各天笔记里它的那一条、导进 Anki 的记录一起去掉
-    public func forget(thread id: String) {
+    /// 历史里删了一个话题：各天笔记里它的那一条、导进 Anki 的记录一起去掉（小结和「记住这几条」见 DayNotes.removing）。
+    /// 返回动过的那几天（yyyy-MM-dd）
+    @discardableResult
+    public func forget(thread id: String) -> [String] {
         lock.lock(); defer { lock.unlock() }
+        var touched: [String] = []
         let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
         for name in names where name.hasSuffix(".json") && name != "anki.json" {
             let file = directory.appendingPathComponent(name)
-            guard let data = try? Data(contentsOf: file), var notes = try? Self.decoder.decode(DayNotes.self, from: data),
-                  notes.items.contains(where: { $0.id == id }) || notes.covered.contains(where: { $0.thread == id }) else { continue }
-            notes.items.removeAll { $0.id == id }
-            notes.covered.removeAll { $0.thread == id }
-            if notes.covered.isEmpty { try? FileManager.default.removeItem(at: file); continue }
-            if let data = try? Self.encoder.encode(notes) { try? writePrivate(data, to: file) }
+            guard let data = try? Data(contentsOf: file), let notes = try? Self.decoder.decode(DayNotes.self, from: data) else { continue }
+            let kept = notes.removing(threads: [id])
+            guard kept != notes else { continue }
+            touched.append(notes.day)
+            if kept.covered.isEmpty { try? FileManager.default.removeItem(at: file); continue }
+            if let data = try? Self.encoder.encode(kept) { try? writePrivate(data, to: file) }
         }
         var all = readLedger()
         if all.removeValue(forKey: id) != nil, let data = try? Self.encoder.encode(all) { try? writePrivate(data, to: ledgerURL) }
+        return touched
     }
 
     public func removeAll() {

@@ -149,4 +149,74 @@ final class DayNotesTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: history.notesDirectory.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: history.exportedNotesDirectory.path))
     }
+
+    // MARK: 删历史（代码审查 1、2）
+
+    private func historyWithTwoThreads() throws -> (history: AskHistoryStore, store: DayNotesStore, day: HistoryDay) {
+        let history = AskHistoryStore(fileURL: dir.appendingPathComponent("history.jsonl"))
+        let base = Date().addingTimeInterval(-3600)
+        try history.append(AskHistoryTurn(id: "tuA", thread: "thA", at: base, question: "我的银行卡 6222 0000 怎么绑", answer: "答 A"))
+        try history.append(AskHistoryTurn(id: "tuB", thread: "thB", at: base.addingTimeInterval(60), question: "B", answer: "答 B"))
+        return (history, DayNotesStore(directory: history.notesDirectory), HistoryDay.group(history.threads())[0])
+    }
+
+    func testDeletingAThreadClearsSummaryAndKeepThatMayQuoteIt() throws {
+        let (history, store, day) = try historyWithTwoThreads()
+        var notes = DayNotes.begin(day)
+        notes.put(DayNoteItem(id: "thA", turnID: "tuA", title: "绑卡", points: "- 卡号 6222 0000"))
+        notes.put(DayNoteItem(id: "thB", turnID: "tuB", title: "B", points: "- b"))
+        notes.summary = "今天弄清了银行卡 6222 0000 怎么绑。"
+        notes.keep = ["卡号 6222 0000 绑在设置里"]
+        try store.save(notes)
+        try history.deleteThread("thA")
+        let after = try XCTUnwrap(store.load(day: day.key))
+        XCTAssertEqual(after.items.map(\.id), ["thB"])
+        XCTAssertEqual(after.summary, "")
+        XCTAssertEqual(after.keep, [])
+        let afterDay = HistoryDay.group(history.threads())[0]
+        XCTAssertFalse(after.status(against: afterDay).isComplete, "小结没了：页面显示「接着整理」，只补小结")
+        XCTAssertEqual(after.status(against: afterDay).done, 1)
+    }
+
+    func testDeletingAThreadWithoutAnItemKeepsTheSummary() throws {
+        let (history, store, day) = try historyWithTwoThreads()
+        var notes = DayNotes.begin(day)
+        notes.put(DayNoteItem(id: "thB", turnID: "tuB", title: "B", points: "- b"))
+        notes.summary = "小结"
+        try store.save(notes)
+        try history.deleteThread("thA")
+        XCTAssertEqual(store.load(day: day.key)?.summary, "小结")
+    }
+
+    func testKeepingDropsThreadsThatAreNoLongerInHistory() {
+        var notes = DayNotes(day: "2026-10-29", covered: [DayNoteCoverage(thread: "a", turns: 1), DayNoteCoverage(thread: "b", turns: 1)])
+        notes.put(DayNoteItem(id: "a", turnID: "ta", title: "A", points: "- 机密要点 A"))
+        notes.put(DayNoteItem(id: "b", turnID: "tb", title: "B", points: "- b"))
+        notes.summary = "s"
+        let kept = notes.keeping(existing: ["b"])
+        XCTAssertEqual(kept.items.map(\.id), ["b"])
+        XCTAssertEqual(kept.covered.map(\.thread), ["b"])
+        XCTAssertEqual(kept.summary, "")
+        XCTAssertEqual(notes.keeping(existing: ["a", "b"]), notes, "都还在就原样")
+        XCTAssertTrue(notes.keeping(existing: []).items.isEmpty)
+    }
+
+    /// 整理途中用户清空历史 / 删一条：存盘前按现在的历史过一遍，已删的不写回
+    func testSavingAfterDeletionDuringGenerationDoesNotWriteItBack() throws {
+        let (history, store, day) = try historyWithTwoThreads()
+        var working = DayNotes.begin(day)
+        working.put(DayNoteItem(id: "thA", turnID: "tuA", title: "甲", points: "- 机密要点 A"))
+        func persist(_ notes: DayNotes) {
+            let kept = notes.keeping(existing: Set(history.threads().map(\.id)))
+            if !kept.items.isEmpty { try? store.save(kept) }
+        }
+        persist(working)
+        XCTAssertNotNil(store.load(day: day.key))
+        try history.deleteThread("thA")
+        persist(working)   // 整理还在写：下一次存盘
+        XCTAssertNil(store.load(day: day.key)?.item(for: "thA"))
+        try history.deleteAll()
+        persist(working)
+        XCTAssertEqual((try? FileManager.default.contentsOfDirectory(atPath: history.notesDirectory.path)) ?? [], [], "清空历史后 day-notes/ 里不再出现文件")
+    }
 }

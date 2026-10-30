@@ -115,10 +115,15 @@ public final class AskHistoryStore {
         return Self.group(loadTurns())
     }
 
+    /// 历史旁边的笔记缓存（day-notes/）和导出的笔记页（notes/）：笔记里有问题、回答要点和截图，删历史时跟着删
+    public var notesDirectory: URL { fileURL.deletingLastPathComponent().appendingPathComponent("day-notes", isDirectory: true) }
+    public var exportedNotesDirectory: URL { fileURL.deletingLastPathComponent().appendingPathComponent("notes", isDirectory: true) }
+
     public func deleteThread(_ id: String) throws {
         lock.lock(); defer { lock.unlock() }
         let all = loadTurns()
         try rewrite(all.filter { $0.thread != id })
+        DayNotesStore(directory: notesDirectory).forget(thread: id)
         let removed = Set(all.filter { $0.thread == id }.map(\.id))
         let files = (try? FileManager.default.contentsOfDirectory(atPath: imagesDirectory.path)) ?? []
         for name in files where removed.contains(where: { name.hasPrefix($0 + "-") }) {
@@ -128,7 +133,7 @@ public final class AskHistoryStore {
 
     public func deleteAll() throws {
         lock.lock(); defer { lock.unlock() }
-        for url in [fileURL, imagesDirectory] where FileManager.default.fileExists(atPath: url.path) {
+        for url in [fileURL, imagesDirectory, notesDirectory, exportedNotesDirectory] where FileManager.default.fileExists(atPath: url.path) {
             try FileManager.default.removeItem(at: url)
         }
     }

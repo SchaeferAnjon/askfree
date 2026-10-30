@@ -56,6 +56,36 @@ struct AskProvider {
     }
 }
 
+/// 已经发出去的一个请求，能中途掐掉（整理笔记时的「停下」）
+public final class AskRequestHandle: @unchecked Sendable {
+    private let lock = NSLock()
+    private var cancelled = false
+    private weak var task: URLSessionTask?
+
+    public init() {}
+
+    public var isCancelled: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return cancelled
+    }
+
+    public func cancel() {
+        lock.lock()
+        cancelled = true
+        let task = self.task
+        lock.unlock()
+        task?.cancel()
+    }
+
+    fileprivate func attach(_ task: URLSessionTask?) {
+        lock.lock()
+        self.task = task
+        let already = cancelled
+        lock.unlock()
+        if already { task?.cancel() }
+    }
+}
+
 /// 语音问答：把问题（可带屏幕截图）交给用户配置的模型，流式返回回答；要联网时自己搜或转千问联网。
 /// 会员模式下（answer 带了 member）问答和联网都走我们的后台
 public class AskAI {
@@ -335,6 +365,46 @@ public class AskAI {
                          onThinking: onThinking, onStats: onStats, completion: routed)
     }
 
+    /// 不是问答的一次性请求（整理一天的笔记）：和回答走同一条通道（用户自己的 Key，或会员后台），
+    /// 不联网、不看屏幕、不思考，流式收文字。onPartial 在主线程，completion 在后台线程。
+    /// 返回的 handle 能中途掐掉；掐掉之后调用方别再等回调
+    @discardableResult
+    public func complete(system: String, user: String, maxTokens: Int, member: AskMember? = nil,
+                         onPartial: ((String) -> Void)? = nil,
+                         completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle {
+        let handle = AskRequestHandle()
+        guard let provider = member.map(AskProvider.member) ?? askProvider() else {
+            completion(.failure(AskError.noAPIKey))
+            return handle
+        }
+        let messages: [[String: Any]] = [["role": "system", "content": system], ["role": "user", "content": user]]
+        let candidates: [String] = (provider.name == "qwen" && QwenModelRouter.isAuto(provider.model))
+            ? QwenModelRouter.candidates(for: provider.model) : [provider.model]
+        func attempt(_ index: Int) {
+            guard index < candidates.count else {
+                completion(.failure(AskError.apiError("问答模型均不可用（额度用完）")))
+                return
+            }
+            let model = candidates[index]
+            var body: [String: Any] = ["model": model, "messages": messages, "stream": true, "temperature": 0.3,
+                                       "max_tokens": maxTokens]
+            if provider.name == "qwen" { body["top_p"] = 0.8 }
+            AskVision.applyThinkingSettings(in: &body, provider: provider.name, model: model, thinking: nil)
+            debugLog?("Notes request provider=\(provider.name) model=\(model) maxTokens=\(maxTokens) chars=\(user.count)")
+            streamChat(url: provider.url, apiKey: provider.apiKey, body: body, member: provider.member,
+                       onPartial: onPartial, handle: handle) { result in
+                if case .failure(let err) = result, case AskError.quotaExhausted = err, index + 1 < candidates.count {
+                    QwenModelRouter.markExhausted(model)
+                    attempt(index + 1)
+                    return
+                }
+                completion(result)
+            }
+        }
+        attempt(0)
+        return handle
+    }
+
     /// 找几张图，和回答并行：模型点名的搜索词，或联网时顺手用搜索词（它看过屏幕），都没有就用问题本身。
     /// unlessNamed：联网顺手找的图，模型已经点名要图时就不用了（点名的词更准）
     private func searchImages(query: String?, question: String, onImages: (([AskImage]) -> Void)?,
@@ -573,6 +643,7 @@ public class AskAI {
                             onThinking: (() -> Void)? = nil,
                             toolNames: [String] = [],
                             thinkingDeadline: TimeInterval? = nil,
+                            handle: AskRequestHandle? = nil,
                             onStats: ((Int, Int?) -> Void)? = nil,
                             completion: @escaping (Result<String, Error>) -> Void) {
         var request = URLRequest(url: url)
@@ -595,7 +666,9 @@ public class AskAI {
                 DispatchQueue.main.async { completion(.failure(error)) }
                 return
             }
+            if handle?.isCancelled == true { return }
             StreamHub.shared.send(request, reader: reader)
+            handle?.attach(reader.task)
         }
     }
 

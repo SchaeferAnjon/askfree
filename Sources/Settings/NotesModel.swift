@@ -96,6 +96,8 @@ final class NotesModel: ObservableObject {
         var use: MemberUseRef
         /// 重新整理之前的那份笔记：新的一个问题都没整理出来就失败了，页面上还是它
         var previous: DayNotes?
+        /// 重新整理一个问题都没整理出来就失败了：报错卡上的「重试」要重新整理，不是接着旧笔记补
+        var retryRegenerates = false
     }
 
     init() {
@@ -188,7 +190,7 @@ final class NotesModel: ObservableObject {
         ledger = store.ankiLedger()
         if states[key]?.phase == .generating { return }
         guard let cached = store.load(day: key) else {
-            if states[key]?.notes == nil { start(key, resume: nil) }
+            if states[key]?.notes == nil { start(key, resume: nil, reuseUse: false) }
             return
         }
         var state = NotesDayState(notes: cached)
@@ -208,24 +210,65 @@ final class NotesModel: ObservableObject {
     }
 
     private func historyDidChange() {
-        guard isOpen else { return }
         let fresh = HistoryDay.group(history.threads())
+        dropDeletedThreads(existing: Set(fresh.flatMap { $0.threads.map(\.id) }))
+        guard isOpen else { return }
         if fresh != days { days = fresh }
         // 这天的问题全删了：回到列表
         if let key = openDay, !fresh.contains(where: { $0.key == key }) { close() }
         picks = picks.filter { id in day?.threads.contains { $0.id == id } == true }
     }
 
+    /// 历史里删了话题（删一条、清空全部）：整理中的那几天停下，内存里的笔记也去掉被删的，之后的存盘不会把它们写回去。
+    /// 磁盘上的笔记文件和导出的网页由 AskHistoryStore 删
+    private func dropDeletedThreads(existing: Set<String>) {
+        if existing.isEmpty {
+            for job in jobs.values { job.handle?.cancel() }
+            jobs = [:]
+            states = [:]
+            return
+        }
+        for (key, state) in states {
+            guard let notes = state.notes else { continue }
+            let kept = notes.keeping(existing: existing)
+            guard kept != notes else { continue }
+            var next = state
+            next.notes = kept
+            if state.phase == .generating, var job = jobs[key] {
+                job.generation += 1   // 之后到的回调都不算数
+                job.handle?.cancel()
+                jobs[key] = job
+                next.phase = .stopped(byUser: true)
+            }
+            states[key] = next
+            log("dropped deleted threads from \(key) notes")
+        }
+    }
+
+    /// 笔记存盘：先按现在的历史过一遍，整理途中删掉的问题不会被写回去
+    @discardableResult
+    private func persist(_ notes: DayNotes) -> DayNotes {
+        let kept = notes.keeping(existing: Set(history.threads().map(\.id)))
+        if !kept.items.isEmpty { try? store.save(kept) }
+        return kept
+    }
+
     // MARK: 整理
 
     func regenerate() {
         guard let key = openDay else { return }
-        start(key, resume: nil)
+        start(key, resume: nil, reuseUse: false)
     }
 
     func resume() {
         guard let key = openDay, let notes = states[key]?.notes else { return }
-        start(key, resume: notes)
+        start(key, resume: notes, reuseUse: true)
+    }
+
+    /// 报错卡上的「重试」：同一个用量号（会员只算一次）。重新整理一个都没整理出来就失败的，重试仍是重新整理
+    private func retry() {
+        guard let key = openDay else { return }
+        if jobs[key]?.retryRegenerates == true { start(key, resume: nil, reuseUse: true) } else { resume() }
     }
 
     func stop() {
@@ -236,24 +279,27 @@ final class NotesModel: ObservableObject {
         var state = states[key] ?? NotesDayState()
         state.phase = .stopped(byUser: true)
         states[key] = state
-        if let notes = state.notes, !notes.items.isEmpty { try? store.save(notes) }
+        if let notes = state.notes { states[key]?.notes = persist(notes) }
         log("stopped \(key) after \(state.notes?.items.count ?? 0) questions")
     }
 
-    private func start(_ key: String, resume: DayNotes?) {
+    /// reuseUse：停下再接着整理、报错后重试，在后台的重试窗口里用同一个用量号（会员只算一次）；重新整理换新号
+    private func start(_ key: String, resume: DayNotes?, reuseUse: Bool) {
         guard let day = days.first(where: { $0.key == key }) else { return }
         jobs[key]?.handle?.cancel()
         let generation = (jobs[key]?.generation ?? 0) + 1
-        // 同一天停下再接着整理，在后台的重试窗口里用同一个用量号：会员算一次
-        let use = MemberUse.forRetry(resume == nil ? nil : jobs[key]?.use)
-        jobs[key] = Job(generation: generation, handle: nil, use: use,
-                        previous: resume == nil ? (states[key]?.notes ?? store.load(day: key)) : nil)
+        let (use, sameUse) = MemberUse.resolve(last: jobs[key]?.use, reuse: reuseUse)
+        // 前一次失败时页面放回去的旧笔记，在重试里仍是「重新整理之前的那份」
+        let previous = resume == nil ? (reuseUse ? jobs[key]?.previous : nil) ?? states[key]?.notes ?? store.load(day: key) : nil
+        jobs[key] = Job(generation: generation, handle: nil, use: use, previous: previous)
         var state = NotesDayState(notes: resume ?? DayNotes.begin(day), phase: .generating)
         for thread in day.threads where !(state.notes?.covered.contains { $0.thread == thread.id } ?? false) {
             state.notes?.covered.append(DayNoteCoverage(thread: thread.id, turns: thread.turns.count))
         }
         states[key] = state
-        if UsageModeStore.isMember, let block = MemberClient.shared.knownBlock(voice: false, log: { [weak self] in self?.log($0) }) {
+        // 沿用已经开出来的用量号（后台已经算过这一次）时不在本地拦：最后一次试用用在这次整理上，
+        // 本地剩 0 次，接着整理仍然能完成；后台对同一个号不再查额度。新开的号才先在本地拦
+        if UsageModeStore.isMember, !sameUse, let block = MemberClient.shared.knownBlock(voice: false, log: { [weak self] in self?.log($0) }) {
             finish(key, generation, .failure(block))
             return
         }
@@ -305,8 +351,7 @@ final class NotesModel: ObservableObject {
 
     private func apply(_ key: String, _ generation: Int, _ notes: DayNotes) {
         guard jobs[key]?.generation == generation else { return }
-        states[key]?.notes = notes
-        if !notes.items.isEmpty { try? store.save(notes) }
+        states[key]?.notes = persist(notes)
     }
 
     private func finish(_ key: String, _ generation: Int, _ result: Result<DayNotes, Error>) {
@@ -314,8 +359,8 @@ final class NotesModel: ObservableObject {
         var state = states[key] ?? NotesDayState()
         switch result {
         case .success(let notes):
+            let notes = persist(notes)
             state.notes = notes
-            if !notes.items.isEmpty { try? store.save(notes) }
             let complete = days.first { $0.key == key }.map { notes.status(against: $0).isComplete } ?? false
             state.phase = complete ? .idle : .stopped(byUser: false)
             log("finished \(key) items=\(notes.items.count) complete=\(complete)")
@@ -328,8 +373,12 @@ final class NotesModel: ObservableObject {
             let trial = MemberClient.shared.status?.trialResult
             state.phase = .failed(AskFailure(error: error, trialResult: trial))
             // 重新整理一个都没整理出来就失败了：页面上留着原来的笔记（文件本来也没动）
-            if state.notes?.items.isEmpty ?? true, let previous = jobs[key]?.previous, !previous.items.isEmpty {
+            let restored = state.notes?.items.isEmpty ?? true
+            if restored, let previous = jobs[key]?.previous, !previous.items.isEmpty {
                 state.notes = previous
+                jobs[key]?.retryRegenerates = true
+            } else {
+                jobs[key]?.retryRegenerates = false
             }
             log("failed \(key): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
         }
@@ -343,7 +392,7 @@ final class NotesModel: ObservableObject {
         case .openMembership: (NSApp.delegate as? AppDelegate)?.openMembership()
         case .openPortal: (NSApp.delegate as? AppDelegate)?.openMemberPortal()
         case .useOwnKeys: (NSApp.delegate as? AppDelegate)?.switchToOwnKeys()
-        case .retry: resume()
+        case .retry: retry()
         case .typeInstead: break   // 笔记不用语音
         }
     }

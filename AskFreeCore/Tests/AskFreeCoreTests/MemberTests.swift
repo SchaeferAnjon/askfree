@@ -759,4 +759,18 @@ final class MemberStatusLimitTests: XCTestCase {
         XCTAssertTrue(p.detail.contains("约 3 小时"))
         XCTAssertTrue(p.actions.isEmpty, "不给再试一次：再试也是被拦")
     }
+
+    func testResolveUseForNotesReusesTheLastIdInsideTheWindowOnly() {
+        let now = Date()
+        let last = MemberUseRef(startedAt: now.addingTimeInterval(-60))
+        let again = MemberUse.resolve(last: last, reuse: true, now: now)
+        XCTAssertEqual(again.use, last)
+        XCTAssertTrue(again.sameUse, "同一个号：后台不再查额度，本地也不先拦（最后一次试用用在这次整理上时仍能接着整理）")
+        let fresh = MemberUse.resolve(last: last, reuse: false, now: now)
+        XCTAssertNotEqual(fresh.use.id, last.id, "重新整理换新号")
+        XCTAssertFalse(fresh.sameUse)
+        let old = MemberUse.resolve(last: MemberUseRef(startedAt: now.addingTimeInterval(-15 * 60)), reuse: true, now: now)
+        XCTAssertFalse(old.sameUse, "过了重试窗口换新号，先在本地拦")
+        XCTAssertFalse(MemberUse.resolve(last: nil, reuse: true, now: now).sameUse)
+    }
 }

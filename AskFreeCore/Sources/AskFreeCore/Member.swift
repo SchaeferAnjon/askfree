@@ -95,6 +95,14 @@ public enum MemberUse {
         if let last, now.timeIntervalSince(last.startedAt) < retryWindow { return last }
         return MemberUseRef(startedAt: now)
     }
+
+    /// 整理笔记用：reuse 时按 forRetry 沿用上一个号；sameUse = 真的沿用了（后台已经算过这一次，
+    /// 不再查额度，本地也别先拦）。不沿用、过了窗口就是新号
+    public static func resolve(last: MemberUseRef?, reuse: Bool, now: Date = Date()) -> (use: MemberUseRef, sameUse: Bool) {
+        let previous = reuse ? last : nil
+        let use = forRetry(previous, now: now)
+        return (use, previous != nil && use == previous)
+    }
 }
 
 /// 一个问题的用量号和它开出来的时刻（语音提问是松开键那一刻，打字提问是发出那一刻）

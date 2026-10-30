@@ -347,7 +347,7 @@ struct HistoryView: View {
     private func delete(_ id: String) {
         let alert = NSAlert()
         alert.messageText = "删除这一条问答？"
-        alert.informativeText = "问题、回答、截图、找到的图，和笔记里的这一条，都会从这台 Mac 上删掉，不能恢复。"
+        alert.informativeText = "问题、回答、截图、找到的图，和笔记里的这一条都会从这台 Mac 上删掉；那一天的小结会清空，导出过的笔记页也会删掉。不能恢复。"
         alert.addButton(withTitle: "删除")
         alert.addButton(withTitle: "取消")
         alert.buttons[0].hasDestructiveAction = true

@@ -681,9 +681,17 @@ private struct NotesSectionView: View {
             skeleton
         } else {
             // 没在整理、这个问题却没有内容：整理之后才问的，或者停下了还没轮到
-            Text(model.phase == .idle ? "这个问题是整理之后才问的，笔记里还没有。点「重新整理」补上。" : "还没整理，点上面的「接着整理」。")
+            Text(unfinishedText)
                 .font(.system(size: 12.5)).foregroundStyle(Theme.text3)
                 .padding(.vertical, 4)
+        }
+    }
+
+    private var unfinishedText: String {
+        switch model.phase {
+        case .idle: return "这个问题是整理之后才问的，笔记里还没有。点「重新整理」补上。"
+        case .stopped: return "还没整理，点上面的「接着整理」。"
+        case .failed, .generating: return "还没整理。"
         }
     }
 

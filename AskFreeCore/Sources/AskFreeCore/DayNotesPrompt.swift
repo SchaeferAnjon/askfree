@@ -22,9 +22,27 @@ public struct NotesQuestion: Equatable, Sendable {
 
 /// 整理一天笔记的那一个请求：写什么、怎么写、回来怎么读
 public enum DayNotesPrompt {
-    /// 整个请求里问题和回答的字数上限：一天问得再多也不让请求大到发不出去
-    static let totalBudget = 60_000
+    /// 一个请求里问题、回答和追问的字数上限：一天问得再多也不让请求大到发不出去（fit 按它挑这一次放哪几个）
+    public static let totalBudget = 60_000
     static let followUpBudget = 700
+
+    /// 一个问题放进请求要多少字
+    static func size(of q: NotesQuestion) -> Int {
+        q.question.count + q.answer.count + q.followUps.reduce(0) { $0 + $1.question.count + $1.answer.count } + 60
+    }
+
+    /// 这一次请求放哪几个：从前往后放，到总字数上限为止（至少放一个）；放不下的下一次「接着整理」
+    public static func fit(_ todo: [NotesQuestion], budget: Int = totalBudget) -> [NotesQuestion] {
+        var used = 0
+        var picked: [NotesQuestion] = []
+        for q in todo {
+            let n = size(of: q)
+            if !picked.isEmpty && used + n > budget { break }
+            picked.append(q)
+            used += n
+        }
+        return picked
+    }
 
     /// 这一天的问题，按那天问的时间排好编号
     public static func questions(for day: HistoryDay, calendar: Calendar = .current) -> [NotesQuestion] {
@@ -86,11 +104,14 @@ public enum DayNotesPrompt {
     """
 
     /// 一个请求：要整理 todo 里的这几个问题；finishedTitles 是已经整理好的（接着整理时，小结要把它们也算上）
+    /// later：这一次装不下、留到下一次的问题数（有的话这一次不写小结和「记住」）
     public static func request(todo: [NotesQuestion], total: Int, dayLabel: String, finishedTitles: [(index: Int, title: String)] = [],
-                               language: String? = nil) -> (system: String, user: String, maxTokens: Int) {
+                               language: String? = nil, later: Int = 0) -> (system: String, user: String, maxTokens: Int) {
         var user = "日期：\(dayLabel)\n这一天一共问了 \(total) 个问题"
         if todo.isEmpty {
             user += "，每个都已经整理好了，现在只要写小结和「记住这几条」。\n"
+        } else if later > 0 {
+            user += "，下面是其中 \(todo.count) 个；另外 \(later) 个留到下一次，这一次只整理下面这几个，不要写「## 小结」和「## 记住」。\n"
         } else {
             user += finishedTitles.isEmpty ? "，下面是全部 \(todo.count) 个。\n" : "，下面是还没整理的 \(todo.count) 个。\n"
         }
@@ -128,7 +149,7 @@ public enum DayNotesParser {
         public var sawSection = false
     }
 
-    private enum Kind: Equatable { case item(Int), summary, keep, other }
+    private enum Kind: Equatable { case item(Int), summary, keep }
 
     /// final：回答已经收完，最后一节也算收尾
     public static func parse(_ text: String, final: Bool) -> Result {
@@ -167,7 +188,6 @@ public enum DayNotesParser {
             case .keep:
                 let points = body.compactMap(bulletText)
                 if !points.isEmpty { result.keep = points }
-            case .other: break
             }
         }
         return result
@@ -189,7 +209,8 @@ public enum DayNotesParser {
         // 模型有时写成「今日小结」「这一天的小结」「Key takeaways」：名字里带这几个词就算
         if ["记住", "要记", "最值得记", "takeaway", "remember"].contains(where: { lower.contains($0) }) { return .keep }
         if ["小结", "总结", "summary", "overview"].contains(where: { lower.contains($0) }) { return .summary }
-        return .other
+        // 别的 # 行（模型偶尔在要点里写的小标题）不分节，留在当前这一节的正文里
+        return nil
     }
 
     private static func item(index: Int, body: [String]) -> Item? {

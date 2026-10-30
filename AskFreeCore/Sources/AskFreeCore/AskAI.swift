@@ -371,6 +371,7 @@ public class AskAI {
     @discardableResult
     public func complete(system: String, user: String, maxTokens: Int, member: AskMember? = nil,
                          onPartial: ((String) -> Void)? = nil,
+                         onFinishReason: ((String?) -> Void)? = nil,
                          completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle {
         let handle = AskRequestHandle()
         guard let provider = member.map(AskProvider.member) ?? askProvider() else {
@@ -392,7 +393,7 @@ public class AskAI {
             AskVision.applyThinkingSettings(in: &body, provider: provider.name, model: model, thinking: nil)
             debugLog?("Notes request provider=\(provider.name) model=\(model) maxTokens=\(maxTokens) chars=\(user.count)")
             streamChat(url: provider.url, apiKey: provider.apiKey, body: body, member: provider.member,
-                       onPartial: onPartial, handle: handle) { result in
+                       onPartial: onPartial, handle: handle, onFinishReason: onFinishReason) { result in
                 if case .failure(let err) = result, case AskError.quotaExhausted = err, index + 1 < candidates.count {
                     QwenModelRouter.markExhausted(model)
                     attempt(index + 1)
@@ -645,6 +646,7 @@ public class AskAI {
                             thinkingDeadline: TimeInterval? = nil,
                             handle: AskRequestHandle? = nil,
                             onStats: ((Int, Int?) -> Void)? = nil,
+                            onFinishReason: ((String?) -> Void)? = nil,
                             completion: @escaping (Result<String, Error>) -> Void) {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -654,7 +656,8 @@ public class AskAI {
         for (name, value) in member?.headers ?? [:] { request.setValue(value, forHTTPHeaderField: name) }
         request.timeoutInterval = timeout
         let reader = SSEReader(onPartial: onPartial, onThinking: onThinking,
-                               toolNames: toolNames, onStats: onStats, member: member, completion: completion)
+                               toolNames: toolNames, onStats: onStats, member: member,
+                               onFinishReason: onFinishReason, completion: completion)
         reader.armThinkingDeadline(thinkingDeadline)
         // 带截图的请求体有几百 KB，序列化和发出去放到后台：调用方多半在主线程上，
         // 堵住它的这几百毫秒里回答浮窗没法重新布局
@@ -746,6 +749,8 @@ public class AskAI {
         /// (思考内容字数, 首字耗时 ms)。关得掉思考的模型这里应该是 0，不是 0 说明参数没生效。
         private let onStats: ((Int, Int?) -> Void)?
         private let completion: (Result<String, Error>) -> Void
+        /// 成功收完时先交出流是怎么结束的（stop / length…），再调 completion；整理笔记靠它知道输出被 max_tokens 截断了
+        private let onFinishReason: ((String?) -> Void)?
         /// 会员后台的请求：错误按后台的 {"error": {"code", "message"}} 读，返回头里的剩几次交回去
         private let member: AskMember?
         private var response: HTTPURLResponse?
@@ -785,7 +790,9 @@ public class AskAI {
              toolNames: [String] = [],
              onStats: ((Int, Int?) -> Void)? = nil,
              member: AskMember? = nil,
+             onFinishReason: ((String?) -> Void)? = nil,
              completion: @escaping (Result<String, Error>) -> Void) {
+            self.onFinishReason = onFinishReason
             self.onPartial = onPartial
             self.onThinking = onThinking
             self.toolNames = toolNames
@@ -891,6 +898,7 @@ public class AskAI {
                                                            tools: toolCalls.completedNames.joined(separator: ","))))
                 return
             }
+            onFinishReason?(finishReason)
             completion(.success(text))
         }
     }

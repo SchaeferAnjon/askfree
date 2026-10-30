@@ -120,7 +120,7 @@ final class DayNotesPromptTests: XCTestCase {
         XCTAssertEqual(r.items.map(\.index), [1, 2])
         XCTAssertEqual(r.items[0].title, "粗体题名")
         XCTAssertEqual(r.items[1].title, "")
-        XCTAssertEqual(r.items[1].points, "- 没有标题行")
+        XCTAssertEqual(r.items[1].points, "- 没有标题行\n## 2026 年的事\n- 不是节", "「## 2026 年…」不是新的一题，留在上一题的正文里")
     }
 
     func testSummaryAndKeepHeadersWithExtraWordsStillCount() {
@@ -137,5 +137,17 @@ final class DayNotesPromptTests: XCTestCase {
     func testFallbackTitleCutsALongQuestion() {
         XCTAssertEqual(DayNotesGenerator.fallbackTitle("短问题"), "短问题")
         XCTAssertEqual(DayNotesGenerator.fallbackTitle(String(repeating: "长", count: 40)), String(repeating: "长", count: 16) + "…")
+    }
+
+    func testSubheadingInsidePointsStaysInThePoints() {
+        let text = "## 1\n标题：一题\n- 甲\n### 示例\n- 乙\n- 丙\n\n## 小结\n好"
+        let parsed = DayNotesParser.parse(text, final: true)
+        XCTAssertEqual(parsed.items.count, 1)
+        XCTAssertEqual(parsed.items[0].points, "- 甲\n### 示例\n- 乙\n- 丙")
+        XCTAssertEqual(parsed.summary, "好")
+        // 年份开头的「## 2026 年…」也不是新的一题
+        let year = DayNotesParser.parse("## 1\n标题：一\n- 甲\n## 2026 年的变化\n- 乙", final: true)
+        XCTAssertEqual(year.items.count, 1)
+        XCTAssertTrue(year.items[0].points.contains("乙"))
     }
 }

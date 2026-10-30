@@ -4,7 +4,7 @@ import Foundation
 public protocol NotesCompleting: AnyObject {
     @discardableResult
     func complete(system: String, user: String, maxTokens: Int, member: AskMember?,
-                  onPartial: ((String) -> Void)?, completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle
+                  onPartial: ((String) -> Void)?, onFinishReason: ((String?) -> Void)?, completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle
 }
 
 extension AskAI: NotesCompleting {}
@@ -43,8 +43,10 @@ public final class DayNotesGenerator {
         for thread in day.threads where !notes.covered.contains(where: { $0.thread == thread.id }) {
             notes.covered.append(DayNoteCoverage(thread: thread.id, turns: thread.turns.count))
         }
-        let todo = all.filter { notes.item(for: $0.threadID) == nil }
-        guard !todo.isEmpty || notes.summary.isEmpty else {
+        let missing = all.filter { notes.item(for: $0.threadID) == nil }
+        // 一个请求装不下全部时只放前面的：剩下的留给「接着整理」，不让请求大到发不出去、整天整理不出来
+        let todo = DayNotesPrompt.fit(missing)
+        guard !missing.isEmpty || notes.summary.isEmpty else {
             DispatchQueue.main.async { completion(.success(notes)) }
             return AskRequestHandle()
         }
@@ -55,7 +57,7 @@ public final class DayNotesGenerator {
         let byIndex = Dictionary(uniqueKeysWithValues: all.map { ($0.index, $0) })
         let finished = all.compactMap { q in notes.item(for: q.threadID).map { (index: q.index, title: $0.title) } }
         let request = DayNotesPrompt.request(todo: todo, total: all.count, dayLabel: day.key, finishedTitles: finished,
-                                             language: DayNotesPrompt.languageName(of: all))
+                                             language: DayNotesPrompt.languageName(of: all), later: missing.count - todo.count)
         let todoIndexes = Set(todo.map(\.index))
         // 读到哪些问题已经收尾；两个回调（出字、结束）都在这条串行队列上改 notes
         let queue = DispatchQueue(label: "askfree.daynotes")
@@ -70,6 +72,8 @@ public final class DayNotesGenerator {
             return parsed
         }
         var lastCount = working.items.count
+        // 输出写到 max_tokens 就被截断，流是正常结束的：最后一节写了一半，不能算整理好
+        var truncated = false
         return ai.complete(system: request.system, user: request.user, maxTokens: request.maxTokens, member: member,
                            onPartial: { text in
             queue.async {
@@ -79,6 +83,8 @@ public final class DayNotesGenerator {
                 let snapshot = working
                 DispatchQueue.main.async { onUpdate(snapshot) }
             }
+        }, onFinishReason: { reason in
+            queue.async { truncated = reason == "length" }
         }, completion: { result in
             queue.async {
                 switch result {
@@ -88,14 +94,15 @@ public final class DayNotesGenerator {
                         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
                         try? text.write(toFile: dir + "/\(day.key)-\(Int(Date().timeIntervalSince1970)).txt", atomically: true, encoding: .utf8)
                     }
-                    let parsed = absorb(text, final: true)
+                    let parsed = absorb(text, final: !truncated)
                     guard parsed.sawSection, working.items.count > notes.items.count || parsed.summary != nil else {
                         DispatchQueue.main.async { completion(.failure(DayNotesError.unreadable)) }
                         return
                     }
                     // 小结等所有问题都整理好了才收：缺了几个时小结只说了一半的事，下次接着整理时再写
-                    let missing = all.contains { working.item(for: $0.threadID) == nil }
-                    if !missing {
+                    let stillMissing = all.contains { working.item(for: $0.threadID) == nil }
+                    // 被截断时「记住这几条」多半没写完：连小结一起留到接着整理时再写
+                    if !stillMissing && !(truncated && parsed.keep == nil) {
                         if let summary = parsed.summary { working.summary = summary }
                         if let keep = parsed.keep { working.keep = keep }
                     }

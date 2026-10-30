@@ -5,17 +5,19 @@ import XCTest
 private final class FakeAI: NotesCompleting {
     var chunks: [String] = []
     var failure: Error?
+    /// 流是怎么结束的：stop；"length" = 输出到 max_tokens 被截断
+    var finishReason: String? = "stop"
     private(set) var requests: [(system: String, user: String, maxTokens: Int, member: String?)] = []
 
     func complete(system: String, user: String, maxTokens: Int, member: AskMember?,
-                  onPartial: ((String) -> Void)?, completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle {
+                  onPartial: ((String) -> Void)?, onFinishReason: ((String?) -> Void)?, completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle {
         requests.append((system, user, maxTokens, member?.useId))
         var text = ""
         for chunk in chunks {
             text += chunk
             onPartial?(text)
         }
-        if let failure { completion(.failure(failure)) } else { completion(.success(text)) }
+        if let failure { completion(.failure(failure)) } else { onFinishReason?(finishReason); completion(.success(text)) }
         return AskRequestHandle()
     }
 }
@@ -145,5 +147,79 @@ final class DayNotesGeneratorTests: XCTestCase {
         let (updates, result) = run(ai2, day: day(2))
         if case .failure(let e) = result { XCTAssertEqual((e as? URLError)?.code, .networkConnectionLost) } else { XCTFail("应当失败") }
         XCTAssertEqual(updates.last?.items.count, 1, "断网前已经收尾的那一节留着")
+    }
+
+    // MARK: 输出被截断
+
+    func testTruncatedLastSectionIsNotAcceptedAsFinished() throws {
+        let ai = FakeAI()
+        ai.finishReason = "length"
+        ai.chunks = ["## 1\n标题：一题\n- 甲\n\n## 2\n标题：二题\n- 乙要用这段\n```swift\nlet a = compute("]
+        let notes = try run(ai, day: day(3)).result.get()
+        XCTAssertEqual(notes.items.map(\.id), ["th0"], "被截断的第 2 节不算整理好")
+        XCTAssertEqual(notes.summary, "")
+        // 接着整理从第 2 个补起
+        let ai2 = FakeAI()
+        ai2.chunks = ["## 2\n标题：二题\n- 乙\n\n## 3\n标题：三题\n- 丙\n\n## 小结\n好\n\n## 记住\n- 记"]
+        let done = try run(ai2, day: day(3), resume: notes).result.get()
+        XCTAssertFalse(ai2.requests[0].user.contains("### 问题 1"))
+        XCTAssertTrue(ai2.requests[0].user.contains("### 问题 2"))
+        XCTAssertEqual(done.items.map(\.title), ["一题", "二题", "三题"])
+        XCTAssertEqual(done.items[1].points, "- 乙")
+    }
+
+    func testTruncatedAfterAllQuestionsKeepsTheSummaryForNextTime() throws {
+        let ai = FakeAI()
+        ai.finishReason = "length"
+        ai.chunks = ["## 1\n标题：一题\n- 甲\n\n## 小结\n好。\n\n## 记住\n- 记一\n- 记"]
+        let notes = try run(ai, day: day(1)).result.get()
+        XCTAssertEqual(notes.items.count, 1)
+        XCTAssertEqual(notes.summary, "", "「记住」被截断了：小结也留到接着整理时一起写")
+        XCTAssertEqual(notes.keep, [])
+    }
+
+    func testFinishedWithStopStillAcceptsTheLastSection() throws {
+        let ai = FakeAI()
+        ai.chunks = ["## 1\n标题：一题\n- 甲\n- 乙"]
+        XCTAssertEqual(try run(ai, day: day(1)).result.get().items[0].points, "- 甲\n- 乙")
+    }
+
+    // MARK: 请求大小
+
+    func testRequestStaysWithinTheBudgetAndTheRestWaitsForResume() throws {
+        let base = calendar.date(from: DateComponents(year: 2026, month: 10, day: 29, hour: 9))!
+        let long = String(repeating: "这是一段很长的回答内容。", count: 500)   // 6000 字
+        let threads = (0..<60).map { i -> AskHistoryThread in
+            var turns = [AskHistoryTurn(id: "tu\(i)", thread: "th\(i)", at: base.addingTimeInterval(Double(i) * 60),
+                                        question: String(repeating: "问", count: 500), answer: long)]
+            for f in 0..<4 {
+                turns.append(AskHistoryTurn(id: "tu\(i)-\(f)", thread: "th\(i)", at: base.addingTimeInterval(Double(i) * 60 + Double(f + 1)),
+                                            question: String(repeating: "追", count: 500), answer: long))
+            }
+            return AskHistoryThread(id: "th\(i)", turns: turns)
+        }
+        let big = HistoryDay.group(threads, calendar: calendar)[0]
+        let ai = FakeAI()
+        ai.chunks = ["## 1\n标题：一\n- 甲\n\n## 2\n标题：二\n- 乙\n\n## 小结\n不该收\n\n## 记住\n- 不该收"]
+        let first = try run(ai, day: big).result.get()
+        let user = ai.requests[0].user
+        XCTAssertLessThanOrEqual(user.count, DayNotesPrompt.totalBudget + 5_000, "整个请求（问题、回答、追问）不超过预算：\(user.count) 字")
+        XCTAssertTrue(user.contains("留到下一次"))
+        XCTAssertTrue(user.contains("### 问题 1（") && !user.contains("### 问题 60（"))
+        XCTAssertEqual(first.summary, "", "还有问题没整理，小结不收")
+        XCTAssertEqual(first.items.count, 2)
+        // 接着整理：从没整理的第一个往下，同样不超预算
+        let ai2 = FakeAI()
+        ai2.chunks = ["## 3\n标题：三\n- 丙"]
+        _ = try run(ai2, day: big, resume: first).result.get()
+        XCTAssertFalse(ai2.requests[0].user.contains("### 问题 2（"))
+        XCTAssertTrue(ai2.requests[0].user.contains("### 问题 3（"))
+        XCTAssertLessThanOrEqual(ai2.requests[0].user.count, DayNotesPrompt.totalBudget + 5_000)
+    }
+
+    func testFitAlwaysTakesAtLeastOneQuestion() {
+        let q = NotesQuestion(index: 1, threadID: "a", turnID: "b", time: "10:00", question: "问", answer: String(repeating: "答", count: 100), followUps: [])
+        XCTAssertEqual(DayNotesPrompt.fit([q, q], budget: 10).count, 1)
+        XCTAssertEqual(DayNotesPrompt.fit([q, q], budget: 10_000).count, 2)
     }
 }

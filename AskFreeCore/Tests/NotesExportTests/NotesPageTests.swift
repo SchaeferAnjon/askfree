@@ -122,6 +122,14 @@ final class NotesPageTests: XCTestCase {
         XCTAssertLessThan(html.utf8.count, 60_000)
     }
 
+    func testPrintStyleStartsEveryQuestionOnItsOwnPage() {
+        // WebKit 打印会把一页里接着排的下一节的一行字、代码块顶栏切成两半（实测），所以每个问题从页顶开始：
+        // 这条规则丢了，导出的 PDF 又会切字，先在这里拦住
+        let html = page(fixture().0, fixture().1)
+        XCTAssertTrue(html.contains(".sec+.sec{break-before:page;page-break-before:always}"))
+        XCTAssertTrue(html.contains("print-color-adjust:exact"), "不加这条，WebKit 打印会把浅灰字洗得看不见")
+    }
+
     func testFileName() {
         XCTAssertEqual(NotesPage.fileName(day: "2026-10-29", ext: "pdf"), "2026-10-29 Ask Free 笔记.pdf")
     }

@@ -132,6 +132,10 @@ pre.texsrc{padding:6px 12px 6px 0;width:auto}
   .scrollx{overflow:visible;-webkit-mask-image:none;mask-image:none}
   pre{white-space:pre-wrap;overflow-wrap:anywhere;width:auto}
   .code,.math,ul.pts li,.para,.sum{break-inside:avoid;page-break-inside:avoid}
-  .sec{break-inside:auto}
+  /* 每个问题另起一页（第一个跟小结排在第一页）。WebKit 打印按页高硬切，break-inside 只在块的开头管用，
+     一页里接着排下一节时实测会把一行字、代码块的顶栏切成两半（两页各留半行）；每节都从页顶开始就切不到 */
+  .sec{break-inside:auto;margin-top:0;padding-top:0;border-top:0;padding-bottom:0}
+  .sec+.sec{break-before:page;page-break-before:always}
+  .sum{padding-bottom:24px;margin-bottom:24px;border-bottom:.5px solid var(--line)}
 }
 .qb.solo{grid-template-columns:minmax(0,1fr)}

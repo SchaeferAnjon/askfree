@@ -94,6 +94,8 @@ final class NotesModel: ObservableObject {
         var generation: Int
         var handle: AskRequestHandle?
         var use: MemberUseRef
+        /// 重新整理之前的那份笔记：新的一个问题都没整理出来就失败了，页面上还是它
+        var previous: DayNotes?
     }
 
     init() {
@@ -244,7 +246,8 @@ final class NotesModel: ObservableObject {
         let generation = (jobs[key]?.generation ?? 0) + 1
         // 同一天停下再接着整理，在后台的重试窗口里用同一个用量号：会员算一次
         let use = MemberUse.forRetry(resume == nil ? nil : jobs[key]?.use)
-        jobs[key] = Job(generation: generation, handle: nil, use: use)
+        jobs[key] = Job(generation: generation, handle: nil, use: use,
+                        previous: resume == nil ? (states[key]?.notes ?? store.load(day: key)) : nil)
         var state = NotesDayState(notes: resume ?? DayNotes.begin(day), phase: .generating)
         for thread in day.threads where !(state.notes?.covered.contains { $0.thread == thread.id } ?? false) {
             state.notes?.covered.append(DayNoteCoverage(thread: thread.id, turns: thread.turns.count))
@@ -324,6 +327,10 @@ final class NotesModel: ObservableObject {
             }
             let trial = MemberClient.shared.status?.trialResult
             state.phase = .failed(AskFailure(error: error, trialResult: trial))
+            // 重新整理一个都没整理出来就失败了：页面上留着原来的笔记（文件本来也没动）
+            if state.notes?.items.isEmpty ?? true, let previous = jobs[key]?.previous, !previous.items.isEmpty {
+                state.notes = previous
+            }
             log("failed \(key): \((error as? LocalizedError)?.errorDescription ?? "\(error)")")
         }
         states[key] = state

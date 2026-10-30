@@ -62,7 +62,7 @@ public enum DayNotesPrompt {
     static let system = """
     你在把用户今天问 AI 的问题整理成一页图文笔记。用户每个问题都带一张截图，笔记的读者就是用户自己，回头复习用。
     对每个问题写：一个不超过 14 个字的短题名（目录里用），和回答的要点——3 到 5 条，每条一句话，只留回答里真正要记住的结论和做法，不复述问题，不加客套。简单的问题 2 条也行。
-    要点里原回答的 `代码`、命令、$公式$ 照原样保留；独立成行的公式写成单独一行的 $$…$$；回答的核心是一段短代码时，在要点后面附一个带语言名的 ``` 代码块（不超过 12 行）。不用表格、小标题。
+    要点里原回答的 `代码`、命令、$公式$ 照原样保留；独立成行的公式写成单独一行的 $$…$$。原回答里有代码块时，把最关键的那一段（不超过 12 行）原样放在相关要点的后面，带上语言名，写成 ``` 代码块；没有代码块的不要自己编。不用表格、小标题。
     最后写这一天的小结：2 到 4 句话说清今天都弄明白了什么，不要逐个问题罗列；再写「记住这几条」：3 到 5 条跨问题最值得记的，每条一句话。
     严格按下面的格式输出，不要输出别的文字，也不要用代码围栏包住整份：
 
@@ -186,8 +186,9 @@ public enum DayNotesParser {
         if let m = title.range(of: #"^(问题|Question|Q)\s*\d+"#, options: [.regularExpression, .caseInsensitive]),
            let n = Int(title[m].drop(while: { !$0.isNumber })) { return .item(n) }
         let lower = title.lowercased()
-        if ["小结", "总结", "今日小结", "summary", "overview"].contains(where: { lower.hasPrefix($0) }) { return .summary }
-        if ["记住", "要记住", "最值得记", "key takeaways", "remember", "takeaways"].contains(where: { lower.hasPrefix($0) }) { return .keep }
+        // 模型有时写成「今日小结」「这一天的小结」「Key takeaways」：名字里带这几个词就算
+        if ["记住", "要记", "最值得记", "takeaway", "remember"].contains(where: { lower.contains($0) }) { return .keep }
+        if ["小结", "总结", "summary", "overview"].contains(where: { lower.contains($0) }) { return .summary }
         return .other
     }
 

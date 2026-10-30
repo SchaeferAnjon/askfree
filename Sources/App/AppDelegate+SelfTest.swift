@@ -135,6 +135,14 @@ extension AppDelegate {
             let prefix = (try? String(contentsOf: directory.appendingPathComponent(".name"), encoding: .utf8))?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? "shot"
             var written: [String] = []
+            // 屏幕锁着、窗口被挡住时 SwiftUI 不一定及时重画：先让界面把现在的状态排版、提交一遍再画
+            for window in NSApp.windows where window.isVisible {
+                window.contentView?.needsLayout = true
+                window.contentView?.layoutSubtreeIfNeeded()
+                window.displayIfNeeded()
+            }
+            CATransaction.flush()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.15))
             for (i, window) in NSApp.windows.enumerated() where window.isVisible && window.frame.width > 120 && window.frame.height > 60 {
                 if let name = try? Self.writePNG(of: window, to: directory, name: "\(prefix.isEmpty ? "shot" : prefix)-\(i)") { written.append(name) }
             }

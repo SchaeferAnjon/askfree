@@ -123,6 +123,12 @@ final class DayNotesPromptTests: XCTestCase {
         XCTAssertEqual(r.items[1].points, "- 没有标题行")
     }
 
+    func testSummaryAndKeepHeadersWithExtraWordsStillCount() {
+        let r = DayNotesParser.parse("## 1\n标题：一\n- 甲\n## 今天的小结\n好。\n## Key takeaways\n- 一条", final: true)
+        XCTAssertEqual(r.summary, "好。")
+        XCTAssertEqual(r.keep, ["一条"])
+    }
+
     func testSectionWithoutPointsIsDroppedAndGarbageHasNoSection() {
         XCTAssertEqual(DayNotesParser.parse("## 1\n标题：空", final: true).items, [])
         XCTAssertFalse(DayNotesParser.parse("好的，下面是笔记……", final: true).sawSection)

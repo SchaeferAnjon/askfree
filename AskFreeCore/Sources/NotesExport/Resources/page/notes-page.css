@@ -118,7 +118,9 @@ pre.texsrc{padding:6px 12px 6px 0;width:auto}
 @page{size:A4;margin:10mm 10mm 14mm}
 @media print{
   :root:not(#_),:root[data-theme]:not(#_){--bg:#fff;--surface:#f4f4f6;--card:#fff;--text:#18191c;--text2:#5f636c;--text3:#969aa2;--line:rgba(0,0,0,.12);--line2:rgba(0,0,0,.18);--fill:rgba(0,0,0,.04);--sel:rgba(0,0,0,.07);--c-k:#9b2393;--c-s:#c41a16;--c-c:#5d6c79;--c-n:#1c00cf;--c-t:#0b4f79;color-scheme:light}
+  /* WebKit 打印默认「省墨」：把浅灰字、浅底色洗得几乎看不见（实测 #969aa2 印成 #E4EAF6），要原样印 */
   html,body{background:#fff}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .shell,.shell.rail{display:block;padding:0;max-width:none}
   .page{max-width:none}
   .toc,.seg,.copy,.zb,.tip,.lb{display:none!important}

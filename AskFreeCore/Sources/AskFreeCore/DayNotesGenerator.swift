@@ -83,6 +83,11 @@ public final class DayNotesGenerator {
             queue.async {
                 switch result {
                 case .success(let text):
+                    // 开发版实测用：把模型回的原文存到这个目录（只在开发版，平时不记问答内容）
+                    if AppIdentity.isDevBuild, let dir = ProcessInfo.processInfo.environment["ASKFREE_NOTES_RAW_DIR"] {
+                        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+                        try? text.write(toFile: dir + "/\(day.key)-\(Int(Date().timeIntervalSince1970)).txt", atomically: true, encoding: .utf8)
+                    }
                     let parsed = absorb(text, final: true)
                     guard parsed.sawSection, working.items.count > notes.items.count || parsed.summary != nil else {
                         DispatchQueue.main.async { completion(.failure(DayNotesError.unreadable)) }

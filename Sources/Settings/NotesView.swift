@@ -117,7 +117,6 @@ struct NotesHeaderView: View {
         }
         .buttonStyle(NotesHoverStyle(radius: 6, active: model.pickerOpen))
         .accessibilityLabel("换一天，现在是 \(model.day.map { NotesFormat.dayTitle($0.date) } ?? "")")
-        .popover(isPresented: $model.pickerOpen, arrowEdge: .bottom) { NotesCalendarView(model: model) }
     }
 }
 
@@ -147,7 +146,8 @@ enum NotesFormat {
 
 // MARK: - 月历（换一天）
 
-private struct NotesCalendarView: View {
+/// 换一天的月历：浮在页头下面的卡片（卡片底、12 圆角、弹层阴影），由主窗口盖在页面上
+struct NotesCalendarView: View {
     @ObservedObject var model: NotesModel
     @State private var month: Date
 
@@ -209,6 +209,12 @@ private struct NotesCalendarView: View {
         }
         .padding(12)
         .frame(width: 300)
+        .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.borderStrong, lineWidth: 0.5))
+        .shadow(color: .black.opacity(0.18), radius: 14, y: 4)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("选日子")
+        .onExitCommand { model.pickerOpen = false }
     }
 
     private func shift(_ delta: Int) {
@@ -261,18 +267,22 @@ struct NotesBodyView: View {
     @State private var viewportHeight: CGFloat = 600
     @State private var columnWidth: CGFloat = 640
     @State private var zoomed: NotesEntry?
+    @State private var scroller = ScrollerBox()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollViewReader { proxy in
+        Group {
             VStack(spacing: 0) {
                 if let outdated = model.outdated { outdatedBanner(outdated) }
                 HStack(spacing: 0) {
-                    NotesTOCView(model: model, current: current) { id in jump(to: id, proxy) } toggle: {
+                    NotesTOCView(model: model, current: current) { id in jump(to: id) } toggle: {
                         let keep = current
+                        let before = offsets[keep]?.minY
                         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) { model.tocCollapsed.toggle() }
-                        // 当前那一节停在原位，不跳
-                        DispatchQueue.main.async { proxy.scrollTo(keep, anchor: .top) }
+                        // 当前那一节停在原来的高度，不跳（目录宽度一变，正文宽度跟着变，各节的高度也变）
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            if let before, let after = offsets[keep]?.minY { scroller.scroll(by: after - before) }
+                        }
                     }
                     .frame(width: model.tocCollapsed ? 44 : 200)
                     Rectangle().fill(Theme.border).frame(width: 0.5)
@@ -295,6 +305,12 @@ struct NotesBodyView: View {
         .onChange(of: model.openDay) { _, _ in current = "ov"; offsets = [:] }
     }
 
+    private func jump(to id: String) {
+        // 一下跳过去，不滚动画（长页面里动画滚过去反而看不清停在哪）
+        if let frame = offsets[id] { scroller.scroll(by: frame.minY) }
+        current = id
+    }
+
     // MARK: 滚动列
 
     private var scrollColumn: some View {
@@ -315,6 +331,7 @@ struct NotesBodyView: View {
                     Color.clear.onAppear { columnWidth = geo.size.width - 48 }
                         .onChange(of: geo.size.width) { _, w in columnWidth = w - 48 }
                 })
+                .background(ScrollerFinder(box: scroller))
             }
             .coordinateSpace(name: "notes-scroll")
             .onPreferenceChange(SectionFramesKey.self) { frames in
@@ -335,11 +352,6 @@ struct NotesBodyView: View {
         // 滚到底了：最后一节算当前（它的头永远到不了 140）
         if let last = order.last, last != "ov", let frame = offsets[last], frame.maxY <= viewportHeight + 40, frame.minY < viewportHeight - 80 { cur = last }
         if cur != current { current = cur }
-    }
-
-    private func jump(to id: String, _ proxy: ScrollViewProxy) {
-        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { proxy.scrollTo(id, anchor: .top) }
-        current = id
     }
 
     // MARK: 顶上：小结 / 整理进度
@@ -436,6 +448,35 @@ struct NotesBodyView: View {
 }
 
 // MARK: 滚动位置：每一节报自己的位置，目录跟着标出当前这一节
+
+/// 笔记正文外面那个 NSScrollView：目录点一下直接把它滚到那一节（不走 SwiftUI 的 scrollTo，它在窗口被挡住时不动）
+final class ScrollerBox {
+    weak var view: NSScrollView?
+
+    /// 往下滚 dy（负数往上）；滚不出头尾
+    func scroll(by dy: CGFloat) {
+        guard let view, let document = view.documentView else { return }
+        let clip = view.contentView
+        let maxY = max(0, document.frame.height - clip.bounds.height)
+        let y = min(max(0, clip.bounds.origin.y + dy), maxY)
+        clip.scroll(to: NSPoint(x: clip.bounds.origin.x, y: y))
+        view.reflectScrolledClipView(clip)
+    }
+}
+
+private struct ScrollerFinder: NSViewRepresentable {
+    let box: ScrollerBox
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { box.view = view.enclosingScrollView }
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        if box.view == nil { DispatchQueue.main.async { box.view = view.enclosingScrollView } }
+    }
+}
 
 struct SectionFramesKey: PreferenceKey {
     static var defaultValue: [String: CGRect] = [:]
@@ -803,6 +844,7 @@ private struct NotesProgressCard: View {
 
     private func title(generating: Bool, done: Int, total: Int, byUser: Bool) -> String {
         if generating { return "正在整理\(model.day.map { Calendar.current.isDateInToday($0.date) ? "今天" : "这一天" } ?? "这一天")的 \(total) 个问题" }
+        if done >= total { return "\(total) 个问题都整理好了，还差这一天的小结" }
         return byUser ? "整理了 \(done) 个，停下了" : "整理了 \(done) 个，还有 \(max(0, total - done)) 个没整理"
     }
 
@@ -811,7 +853,7 @@ private struct NotesProgressCard: View {
             let current = model.entries.first { $0.item == nil }
             return current.map { "第 \($0.number) 个：\($0.thread.turns[0].question)" } ?? "正在写这一天的小结…"
         }
-        if done >= total { return "问题都整理好了，接着整理会写这一天的小结。" }
+        if done >= total { return "点「接着整理」把小结补上，已经整理好的问题不动。" }
         return "已经整理好的留着，接着整理会从第 \(done + 1) 个开始。"
     }
 }

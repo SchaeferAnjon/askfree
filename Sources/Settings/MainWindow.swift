@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import Combine
 #if canImport(AskFreeCore)
 import AskFreeCore
 #endif
@@ -23,6 +24,14 @@ final class MainWindowModel: ObservableObject {
     @Published var showsPricing = false
     /// 「历史」页里看的每日图文笔记（开着时「历史」页换成笔记页）
     let notes = NotesModel()
+    private var notesChange: AnyCancellable?
+    private var pickerChange: AnyCancellable?
+
+    init() {
+        // 笔记页开了、关了，主窗口的页头和内容跟着换
+        notesChange = notes.$openDay.removeDuplicates().sink { [weak self] _ in self?.objectWillChange.send() }
+        pickerChange = notes.$pickerOpen.removeDuplicates().sink { [weak self] _ in self?.objectWillChange.send() }
+    }
 }
 
 // MARK: - 窗口
@@ -134,6 +143,15 @@ struct MainWindowView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Theme.bg)
+            .overlay(alignment: .topLeading) {
+                // 笔记页「换一天」的月历：浮在页头下面，点别处收起
+                if model.page == .history, model.notes.isOpen, model.notes.pickerOpen {
+                    ZStack(alignment: .topLeading) {
+                        Color.black.opacity(0.001).contentShape(Rectangle()).onTapGesture { model.notes.pickerOpen = false }
+                        NotesCalendarView(model: model.notes).padding(.leading, 16).padding(.top, 46)
+                    }
+                }
+            }
         }
         .frame(minWidth: 860, minHeight: 580)
         .ignoresSafeArea()

@@ -15,6 +15,7 @@ import AskFreeCore
 ///   panel             写出当前存储面板的文件名和文件夹
 ///   accept-panel      点存储面板的默认按钮（「存储」）
 ///   cancel-panel      点存储面板的「取消」
+///   size <宽> <高>    把主窗口改成这么大（截很长的一页用）
 ///   wait <秒>         后面的命令等这么久再执行
 extension AppDelegate {
     func installDevCommands() {
@@ -40,6 +41,20 @@ extension AppDelegate {
             case "press~": result = Self.devPress(argument, prefix: true)
             case "find": result = Self.devLabels().filter { $0.contains(argument) }.joined(separator: "\n")
             case "dump": result = Self.devLabels().joined(separator: "\n")
+            case "size":
+                let n = argument.split(separator: " ").compactMap { Double($0) }
+                if n.count == 2, let window = MainActor.assumeIsolated({ SettingsWindowController.shared?.window }) {
+                    window.setFrame(NSRect(x: window.frame.minX, y: window.frame.maxY - n[1], width: n[0], height: n[1]), display: true)
+                    result = "size \(Int(window.frame.width))x\(Int(window.frame.height))"
+                }
+            case "scrolls":
+                var lines: [String] = []
+                func visit(_ v: NSView) {
+                    if let sv = v as? NSScrollView { lines.append("scroll doc=\(Int(sv.documentView?.frame.height ?? 0)) visibleY=\(Int(sv.documentVisibleRect.minY)) h=\(Int(sv.documentVisibleRect.height))") }
+                    v.subviews.forEach(visit)
+                }
+                for w in NSApp.windows where w.isVisible { lines.append("window \(w.title) occluded=\(!w.occlusionState.contains(.visible)) key=\(w.isKeyWindow)"); if let c = w.contentView { visit(c) } }
+                result = lines.joined(separator: "\n")
             case "panel":
                 if let panel = Self.devSavePanel() { result = "name=\(panel.nameFieldStringValue) dir=\(panel.directoryURL?.path ?? "-")" } else { result = "no panel" }
             case "accept-panel", "cancel-panel":
@@ -123,19 +138,15 @@ extension AppDelegate {
         return nil
     }
 
+    /// 存储面板的按钮在系统的远程视图里，进程里点不到：用窗口结束这张面板，带上和「存储」「取消」一样的返回值，
+    /// 面板的回调（笔记页拿文件路径往下走）就和用户点了按钮时一样
     static func devClickPanelButton(accept: Bool) -> String {
         guard let panel = devSavePanel() else { return "no panel" }
-        var found: NSButton?
-        func search(_ view: NSView) {
-            for sub in view.subviews {
-                if let b = sub as? NSButton, found == nil, accept ? b.keyEquivalent == "\r" : b.keyEquivalent == "\u{1b}" { found = b }
-                search(sub)
-            }
+        if let parent = NSApp.windows.first(where: { $0.attachedSheet === panel }) {
+            parent.endSheet(panel, returnCode: accept ? .OK : .cancel)
+            return accept ? "sheet ended OK" : "sheet ended cancel"
         }
-        if let content = panel.contentView { search(content) }
-        guard let button = found else { return "button not found" }
-        button.performClick(nil)
-        return "clicked \(button.title)"
+        return "panel is not a sheet"
     }
 }
 

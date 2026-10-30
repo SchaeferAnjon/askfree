@@ -103,6 +103,8 @@ struct HistoryView: View {
 
     /// 打开时把键盘焦点给列表（上下键换一条）；从侧栏用 ↑↓ 走过来时为 false，焦点留在侧栏
     var focusListOnAppear = true
+    /// 点某一天旁边的「笔记」：打开那一天的图文笔记（参数是 yyyy-MM-dd）
+    var onOpenNotes: (String) -> Void = { _ in }
 
     @State private var threads: [AskHistoryThread] = AskHistoryStore.shared.threads()
     @State private var query = ""
@@ -223,6 +225,19 @@ struct HistoryView: View {
                                 HStack(spacing: 6) {
                                     Text(HistoryFormat.day(group.day)).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text2)
                                     Text("\(group.threads.count)").font(.system(size: 12)).foregroundStyle(Theme.text3)
+                                    Spacer(minLength: 0)
+                                    Button { onOpenNotes(HistoryDay.key(for: group.day)) } label: {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "doc.text").font(.system(size: 11))
+                                            Text("笔记").font(.system(size: 12))
+                                        }
+                                        .foregroundStyle(Theme.text2)
+                                        .padding(.horizontal, 6).frame(height: 24)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(NotesHoverStyle(radius: 5))
+                                    .help("把这一天问过的问题整理成图文笔记")
+                                    .accessibilityLabel("\(HistoryFormat.day(group.day))的笔记")
                                 }
                                 .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 6)
                                 ForEach(group.threads) { thread in

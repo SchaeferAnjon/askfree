@@ -47,25 +47,21 @@ enum UsageModeStore {
     }
 }
 
-extension AppDelegate {
-    /// 会员模式下按下提问键那一刻：上次问后台时已经知道用不了（试用用完、没领到、到期、欠费、今天的用完了），
-    /// 不录音，直接在右上角说清楚怎么办（订阅 / 换卡），顺手再问一次后台（别处刚付过钱就能马上恢复）。回 true = 拦下了。
-    /// voice：要录音的（按住说话、面板上按住追问）还看识别分钟用完没有；打字问不看
+extension MemberClient {
+    /// 会员模式下，这一刻已经知道用不了就返回要给用户看的那个错（回答面板的报错卡、笔记页都用它）；没拦下返回 nil。
+    /// 因为状态拦下时顺手再问一次后台：别处刚付过钱就能马上恢复
     @MainActor
-    func blockedByMembership(voice: Bool) -> Bool {
-        guard UsageModeStore.isMember else { return false }
-        let member = MemberClient.shared
+    func knownBlock(voice: Bool, log: (String) -> Void) -> MemberAPIError? {
         // 这张授权今天的成本、识别分钟（/status 的 limitBy、voice，或计量接口回过的）：到重置那一刻为止
-        if let block = member.usageBlock(voice: voice) {
-            debugLog("Member: blocked before asking reason=\(block.code) (limit)")
-            showMemberNotice(block)
-            return true
+        if let block = usageBlock(voice: voice) {
+            log("Member: blocked before asking reason=\(block.code) (limit)")
+            return block
         }
-        guard let s = member.status, !s.canUse, let reason = s.reason else { return false }
+        guard let s = status, !s.canUse, let reason = s.reason else { return nil }
         let reset = s.resetAt ?? s.today?.resetAt
         if reason == "daily-limit", let reset, Date().timeIntervalSince1970 * 1000 >= reset {
-            Task { await member.refresh() }
-            return false
+            Task { await refresh() }
+            return nil
         }
         let message: String
         if reason == "daily-limit" {
@@ -73,10 +69,21 @@ extension AppDelegate {
         } else {
             message = MemberSummary.line(s).detail
         }
-        debugLog("Member: blocked before asking reason=\(reason)")
-        showMemberNotice(MemberAPIError(status: reason == "daily-limit" ? 429 : 402, code: reason, message: message,
-                                        resetAt: reason == "daily-limit" ? reset : nil))
-        Task { await member.refresh() }
+        log("Member: blocked before asking reason=\(reason)")
+        Task { await refresh() }
+        return MemberAPIError(status: reason == "daily-limit" ? 429 : 402, code: reason, message: message,
+                              resetAt: reason == "daily-limit" ? reset : nil)
+    }
+}
+
+extension AppDelegate {
+    /// 会员模式下按下提问键那一刻：上次问后台时已经知道用不了（试用用完、没领到、到期、欠费、今天的用完了），
+    /// 不录音，直接在右上角说清楚怎么办（订阅 / 换卡），顺手再问一次后台（别处刚付过钱就能马上恢复）。回 true = 拦下了。
+    /// voice：要录音的（按住说话、面板上按住追问）还看识别分钟用完没有；打字问不看
+    @MainActor
+    func blockedByMembership(voice: Bool) -> Bool {
+        guard UsageModeStore.isMember, let block = MemberClient.shared.knownBlock(voice: voice, log: { [weak self] in self?.debugLog($0) }) else { return false }
+        showMemberNotice(block)
         return true
     }
 

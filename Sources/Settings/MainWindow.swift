@@ -21,6 +21,8 @@ final class MainWindowModel: ObservableObject {
     @Published var asksUsageConsent = false
     /// 收费页（会员页、报错卡「订阅会员」、菜单栏打开）
     @Published var showsPricing = false
+    /// 「历史」页里看的每日图文笔记（开着时「历史」页换成笔记页）
+    let notes = NotesModel()
 }
 
 // MARK: - 窗口
@@ -114,6 +116,8 @@ struct MainWindowView: View {
     @ObservedObject private var member = MemberClient.shared
     @State private var usageMode = UsageMode.current()
     @State private var historyCount = AskHistoryStore.shared.threads().count
+    /// 今天问过问题吗（「今天的笔记」能不能点）
+    @State private var hasToday = AskHistoryStore.shared.threads().contains { Calendar.current.isDateInToday($0.updatedAt) }
     /// 侧栏有键盘焦点时 ↑↓ 换页（点一下侧栏、或 Tab 进来）；历史列表、输入框有焦点时 ↑↓ 归它们
     @FocusState private var sidebarFocused: Bool
     /// 按过 ↑↓ 才画焦点框；用鼠标点的人看不到这圈
@@ -134,7 +138,9 @@ struct MainWindowView: View {
         .frame(minWidth: 860, minHeight: 580)
         .ignoresSafeArea()
         .onReceive(NotificationCenter.default.publisher(for: .askFreeHistoryDidChange)) { _ in
-            historyCount = AskHistoryStore.shared.threads().count
+            let threads = AskHistoryStore.shared.threads()
+            historyCount = threads.count
+            hasToday = threads.contains { Calendar.current.isDateInToday($0.updatedAt) }
         }
         .sheet(isPresented: $model.asksUsageConsent) {
             UsageConsentSheet { agree in
@@ -195,7 +201,10 @@ struct MainWindowView: View {
 
     private func sidebarRow(_ page: MainPage, title: String? = nil, symbol: String? = nil, trailing: String? = nil) -> some View {
         let selected = model.page == page
-        return Button { model.page = page; sidebarFocused = true; keyboardNavigating = false } label: {
+        return Button {
+            if page == .history, model.page == .history, model.notes.isOpen { model.notes.close() }   // 已经在「历史」上再点一下：从笔记回到列表
+            model.page = page; sidebarFocused = true; keyboardNavigating = false
+        } label: {
             HStack(spacing: 10) {
                 Image(systemName: symbol ?? page.symbol).font(.system(size: 13))
                     .foregroundStyle(selected ? Theme.text : Theme.text2)
@@ -253,25 +262,49 @@ struct MainWindowView: View {
 
     // MARK: 页头和内容
 
-    private var header: some View {
-        HStack {
-            Text(model.page == .start ? startTitle : model.page.title)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Theme.text)
-            Spacer()
-            if model.page == .history {
-                Text("\(historyCount) 条，只存在这台 Mac 上").font(.system(size: 12)).foregroundStyle(Theme.text3)
+    @ViewBuilder private var header: some View {
+        if model.page == .history && model.notes.isOpen {
+            NotesHeaderView(model: model.notes)
+        } else {
+            HStack {
+                Text(model.page == .start ? startTitle : model.page.title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.text)
+                Spacer()
+                if model.page == .history {
+                    Text("\(historyCount) 条，只存在这台 Mac 上").font(.system(size: 12)).foregroundStyle(Theme.text3)
+                    Button { if let key = model.notes.todayKey() { model.notes.open(day: key) } } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "doc.text").font(.system(size: 13))
+                            Text("今天的笔记").font(.system(size: 13))
+                        }
+                        .foregroundStyle(hasToday ? Theme.text : Theme.text3)
+                        .padding(.horizontal, 12).frame(height: 28)
+                        .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.borderStrong, lineWidth: 0.5))
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!hasToday)
+                    .help(hasToday ? "把今天问过的问题整理成图文笔记" : "今天还没有问过问题")
+                    .accessibilityLabel("今天的笔记")
+                    .accessibilityHint(hasToday ? "把今天问过的问题整理成图文笔记" : "今天还没有问过问题")
+                }
             }
+            .padding(.horizontal, 24)
+            .frame(height: 52)
         }
-        .padding(.horizontal, 24)
-        .frame(height: 52)
     }
 
     @ViewBuilder private var content: some View {
         switch model.page {
         case .history:
-            // 用侧栏 ↑↓ 走到「历史」时焦点留在侧栏，不然下一下 ↓ 换的是历史里的那一条
-            HistoryView(focusListOnAppear: !model.arrivedByArrowKey)
+            if model.notes.isOpen {
+                NotesBodyView(model: model.notes)
+            } else {
+                // 用侧栏 ↑↓ 走到「历史」时焦点留在侧栏，不然下一下 ↓ 换的是历史里的那一条
+                HistoryView(focusListOnAppear: !model.arrivedByArrowKey, onOpenNotes: { model.notes.open(day: $0) })
+            }
         default:
             ScrollView {
                 pageContent

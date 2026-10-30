@@ -42,6 +42,8 @@ enum AppLinks {
 /// 启动参数（scripts/dev_run.sh 透传）：
 /// - `-openPage <start|history|member|hotkeys|models|answer|recording|permissions|general|about|onboarding|pricing>`：
 ///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导，pricing 打开会员页再弹出收费页），正式版也认
+/// - `-openNotes <yyyy-MM-dd|today>`：启动后打开主窗口的「历史」页，直接看（没整理过的就开始整理）那一天的图文笔记，只在开发版生效。
+///   开发版还认环境变量 ASKFREE_ANKI_URL（把 AnkiConnect 指到本机的假服务）、ASKFREE_NOTES_NO_OPEN（导出时只写文件，不打开浏览器和 PDF）
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效；
 ///   可以给几个，后面的等前一句答完 4 秒后当追问接着问
@@ -78,6 +80,11 @@ enum DevLaunchOptions {
     }()
 
     static let isDemo: Bool = AppIdentity.demoDataDirectory != nil
+
+    static let openNotesDay: String? = {
+        guard AppIdentity.isDevBuild, let i = arguments.firstIndex(of: "-openNotes"), i + 1 < arguments.count else { return nil }
+        return arguments[i + 1] == "today" ? HistoryDay.key(for: Date()) : arguments[i + 1]
+    }()
 
     static let demoScreen: DemoScreen? = AppIdentity.isDevBuild ? DemoScreen(arguments: arguments) : nil
 
@@ -137,6 +144,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// 第几轮提问：回答在面板里流式出字时录音不再被占住，旧回答的回调按这个编号丢掉，不写进新一轮。
     /// 面板开始显示新一轮（startThread / appendQuestion）时加一
     var askRound = 0
+    /// 开发版的实测命令（installDevCommands）：轮询 command.txt 的定时器要留着
+    var devCommandTimer: DispatchSourceTimer?
     /// 开发版的窗口留图（installDevWindowShots）：收 SIGUSR1 的那个源要留着，不然马上被释放
     var devShotSource: DispatchSourceSignal?
     /// 有一轮回答还在路上。这期间新提问一律另起话题，面板上按住续聊先不接（上一轮还没答完，接不上）
@@ -251,6 +260,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         installDevWindowShots()
+        installDevCommands()
         MainThreadStallMonitor.start { [weak self] in self?.debugLog($0) }
         // 进程里第一条公式要读字体（几十毫秒）：启动后 1 秒先排一条，第一次回答时不卡
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
@@ -271,6 +281,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else if !cloudTranscriber.isConfigured() || !askAI.isConfigured() {
             SettingsWindowController.show(page: .start)
+        }
+        if let day = DevLaunchOptions.openNotesDay {
+            debugLog("Launch argument: opening notes for \(day)")
+            SettingsWindowController.show(page: .history)
+            MainActor.assumeIsolated { SettingsWindowController.shared?.model.notes.open(day: day) }
         }
         if !DevLaunchOptions.askTexts.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.devAsk(DevLaunchOptions.askTexts) }

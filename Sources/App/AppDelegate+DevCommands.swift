@@ -4,7 +4,7 @@ import SwiftUI
 import AskFreeCore
 #endif
 
-/// 开发版带 -demoData 启动时，在那个目录里放一个 command.txt，App 每 0.25 秒看一眼，一行一条命令，执行完删掉文件，
+/// 开发版带 -demoData（或 -freshData）启动时，在那个目录里放一个 command.txt，App 每 0.25 秒看一眼，一行一条命令，执行完删掉文件，
 /// 结果写进 command.out。给没人看着的实测用（屏幕锁着、不能发鼠标键盘）：不走鼠标，而是在 App 自己的进程里
 /// 走一遍无障碍树，按名字找到控件、执行和旁白一样的「按下」，所以按下去走的是控件真正的响应；点击的命中区域这里测不到。
 /// 命令：
@@ -19,7 +19,7 @@ import AskFreeCore
 ///   wait <秒>         后面的命令等这么久再执行
 extension AppDelegate {
     func installDevCommands() {
-        guard AppIdentity.isDevBuild, let directory = AppIdentity.demoDataDirectory else { return }
+        guard AppIdentity.isDevBuild, let directory = AppIdentity.demoDataDirectory ?? AppIdentity.freshDataDirectory else { return }
         let input = directory.appendingPathComponent("command.txt")
         let output = directory.appendingPathComponent("command.out")
         let timer = DispatchSource.makeTimerSource(queue: .main)

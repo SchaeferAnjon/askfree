@@ -466,8 +466,14 @@ final class NotesModel: ObservableObject {
                 try? self.store.markInAnki(result.added + result.skipped)
                 self.ledger = self.store.ankiLedger()
                 self.picks = self.picks.subtracting(result.added + result.skipped)
-                self.bar = .result(added: result.added.count, skipped: result.skipped.count)
-                self.log("anki import done added=\(result.added.count) skipped=\(result.skipped.count)")
+                if result.failed.isEmpty {
+                    self.bar = .result(added: result.added.count, skipped: result.skipped.count)
+                } else {
+                    // 没加成的不说成「已经有了」，也不记「已在 Anki」，选的还勾着
+                    let done = result.added.count > 0 ? "加了 \(result.added.count) 张，" : ""
+                    self.bar = .failed("\(done)\(result.failed.count) 张没能加进 Anki：牌组里没有它，笔记类型「\(AnkiCardBuilder.modelName)」可能被改过")
+                }
+                self.log("anki import done added=\(result.added.count) skipped=\(result.skipped.count) failed=\(result.failed.count)")
             } catch AnkiConnectError.notRunning {
                 self?.bar = .noAnki(timedOut: false)
                 self?.log("anki not running")

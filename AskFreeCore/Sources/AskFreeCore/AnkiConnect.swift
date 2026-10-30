@@ -11,16 +11,24 @@ public struct AnkiCard: Equatable, Sendable {
     /// 截图在 Anki 媒体库里的文件名和内容（没有截图的问题是 nil）
     public let mediaName: String?
     public let mediaData: Data?
+    /// 正面末尾那个看不见的唯一标记：判重、确认「已经有了」都靠它
+    public let marker: String
 }
 
 public enum AnkiCardBuilder {
     public static let deckName = "Ask Free"
     public static let modelName = "Ask Free 笔记"
 
+    static func idMarker(turnID: String) -> String { "askfree-\(turnID)" }
+
     /// item：这个问题整理出的笔记；screenshot：它的截图（没有就 nil）。公式在 Anki 里用它自带的 MathJax（\( \)、\[ \]）
     public static func card(item: DayNoteItem, question: String, day: String, time: String, screenshot: Data?) -> AnkiCard {
         let mediaName = screenshot == nil ? nil : "askfree-\(item.turnID).jpg"
         var front = "<div class=\"q\">\(AnswerHTML.escape(question).replacingOccurrences(of: "\n", with: "<br>"))</div>"
+        // Anki 按第一栏判重：两个问法一样（比如都是「这是什么意思？」）的问题不能算同一张。
+        // 末尾放一个看不见的、每个问题唯一的标记；这个标记也用来确认「已经有了」是真的有这张
+        let marker = idMarker(turnID: item.turnID)
+        front += "<div style=\"display:none\">\(marker)</div>"
         if let mediaName { front += "<div class=\"shot\"><img src=\"\(mediaName)\"></div>" }
         let renderer = AnswerHTML(math: { tex, display in
             let body = AnswerHTML.escape(tex)
@@ -28,7 +36,7 @@ public enum AnkiCardBuilder {
         })
         return AnkiCard(threadID: item.id, front: front, back: renderer.html(item.points),
                         source: "Ask Free · \(day) \(time)", tags: ["askfree", "askfree-\(day)"],
-                        mediaName: mediaName, mediaData: screenshot)
+                        mediaName: mediaName, mediaData: screenshot, marker: marker)
     }
 }
 
@@ -38,6 +46,8 @@ public struct AnkiImportResult: Equatable, Sendable {
     public let added: [String]
     /// Anki 里已经有的，没有重复加
     public let skipped: [String]
+    /// 没加进去、Anki 里也没找到这张：笔记类型被改过之类，不能说成「已经有了」
+    public let failed: [String]
 }
 
 public enum AnkiConnectError: LocalizedError, Equatable {
@@ -167,8 +177,20 @@ public final class AnkiConnect: @unchecked Sendable {
             guard ids.count == fresh.count else { throw AnkiConnectError.badResponse }
             for (card, id) in zip(fresh, ids) where !(id is NSNull) { added.append(card.threadID) }
         }
+        // 没加进去的：Anki 里真有这张才算「已经有了」（canAddNotes 说不行还有别的原因），找不到的算没加成
         let addedSet = Set(added)
-        return AnkiImportResult(added: added, skipped: cards.map(\.threadID).filter { !addedSet.contains($0) })
+        var skipped: [String] = []
+        var failed: [String] = []
+        for card in cards where !addedSet.contains(card.threadID) {
+            if try await exists(card, deck: deck) { skipped.append(card.threadID) } else { failed.append(card.threadID) }
+        }
+        return AnkiImportResult(added: added, skipped: skipped, failed: failed)
+    }
+
+    /// 牌组里已经有这个问题的卡（按卡片正面末尾那个标记找）
+    private func exists(_ card: AnkiCard, deck: String) async throws -> Bool {
+        let found = try await call("findNotes", ["query": "deck:\"\(deck)\" \"Front:*\(card.marker)*\""]) as? [Any]
+        return !(found ?? []).isEmpty
     }
 
     /// 在 Anki 的卡片浏览器里打开这个牌组

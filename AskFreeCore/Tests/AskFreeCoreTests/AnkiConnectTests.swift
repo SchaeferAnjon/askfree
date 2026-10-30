@@ -94,16 +94,20 @@ final class AnkiConnectTests: XCTestCase {
             case "canAddNotes": return [true, false, true]
             case "storeMediaFile": return "x.jpg"
             case "addNotes": return [101, 102]
+            case "findNotes": return [55]
             default: XCTFail("没想到的动作 \(action)"); return nil
             }
         }
         let result = try await anki.add([card("a"), card("b"), card("c")])
         XCTAssertEqual(result.added, ["a", "c"])
         XCTAssertEqual(result.skipped, ["b"])
+        XCTAssertEqual(result.failed, [])
+        let query = FakeAnki.log.first { $0.action == "findNotes" }?.params["query"] as? String
+        XCTAssertEqual(query, "deck:\"Ask Free\" \"Front:*askfree-turn-b*\"", "「已经有了」要在牌组里按这张的标记找到才算")
         let actions = FakeAnki.log.map(\.action)
         XCTAssertEqual(actions.filter { $0 == "storeMediaFile" }.count, 2, "只给要加的卡传截图")
-        XCTAssertEqual(actions.last, "addNotes")
-        let added = (FakeAnki.log.last!.params["notes"] as! [[String: Any]])
+        XCTAssertEqual(actions.last, "findNotes", "加完才去确认没加的那张")
+        let added = (FakeAnki.log.last { $0.action == "addNotes" }!.params["notes"] as! [[String: Any]])
         XCTAssertEqual(added.count, 2)
         XCTAssertEqual(added[0]["deckName"] as? String, "Ask Free")
         XCTAssertEqual(added[0]["modelName"] as? String, "Ask Free 笔记")
@@ -116,6 +120,7 @@ final class AnkiConnectTests: XCTestCase {
             case "version": return 6
             case "modelNames": return ["Ask Free 笔记"]
             case "canAddNotes": return [false, false]
+            case "findNotes": return [55]
             default: return 1
             }
         }
@@ -133,12 +138,37 @@ final class AnkiConnectTests: XCTestCase {
             case "modelNames": return ["Ask Free 笔记"]
             case "canAddNotes": return [true, true]
             case "addNotes": return [7, NSNull()]
+            case "findNotes": return [55]
             default: return 1
             }
         }
         let result = try await anki.add([card("a"), card("b")])
         XCTAssertEqual(result.added, ["a"])
         XCTAssertEqual(result.skipped, ["b"])
+    }
+
+    func testCardFrontEndsWithAUniqueHiddenMarker() {
+        let a = AnkiCardBuilder.card(item: DayNoteItem(id: "A", turnID: "turn-A", title: "题", points: "- x"), question: "这是什么意思？", day: "2026-10-29", time: "10:00", screenshot: nil)
+        let b = AnkiCardBuilder.card(item: DayNoteItem(id: "B", turnID: "turn-B", title: "题", points: "- y"), question: "这是什么意思？", day: "2026-10-29", time: "10:00", screenshot: nil)
+        XCTAssertNotEqual(a.front, b.front, "问法一样的两个问题，Anki 按第一栏判重时不能算同一张")
+        XCTAssertTrue(a.front.hasSuffix("<div style=\"display:none\">askfree-turn-A</div>"))
+    }
+
+    /// canAddNotes 说不行、牌组里又找不到这张：不是「已经有了」，是没加成
+    func testRefusedCardThatIsNotInTheDeckCountsAsFailedNotSkipped() async throws {
+        FakeAnki.handler = { action, _ in
+            switch action {
+            case "version": return 6
+            case "modelNames": return ["Ask Free 笔记"]
+            case "canAddNotes": return [false, false]
+            case "findNotes": return [Int]()
+            default: return 1
+            }
+        }
+        let result = try await anki.add([card("a"), card("b")])
+        XCTAssertEqual(result.added, [])
+        XCTAssertEqual(result.skipped, [])
+        XCTAssertEqual(result.failed, ["a", "b"])
     }
 
     func testAnkiNotRunningIsReportedAndNothingIsSent() async {

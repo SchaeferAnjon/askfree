@@ -16,6 +16,11 @@ let package = Package(
             name: "AnswerRender",
             targets: ["AnswerRender"]
         ),
+        // 一天的笔记导出成自带一切的 HTML（公式用 KaTeX 排好、代码着色、截图内嵌），浏览器打开和导出 PDF 共用
+        .library(
+            name: "NotesExport",
+            targets: ["NotesExport"]
+        ),
     ],
     dependencies: [
         // 公式排版。MIT，钉在 main 的这个 commit 上（1.7.3 那个 tag 不认 \dfrac）；升级先看 diff，再跑 FormulaCorpusTests
@@ -33,6 +38,17 @@ let package = Package(
             name: "AnswerRender",
             dependencies: ["AskFreeCore", .product(name: "SwiftMath", package: "SwiftMath")],
             path: "Sources/AnswerRender"
+        ),
+        .target(
+            name: "NotesExport",
+            dependencies: ["AskFreeCore", "AnswerRender"],
+            path: "Sources/NotesExport",
+            resources: [.copy("Resources")]
+        ),
+        .testTarget(
+            name: "NotesExportTests",
+            dependencies: ["NotesExport", "AskFreeCore"],
+            path: "Tests/NotesExportTests"
         ),
         .testTarget(
             name: "AskFreeCoreTests",

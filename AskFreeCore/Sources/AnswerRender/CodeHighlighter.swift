@@ -26,10 +26,10 @@ public enum CodeHighlighter {
     private static let swiftUIColors: [Token: Color] = colors.mapValues { Color(nsColor: $0) }
 
     /// 超过就不着色
-    static let maxLines = 400
-    static let maxChars = 20_000
+    nonisolated static let maxLines = 400
+    nonisolated static let maxChars = 20_000
 
-    struct Language {
+    struct Language: Sendable {
         var keywords: Set<String>
         var lineComment: [String] = ["//"]
         var hashComment = false
@@ -44,9 +44,9 @@ public enum CodeHighlighter {
         var attributes = false
     }
 
-    private static let cFamilyTypes: Set<String> = ["int", "char", "void", "float", "double", "long", "short", "unsigned", "signed", "bool", "auto", "size_t"]
+    nonisolated private static let cFamilyTypes: Set<String> = ["int", "char", "void", "float", "double", "long", "short", "unsigned", "signed", "bool", "auto", "size_t"]
 
-    static func language(_ name: String) -> Language? {
+    nonisolated static func language(_ name: String) -> Language? {
         switch name.lowercased() {
         case "python", "py", "python3":
             return Language(keywords: ["import", "from", "as", "def", "class", "return", "if", "elif", "else", "for", "in", "while", "with",
@@ -118,7 +118,7 @@ public enum CodeHighlighter {
     }
 
     /// 跨行的状态：上一行结束时还在块注释、或者还没收尾的字符串（三引号、JS 模板字符串、Go 原始字符串；带的是收尾符）里
-    enum LineState: Hashable {
+    enum LineState: Hashable, Sendable {
         case normal
         case blockComment
         case string(String)
@@ -160,6 +160,21 @@ public enum CodeHighlighter {
         return out
     }
 
+    /// 一段代码分好词，一行一个数组，每段（字, 类别）；类别 nil = 正文色。导出 HTML 用，不碰主线程上的缓存，哪个线程都能调。
+    /// 没认出的语言、太长的代码返回 nil（调用方按原文放）
+    nonisolated public static func tokenLines(_ code: String, language: String) -> [[(text: String, token: Token?)]]? {
+        let lines = code.components(separatedBy: "\n")
+        guard let lang = Self.language(language), code.count <= maxChars, lines.count <= maxLines else { return nil }
+        var state = LineState.normal
+        var out: [[(text: String, token: Token?)]] = []
+        for line in lines {
+            let (pieces, end) = tokenizeLine(line, lang, state)
+            out.append(pieces.map { (text: $0.0, token: $0.1) })
+            state = end
+        }
+        return out
+    }
+
     /// 整段着色（各行接起来）：历史页的代码块是一整段字，能跨行选中
     public static func highlight(_ code: String, language: String) -> AttributedString {
         var out = AttributedString()
@@ -171,7 +186,7 @@ public enum CodeHighlighter {
     }
 
     /// 一行分词：返回一段段（字, 类别）和这一行结束时的状态，类别 nil = 正文色。字拼起来等于这一行
-    static func tokenizeLine(_ line: String, _ lang: Language, _ entry: LineState) -> ([(String, Token?)], LineState) {
+    nonisolated static func tokenizeLine(_ line: String, _ lang: Language, _ entry: LineState) -> ([(String, Token?)], LineState) {
         let s = Array(line)
         var out: [(String, Token?)] = []
         var plain = ""

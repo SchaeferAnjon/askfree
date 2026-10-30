@@ -62,7 +62,7 @@ public struct AnswerHTML {
     }
 
     /// 行内：公式、`代码`、**加粗**、*斜体*、[链接](网址)
-    func inline(_ source: String) -> String {
+    public func inline(_ source: String) -> String {
         var out = ""
         for piece in AnswerBlocks.inline(source) {
             switch piece {

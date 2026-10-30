@@ -16,12 +16,15 @@ enum NotesExportError: LocalizedError {
     case emptyDocument
     case printFailed
     case loadFailed(String)
+    /// 选的文件夹写不进去（没有权限）
+    case notWritable(folder: String)
 
     var errorDescription: String? {
         switch self {
         case .emptyDocument: return "排出来的 PDF 是空的"
         case .printFailed: return "系统没能把笔记排成 PDF"
         case .loadFailed(let reason): return "笔记页没能载入：\(reason)"
+        case .notWritable(let folder): return "\(folder) 文件夹不能写入：没有权限。换个位置再试。"
         }
     }
 }
@@ -112,6 +115,10 @@ final class NotesPDFPrinter: NSObject, WKNavigationDelegate {
 
     /// 返回页数
     func render(html: String, title: String, to url: URL) async throws -> Int {
+        let folder = url.deletingLastPathComponent()
+        guard FileManager.default.isWritableFile(atPath: folder.path) else {
+            throw NotesExportError.notWritable(folder: FileManager.default.displayName(atPath: folder.path))
+        }
         let width = Self.paper.width - Self.margin.left - Self.margin.right
         let web = WKWebView(frame: NSRect(x: 0, y: 0, width: width, height: 1000), configuration: WKWebViewConfiguration())
         web.navigationDelegate = self

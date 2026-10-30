@@ -32,6 +32,7 @@ You are reading a web page, a paper or some code and hit something you don't get
 - **Searches the web by itself**: for news, prices or exchange rates it looks them up; start with 搜一下 ("search") to search right away.
 - **Pictures in the answer**: ask to see a photo of something and 3 images from the web appear below the answer; click one to open the original.
 - **History with screenshots**: every question and answer is kept on your Mac with the screenshots sent to the AI, listed by day; search, copy or delete them.
+- **Daily illustrated notes**: on the **历史** (History) page, **今天的笔记** (Today's notes) turns the day's questions into one page of notes (a summary, then each question's screenshot and the key points of its answer). Pick questions to add to Anki; open the page in your browser or export it as PDF. Writing the notes sends that day's questions and answers as text (no screenshots) to your model, or to the membership backend, where one run counts as one question.
 - **Type instead**: when you can't talk, double-tap a key (Control, say), it captures the screen and you type the question.
 
 <details>
@@ -138,7 +139,7 @@ Open the downloaded `AskFree.dmg`, drag **Ask Free** onto the **Applications** f
 - **联网的回答附上图** (Pictures with web answers) is on by default: when the answer needs pictures, one image search term (or your question, if there is no term) goes to DuckDuckGo, never the screenshots or the recording. Turn it off on the **回答方式** (Answers) page.
 - Update checks: every 6 hours Ask Free fetches the latest version info from GitHub and downloads the new version if there is one; none of your questions, recordings, screenshots or keys go with it. Turn it off under **通用 → 更新** (General → Updates).
 - Anonymous usage statistics: we will give the first 100 users free credit, so we need to count how many people use Ask Free. The count is anonymous. Ask Free asks you the first time you open it and **sends only if you agree**: once a day, to our server (api.us-cloud.uk), a random ID (created the first time it is sent, unrelated to your name, email or hardware), which app it is (Ask Free), the version, the system and chip type, whether you use a membership or your own keys, and the interface language. Never your questions, answers, recordings, screenshots or keys. Change it any time under **通用 → 匿名使用统计** (General → Anonymous usage statistics).
-- Keys and the membership token are stored in the macOS Keychain. History and screenshots stay on your Mac in `~/.config/askfree/`, readable only by your user account: text in `history.jsonl`, the screenshots sent to the model and thumbnails of found images in `history-images/`. Delete single entries or everything on the **历史** (History) page.
+- Keys and the membership token are stored in the macOS Keychain. History and screenshots stay on your Mac in `~/.config/askfree/`, readable only by your user account: text in `history.jsonl`, the screenshots sent to the model and thumbnails of found images in `history-images/`. Delete single entries or everything on the **历史** (History) page; the daily notes (`day-notes/`) and exported notes pages (`notes/`) go with them.
 
 The full [privacy policy](https://askfree.us-cloud.uk/#page=privacy) is on the website (in Chinese).
 

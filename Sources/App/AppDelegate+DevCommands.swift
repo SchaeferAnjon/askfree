@@ -15,6 +15,7 @@ import AskFreeCore
 ///   panel             写出当前存储面板的文件名和文件夹
 ///   accept-panel      点存储面板的默认按钮（「存储」）
 ///   cancel-panel      点存储面板的「取消」
+///   history-changed   通知「历史变了」（实测时从外面改 history.jsonl 来模拟删历史，再发这条让笔记页重新读）
 ///   size <宽> <高>    把主窗口改成这么大（截很长的一页用）
 ///   wait <秒>         后面的命令等这么久再执行
 extension AppDelegate {
@@ -41,6 +42,9 @@ extension AppDelegate {
             case "press~": result = Self.devPress(argument, prefix: true)
             case "find": result = Self.devLabels().filter { $0.contains(argument) }.joined(separator: "\n")
             case "dump": result = Self.devLabels().joined(separator: "\n")
+            case "history-changed":
+                NotificationCenter.default.post(name: .askFreeHistoryDidChange, object: nil)
+                result = "posted"
             case "size":
                 let n = argument.split(separator: " ").compactMap { Double($0) }
                 if n.count == 2, let window = MainActor.assumeIsolated({ SettingsWindowController.shared?.window }) {

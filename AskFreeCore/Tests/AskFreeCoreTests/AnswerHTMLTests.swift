@@ -55,4 +55,13 @@ final class AnswerHTMLTests: XCTestCase {
         XCTAssertTrue(html.contains("<p class=\"hd3\">小标题</p>"))
         XCTAssertTrue(html.contains("<p class=\"para\">一段话， 接着写。</p>"))
     }
+
+    func testCodeBlockLabelIsTheSameTableEverywhere() {
+        XCTAssertEqual(AnswerHTML.codeLabel("bash"), "Bash")
+        XCTAssertEqual(AnswerHTML.codeLabel("python"), "Python")
+        XCTAssertEqual(AnswerHTML.codeLabel("js"), "JavaScript")
+        XCTAssertEqual(AnswerHTML.codeLabel(""), "代码")
+        XCTAssertEqual(AnswerHTML.codeLabel("text"), "代码")
+        XCTAssertEqual(AnswerHTML.codeLabel("zig"), "Zig")
+    }
 }

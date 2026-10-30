@@ -773,4 +773,34 @@ final class MemberStatusLimitTests: XCTestCase {
         XCTAssertFalse(old.sameUse, "过了重试窗口换新号，先在本地拦")
         XCTAssertFalse(MemberUse.resolve(last: nil, reuse: true, now: now).sameUse)
     }
+
+    // MARK: 笔记页上的报错卡说「接着整理」，不说「再问一次」
+
+    func testFailureCardWordingForNotes() {
+        let noKey = AskFailure.noKey
+        XCTAssertEqual(noKey.actions(wording: .notes).map(\.title), ["去填 Key", "填好了，接着整理"])
+        XCTAssertEqual(noKey.actions.map(\.title), ["去填 Key", "填好了，再问一次"], "回答面板的说法不变")
+        XCTAssertTrue(noKey.detail(provider: "DeepSeek", wording: .notes).hasSuffix("就能接着整理。"))
+        XCTAssertTrue(noKey.detail(provider: "DeepSeek").hasSuffix("就能接着问这一句。"))
+
+        let used = AskFailure(error: MemberAPIError(status: 402, code: "trial-used-up", message: "x"))
+        XCTAssertTrue(used.detail(provider: "会员", wording: .notes).hasPrefix("订阅会员就能接着整理"))
+        XCTAssertTrue(used.detail(provider: "会员").hasPrefix("订阅会员就能接着问"))
+        XCTAssertEqual(used.actions(wording: .notes).map(\.title), ["订阅会员", "改用自带 Key"])
+
+        let expired = AskFailure(error: MemberAPIError(status: 409, code: "use-expired", message: "x"))
+        XCTAssertEqual(expired.title(provider: "会员", wording: .notes), "这次整理过了重试的时间")
+        XCTAssertEqual(expired.actions(wording: .notes).map(\.title), ["重新整理"])
+        XCTAssertEqual(expired.actions(wording: .notes).map(\.action), [.retry])
+
+        let offline = AskFailure.offline
+        XCTAssertEqual(offline.detail(provider: "x", wording: .notes), "检查一下网络，连上后再整理一次。")
+        let slow = AskFailure(error: MemberAPIError(status: 429, code: "too-fast", message: "x"))
+        XCTAssertTrue(slow.detail(provider: "会员", wording: .notes).contains("再整理"))
+        for failure in [noKey, used, expired, offline, slow] {
+            let text = failure.title(provider: "会员", wording: .notes) + failure.detail(provider: "会员", wording: .notes)
+                + failure.actions(wording: .notes).map(\.title).joined()
+            XCTAssertFalse(text.contains("再问") || text.contains("接着问"), "笔记页上不该出现「再问」「接着问」：\(text)")
+        }
+    }
 }

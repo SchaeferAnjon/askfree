@@ -1,3 +1,4 @@
+import AskFreeCore
 import AppKit
 import SwiftUI
 
@@ -18,7 +19,7 @@ struct CodeBlockView: View {
         let shown = code.isEmpty ? " " : code.replacingOccurrences(of: "\t", with: "    ")
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
-                Text(language.isEmpty ? "代码" : language)
+                Text(AnswerHTML.codeLabel(language))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(style.text2)
                     .lineLimit(1)

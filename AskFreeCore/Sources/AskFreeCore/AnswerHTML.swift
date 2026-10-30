@@ -48,7 +48,7 @@ public struct AnswerHTML {
     }
 
     func codeBlock(_ language: String, _ code: String) -> String {
-        let label = language.isEmpty || language.lowercased() == "text" ? "代码" : Self.languageLabel(language)
+        let label = Self.codeLabel(language)
         let body = self.code(language, code) ?? Self.escape(code)
         return "<div class=\"code\"><div class=\"code-h\"><span>\(Self.escape(label))</span>"
             + "<button class=\"copy\" type=\"button\" data-copy><svg viewBox=\"0 0 16 16\"><rect x=\"5.5\" y=\"5.5\" width=\"8\" height=\"8\" rx=\"1.5\"/>"
@@ -138,8 +138,13 @@ public struct AnswerHTML {
         return out
     }
 
+    /// 代码块顶上写什么：没写语言（或写的 text）是「代码」，其余照下面这张表。App 里的代码块和导出的网页用同一个
+    public static func codeLabel(_ language: String) -> String {
+        language.isEmpty || language.lowercased() == "text" ? "代码" : languageLabel(language)
+    }
+
     /// 代码块顶上的语言名：swift → Swift，js → JavaScript……认不出的原样大写开头
-    static func languageLabel(_ raw: String) -> String {
+    public static func languageLabel(_ raw: String) -> String {
         let names = ["swift": "Swift", "python": "Python", "py": "Python", "js": "JavaScript", "javascript": "JavaScript",
                      "ts": "TypeScript", "typescript": "TypeScript", "bash": "Bash", "sh": "Shell", "zsh": "Shell", "shell": "Shell",
                      "c": "C", "cpp": "C++", "c++": "C++", "java": "Java", "go": "Go", "rust": "Rust", "rs": "Rust", "json": "JSON",

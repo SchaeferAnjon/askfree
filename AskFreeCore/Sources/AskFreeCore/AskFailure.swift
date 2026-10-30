@@ -62,37 +62,45 @@ public enum AskFailure: Equatable {
         }
     }
 
-    public func title(provider: String) -> String {
+    /// 报错卡用在哪：回答面板（再问一次），还是笔记页（接着整理）。卡片的样子一样，只有字不同
+    public enum Wording: Sendable { case answer, notes }
+
+    public func title(provider: String, wording: Wording = .answer) -> String {
         switch self {
         case .noKey: return "还没填问答模型的 Key"
         case .invalidKey: return "\(provider) 不认这个 Key"
         case .quota: return "\(provider) 的额度用完了"
         case .timeout: return "\(provider) 没有回应"
         case .offline: return "连不上网络"
-        case .member(let p): return p.title
-        case .other: return "没答成"
+        case .member(let p): return wording == .notes ? p.forNotes.title : p.title
+        case .other: return wording == .notes ? "没整理成" : "没答成"
         }
     }
 
-    public func detail(provider: String) -> String {
+    public func detail(provider: String, wording: Wording = .answer) -> String {
+        let notes = wording == .notes
         switch self {
-        case .noKey: return "回答要用你自己的 AI Key。在「语音与模型」页填好 DeepSeek 或千问的 Key，就能接着问这一句。"
+        case .noKey:
+            return notes ? "整理笔记要用你自己的 AI Key。在「语音与模型」页填好 DeepSeek 或千问的 Key，就能接着整理。"
+                : "回答要用你自己的 AI Key。在「语音与模型」页填好 DeepSeek 或千问的 Key，就能接着问这一句。"
         case .invalidKey: return "可能复制少了几位，或者在官网删掉了。到「语音与模型」页重新粘贴，点「验证」试一下。"
         case .quota: return "账号欠费或免费额度用完了。到服务商控制台看看，或者在「语音与模型」页换一家。"
         case .timeout: return "可能是网络不稳，也可能是它正忙。"
-        case .offline: return "检查一下网络，连上后再问一次。"
-        case .member(let p): return p.detail
+        case .offline: return notes ? "检查一下网络，连上后再整理一次。" : "检查一下网络，连上后再问一次。"
+        case .member(let p): return notes ? p.forNotes.detail : p.detail
         case .other(let reason): return reason
         }
     }
 
     /// 第一个是黑色主按钮
-    public var actions: [(title: String, action: Action)] {
+    public var actions: [(title: String, action: Action)] { actions(wording: .answer) }
+
+    public func actions(wording: Wording) -> [(title: String, action: Action)] {
         switch self {
-        case .noKey: return [("去填 Key", .openModels), ("填好了，再问一次", .retry)]
+        case .noKey: return [("去填 Key", .openModels), (wording == .notes ? "填好了，接着整理" : "填好了，再问一次", .retry)]
         case .invalidKey: return [("去换 Key", .openModels), ("重试", .retry)]
         case .quota: return [("去换一家", .openModels), ("重试", .retry)]
-        case .member(let p): return p.actions.map { ($0.title, $0.action) }
+        case .member(let p): return (wording == .notes ? p.forNotes : p).actions.map { ($0.title, $0.action) }
         case .timeout, .offline, .other: return [("再试一次", .retry)]
         }
     }
@@ -133,6 +141,35 @@ public struct MemberProblem: Equatable, Sendable {
         self.actions = actions
         self.isError = isError
         self.symbol = symbol
+    }
+
+    /// 笔记页上的说法：要做的是接着整理，不是再问一次
+    public var forNotes: MemberProblem {
+        func reword(_ text: String) -> String {
+            text.replacingOccurrences(of: "就能接着问", with: "就能接着整理")
+                .replacingOccurrences(of: "连上后再问一次", with: "连上后再整理一次")
+                .replacingOccurrences(of: "稍后再问一次", with: "稍后再试一次")
+                .replacingOccurrences(of: "再问一次", with: "再整理一次")
+                .replacingOccurrences(of: "稍等几秒再问", with: "稍等几秒再整理")
+                .replacingOccurrences(of: "分钟再问", with: "分钟再整理")
+        }
+        var title = reword(self.title)
+        var detail = reword(self.detail)
+        var actions = self.actions
+        switch code {
+        case "use-limit":
+            title = "这次整理的请求次数到上限了"
+            detail = "点「重新整理」再来一次（算一次新的整理）。"
+        case "use-expired":
+            title = "这次整理过了重试的时间"
+            detail = "超过 15 分钟了，重新整理一次（算一次新的整理）。"
+            actions = actions.map { $0.action == .retry ? Button(title: "重新整理", action: .retry) : $0 }
+        case "bad-request", "bad-json", "bad-use-id", "bad-audio":
+            title = "这次整理发不出去"
+            detail = "稍后点「重新整理」再试一次。"
+        default: break
+        }
+        return MemberProblem(code: code, title: title, detail: detail, actions: actions, isError: isError, symbol: symbol)
     }
 
     public var withoutRetry: MemberProblem {

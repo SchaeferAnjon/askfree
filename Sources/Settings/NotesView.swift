@@ -137,7 +137,7 @@ enum NotesFormat {
     private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "M月d日 EEE"
+        f.dateFormat = "M 月 d 日 EEE"
         return f
     }()
 
@@ -265,7 +265,6 @@ struct NotesBodyView: View {
     @State private var current = "ov"
     @State private var offsets: [String: CGRect] = [:]
     @State private var viewportHeight: CGFloat = 600
-    @State private var columnWidth: CGFloat = 640
     @State private var zoomed: NotesEntry?
     @State private var scroller = ScrollerBox()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -273,7 +272,6 @@ struct NotesBodyView: View {
     var body: some View {
         Group {
             VStack(spacing: 0) {
-                if let outdated = model.outdated { outdatedBanner(outdated) }
                 HStack(spacing: 0) {
                     NotesTOCView(model: model, current: current) { id in jump(to: id) } toggle: {
                         let keep = current
@@ -315,6 +313,9 @@ struct NotesBodyView: View {
 
     private var scrollColumn: some View {
         GeometryReader { outer in
+            // 正文宽度只看这一栏能看到的宽度（最宽 860，左右各留 24）：窗口拉窄时跟着缩，拉宽时跟着长。
+            // 不能从正文自己排出来的宽度反推，不然截图、并排的栏定了宽，正文就再也缩不回去、右边被切掉
+            let columnWidth = max(0, min(860, outer.size.width) - 48)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     top.id("ov").trackSection("ov")
@@ -324,13 +325,9 @@ struct NotesBodyView: View {
                             .trackSection(entry.id)
                     }
                 }
-                .frame(maxWidth: 860, alignment: .leading)
+                .frame(width: columnWidth, alignment: .leading)
                 .padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 40)
-                .frame(maxWidth: .infinity)
-                .background(GeometryReader { geo in
-                    Color.clear.onAppear { columnWidth = geo.size.width - 48 }
-                        .onChange(of: geo.size.width) { _, w in columnWidth = w - 48 }
-                })
+                .frame(width: outer.size.width)
                 .background(ScrollerFinder(box: scroller))
             }
             .coordinateSpace(name: "notes-scroll")
@@ -358,6 +355,8 @@ struct NotesBodyView: View {
 
     @ViewBuilder private var top: some View {
         VStack(alignment: .leading, spacing: 16) {
+            // 页面开着时又问了新问题：和进度卡同一个位置的一张卡，目录和页头不动
+            if let outdated = model.outdated { outdatedCard(outdated) }
             switch model.phase {
             case .generating:
                 NotesProgressCard(model: model)
@@ -397,27 +396,24 @@ struct NotesBodyView: View {
 
     // MARK: 整理之后又问了新的
 
-    private func outdatedBanner(_ info: (new: Int, followedUp: Int)) -> some View {
+    private func outdatedCard(_ info: (new: Int, followedUp: Int)) -> some View {
         let text: String
         if info.new > 0 {
             text = "这一天又问了 \(info.new) 个问题，笔记里还没有" + (info.followedUp > 0 ? "，另有 \(info.followedUp) 个又追问了" : "")
         } else {
             text = "有 \(info.followedUp) 个问题整理之后又追问了，笔记里还是以前的"
         }
-        return VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                Circle().fill(Theme.warn).frame(width: 7, height: 7)
-                Text(text).font(.system(size: 12.5)).foregroundStyle(Theme.text)
-                Spacer(minLength: 8)
-                Button("重新整理") { model.regenerate() }
-                    .buttonStyle(NotesSmallButtonStyle())
-            }
-            .padding(.horizontal, 24)
-            .frame(height: 40)
-            .background(Theme.surface)
-            Hairline()
+        return HStack(spacing: 8) {
+            Circle().fill(Theme.warn).frame(width: 7, height: 7)
+            Text(text).font(.system(size: 13)).foregroundStyle(Theme.text)
+            Spacer(minLength: 8)
+            Button("重新整理") { model.regenerate() }
+                .buttonStyle(NotesHoverTextStyle())
         }
-        .accessibilityElement(children: .combine)
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.border, lineWidth: 0.5))
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: 放大截图
@@ -536,12 +532,30 @@ private struct NotesTOCView: View {
     private func clipped(_ q: String) -> String { q.count > 20 ? String(q.prefix(20)) + "…" : q }
 
     private func item(id: String, number: Int?, title: String, entry: NotesEntry?) -> some View {
-        let collapsed = model.tocCollapsed
-        let on = current == id
         let waiting = entry != nil && entry?.item == nil
-        let working = waiting && model.currentNumber == number
-        let picked = entry.map { model.picks.contains($0.thread.id) } ?? false
-        return Button { jump(id) } label: {
+        return NotesTOCRow(
+            number: number, title: title, collapsed: model.tocCollapsed, on: current == id, waiting: waiting,
+            working: waiting && model.currentNumber == number,
+            picked: entry.map { model.picks.contains($0.thread.id) } ?? false,
+            jump: { jump(id) })
+    }
+}
+
+/// 目录里的一行：当前节有底色（sel）、字用 text、500；指上去不加底，只把字从 text2 换成 text
+private struct NotesTOCRow: View {
+    let number: Int?
+    let title: String
+    let collapsed: Bool
+    let on: Bool
+    let waiting: Bool
+    let working: Bool
+    let picked: Bool
+    let jump: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        let lit = on || hovering
+        Button(action: jump) {
             HStack(alignment: .top, spacing: 8) {
                 Group {
                     if let number {
@@ -550,11 +564,11 @@ private struct NotesTOCView: View {
                         Image(systemName: "list.bullet").font(.system(size: 12))
                     }
                 }
-                .foregroundStyle(on ? Theme.text : Theme.text3)
+                .foregroundStyle(lit ? Theme.text : Theme.text3)
                 .frame(width: collapsed ? nil : 14, alignment: collapsed ? .center : .trailing)
-                .padding(.top, collapsed ? 0 : 0)
                 if !collapsed {
-                    Text(title).font(.system(size: 12.5)).foregroundStyle(waiting ? Theme.text3 : (on ? Theme.text : Theme.text2))
+                    Text(title).font(.system(size: 12.5, weight: on ? .medium : .regular))
+                        .foregroundStyle(waiting ? (hovering ? Theme.text2 : Theme.text3) : (lit ? Theme.text : Theme.text2))
                         .lineLimit(2).multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if working {
@@ -573,7 +587,8 @@ private struct NotesTOCView: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(NotesHoverStyle(radius: 6))
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
         .help(collapsed ? title : "")
         .accessibilityLabel(number.map { "第 \($0) 个：\(title)" } ?? title)
         .accessibilityValue(picked ? "已选" : (waiting ? "还没整理" : ""))
@@ -601,10 +616,11 @@ private struct NotesSectionView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Rectangle().fill(Theme.border).frame(height: 0.5).padding(.top, 24)
-            head
-            content.padding(.leading, 26)
+        // 分隔线上 24、下 24（题目到要点之间 12）
+        VStack(alignment: .leading, spacing: 0) {
+            Rectangle().fill(Theme.border).frame(height: 0.5)
+            head.padding(.top, 24)
+            content.padding(.leading, 26).padding(.top, 12)
         }
         .padding(.top, 24)
         .accessibilityElement(children: .contain)
@@ -890,13 +906,13 @@ private struct NotesFailureCard: View {
                         .offset(x: 4, y: 4)
                 }
             VStack(alignment: .leading, spacing: 3) {
-                Text(failure.title(provider: provider)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.text)
+                Text(failure.title(provider: provider, wording: .notes)).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.text)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(failure.detail(provider: provider)).font(.system(size: 13)).foregroundStyle(Theme.text2).lineSpacing(3)
+                Text(failure.detail(provider: provider, wording: .notes)).font(.system(size: 13)).foregroundStyle(Theme.text2).lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
-                if !failure.actions.isEmpty {
+                if !failure.actions(wording: .notes).isEmpty {
                     HStack(spacing: 8) {
-                        ForEach(Array(failure.actions.enumerated()), id: \.offset) { i, item in
+                        ForEach(Array(failure.actions(wording: .notes).enumerated()), id: \.offset) { i, item in
                             Button(item.title) { model.perform(item.action) }
                                 .buttonStyle(NotesSmallButtonStyle(solid: i == 0, outlined: i != 0))
                         }
@@ -938,7 +954,8 @@ private struct NotesAnkiBar: View {
 
     var body: some View {
         let count = model.picks.count
-        let generating = model.phase == .generating
+        // 整理中、或者一个都没整理好（试用用完、没填 Key、停在 0）：方框都是灰的，说整理好后才能勾
+        let generating = model.phase == .generating || model.finished.isEmpty
         HStack(spacing: 8) {
             if generating {
                 Text("整理好后能勾选问题，导入 Anki 做卡片").font(.system(size: 12)).foregroundStyle(Theme.text3)
@@ -1075,27 +1092,46 @@ private struct NotesToastView: View {
     let toast: NotesToast
     let close: () -> Void
 
+    /// 宽度跟内容走，最小 300、最大 520；内容靠左，× 在右端
+    private static let maxWidth: CGFloat = 520
+    private static let padding: CGFloat = 12
+    private static let dot: CGFloat = 7
+    private static let gap: CGFloat = 10
+    private static let closeSize: CGFloat = 22
+
+    /// 文字一行排下来要多宽（超过 cap 就停在 cap，由省略号收尾）
+    private func width(_ text: String, size: CGFloat, weight: NSFont.Weight, cap: CGFloat) -> CGFloat {
+        let natural = (text as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: size, weight: weight)]).width
+        return min(ceil(natural) + 2, cap)
+    }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Circle().fill(toast.isError ? Theme.danger : Theme.ok).frame(width: 7, height: 7).padding(.top, 6)
+        let textCap = Self.maxWidth - 2 * Self.padding - Self.dot - Self.gap - (toast.isError ? Self.closeSize + Self.gap : 0)
+        HStack(alignment: .top, spacing: Self.gap) {
+            Circle().fill(toast.isError ? Theme.danger : Theme.ok).frame(width: Self.dot, height: Self.dot).padding(.top, 6)
             VStack(alignment: .leading, spacing: 1) {
                 Text(toast.title).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.text)
+                    .lineLimit(1)
+                    .frame(width: width(toast.title, size: 13, weight: .medium, cap: textCap), alignment: .leading)
                 if let detail = toast.detail {
                     Text(detail).font(.system(size: 12)).foregroundStyle(Theme.text2)
                         .lineLimit(1).truncationMode(.head)   // 放不下省略开头，文件名留全
+                        .frame(width: width(detail, size: 12, weight: .regular, cap: textCap), alignment: .leading)
                 }
             }
             if toast.isError {
+                Spacer(minLength: 0)
                 Button(action: close) {
                     Image(systemName: "xmark").font(.system(size: 12)).foregroundStyle(Theme.text2)
-                        .frame(width: 22, height: 22).contentShape(Rectangle())
+                        .frame(width: Self.closeSize, height: Self.closeSize).contentShape(Rectangle())
                 }
                 .buttonStyle(NotesHoverStyle(radius: 5))
                 .accessibilityLabel("关闭提示")
             }
         }
-        .padding(.horizontal, 12).padding(.vertical, 10)
-        .frame(minWidth: 300, maxWidth: 520)
+        .padding(.horizontal, Self.padding).padding(.vertical, 10)
+        .frame(minWidth: 300, alignment: .leading)
+        .fixedSize(horizontal: true, vertical: false)
         .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.borderStrong, lineWidth: 0.5))
         .shadow(color: .black.opacity(0.18), radius: 14, y: 4)

@@ -22,14 +22,15 @@ public enum NotesPage {
             },
             code: { language, code in codeHTML(language: language, code: code) })
 
-        let entries: [(thread: AskHistoryThread, item: DayNoteItem)] = day.threads.compactMap { thread in
-            notes.item(for: thread.id).map { (thread, $0) }
+        // 编号是这一天里的第几个问题（没整理好的也占一个号），和 App 里笔记页上的一样
+        let entries: [(n: Int, thread: AskHistoryThread, item: DayNoteItem)] = day.threads.enumerated().compactMap { offset, thread in
+            notes.item(for: thread.id).map { (offset + 1, thread, $0) }
         }
         var anyShot = false
         var sections = ""
         var toc = ""
-        for (offset, entry) in entries.enumerated() {
-            let n = offset + 1
+        for entry in entries {
+            let n = entry.n
             let moment = HistoryDay.moment(of: entry.thread, on: day.date, calendar: calendar)
             let first = entry.thread.turns[0]
             var meta = [Self.time(moment, calendar), kindTitle(entry.thread)]

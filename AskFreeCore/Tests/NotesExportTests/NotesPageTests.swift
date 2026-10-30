@@ -133,4 +133,47 @@ final class NotesPageTests: XCTestCase {
     func testFileName() {
         XCTAssertEqual(NotesPage.fileName(day: "2026-10-29", ext: "pdf"), "2026-10-29 Ask Free 笔记.pdf")
     }
+
+    /// 中间有一题没整理好：App 里编号 1、3，导出的网页 / PDF 里同一题也是 1、3，锚点跟着
+    func testExportKeepsTheSameQuestionNumbersAsTheApp() {
+        let (day, full) = fixture()
+        var notes = full
+        notes.items.removeAll { $0.id == "th1" }
+        let html = NotesPage.html(notes: notes, day: day, screenshot: { _ in nil }, calendar: calendar, math: { _, _ in nil })
+        XCTAssertTrue(html.contains("<span class=\"ix\">3</span>问题 3"))
+        XCTAssertTrue(html.contains("id=\"t3\""))
+        XCTAssertTrue(html.contains("href=\"#t3\""))
+        XCTAssertFalse(html.contains("id=\"t2\""))
+    }
+
+    /// 删历史里的一条：那一天导出过的网页（里面有问题原文和内嵌的截图）一起删
+    func testDeletingAThreadRemovesTheExportedPageOfThatDay() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("notes-export-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let history = AskHistoryStore(fileURL: dir.appendingPathComponent("history.jsonl"))
+        let base = Date().addingTimeInterval(-3600)
+        let shot = Data([0xFF, 0xD8, 0xFF, 0xE0]) + Data("SECRET-SCREEN-PIXELS".utf8)
+        try history.append(AskHistoryTurn(id: "tuA", thread: "thA", at: base, question: "银行卡号这个页面怎么填", answer: "答 A", via: "screen"),
+                           screenshot: (overviewJPEG: shot, closeUpJPEG: shot))
+        try history.append(AskHistoryTurn(id: "tuB", thread: "thB", at: base.addingTimeInterval(60), question: "留着的问题", answer: "答 B"))
+        let day = HistoryDay.group(history.threads())[0]
+        var notes = DayNotes.begin(day)
+        notes.put(DayNoteItem(id: "thA", turnID: "tuA", title: "填卡号", points: "- 卡号要点"))
+        notes.put(DayNoteItem(id: "thB", turnID: "tuB", title: "留着", points: "- 留着的要点"))
+        let html = NotesPage.html(notes: notes, day: day, screenshot: { thread in
+            thread.turns[0].hasScreenshot ? try? Data(contentsOf: history.screenshotURLs(turnID: thread.turns[0].id).closeUp) : nil
+        }, math: { _, _ in nil })
+        try FileManager.default.createDirectory(at: history.exportedNotesDirectory, withIntermediateDirectories: true)
+        let page = history.exportedNotesDirectory.appendingPathComponent(NotesPage.fileName(day: day.key, ext: "html"))
+        let other = history.exportedNotesDirectory.appendingPathComponent(NotesPage.fileName(day: "2020-01-01", ext: "html"))
+        try Data(html.utf8).write(to: page)
+        try Data("<html>另一天</html>".utf8).write(to: other)
+        XCTAssertTrue(html.contains(shot.base64EncodedString()))
+
+        try history.deleteThread("thA")
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: page.path), "那一天的网页连问题原文和内嵌截图一起删掉")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path), "别的天的不动")
+    }
 }

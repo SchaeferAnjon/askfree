@@ -122,11 +122,13 @@ final class NotesPageTests: XCTestCase {
         XCTAssertLessThan(html.utf8.count, 60_000)
     }
 
-    func testPrintStyleStartsEveryQuestionOnItsOwnPage() {
-        // WebKit 打印会把一页里接着排的下一节的一行字、代码块顶栏切成两半（实测），所以每个问题从页顶开始：
-        // 这条规则丢了，导出的 PDF 又会切字，先在这里拦住
+    func testPrintStyleLetsTheAppMovePageBreaks() {
+        // WebKit 打印会把一页里接着排的下一块的一行字、代码块顶栏切成两半（实测）。App 打印前量一遍，只给放不下的块加 .pbk；
+        // 这几条规则丢了，导出的 PDF 要么又切字，要么每题一页留一大片空白
         let html = page(fixture().0, fixture().1)
-        XCTAssertTrue(html.contains(".sec+.sec{break-before:page;page-break-before:always}"))
+        XCTAssertTrue(html.contains(".pbk{break-before:page;page-break-before:always"))
+        XCTAssertFalse(html.contains(".sec+.sec{break-before:page"), "不再每个问题强制另起一页")
+        XCTAssertTrue(html.contains(".qb,.qb.solo{display:block}"), "打印里不用栅格，栅格里的分页不可靠")
         XCTAssertTrue(html.contains("print-color-adjust:exact"), "不加这条，WebKit 打印会把浅灰字洗得看不见")
     }
 

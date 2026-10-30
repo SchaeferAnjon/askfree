@@ -577,9 +577,10 @@ final class NotesModel: ObservableObject {
                 defer { self.busyExport = nil }
                 do {
                     let html = await self.buildHTML(snapshot)
-                    let pages = try await NotesPDFPrinter().render(html: html, title: name.replacingOccurrences(of: ".pdf", with: ""), to: url)
+                    let printer = NotesPDFPrinter()
+                    let pages = try await printer.render(html: html, title: name.replacingOccurrences(of: ".pdf", with: ""), to: url)
                     NotesFiles.rememberDirectory(url.deletingLastPathComponent())
-                    self.log("export pdf done pages=\(pages) \(url.lastPathComponent)")
+                    self.log("export pdf done pages=\(pages) pageBreaks=\(printer.forcedBreaks) \(url.lastPathComponent)")
                     let openError = await NotesFiles.openInDefaultApp(url)
                     let path = NotesFiles.displayPath(url)
                     self.showToast("已导出 PDF", detail: openError.map { "\(path)（没能打开：\($0)）" } ?? path)

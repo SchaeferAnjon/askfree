@@ -101,12 +101,19 @@ enum NotesFiles {
 }
 
 /// 笔记页排成 A4 的 PDF：不显示的 WKWebView 加载同一份 HTML，等图片和字体好了，先把页面设成浅色，
+/// 再在隐藏页面里量一遍分页（paginationScript：只给会被页边切开的那一块加 .pbk，整块挪到下一页），
 /// 再用 NSPrintOperation 按页边分页存成文件（不能用 createPDF：它出来的是一整张长页），最后给每页画页码。
 @MainActor
 final class NotesPDFPrinter: NSObject, WKNavigationDelegate {
     /// A4（点）；页边上、左、右 10 毫米，下 14 毫米（和会议字幕的 0.4 / 0.55 英寸一样）
     nonisolated static let paper = NSSize(width: 595.28, height: 841.89)
     nonisolated static let margin = (top: CGFloat(28.35), left: CGFloat(28.35), right: CGFloat(28.35), bottom: CGFloat(39.69))
+
+    /// WebKit 打印时把页面排在「页宽的 1.25 倍」宽，再缩到页宽（实测：10 毫米页边的 A4，1 个 CSS 像素印出 0.8 点）
+    nonisolated static let printScale: CGFloat = 1.25
+
+    /// 分页脚本给多少个块加了「另起一页」（日志里看）
+    private(set) var forcedBreaks = 0
 
     private var webView: WKWebView?
     private var window: NSWindow?
@@ -143,6 +150,8 @@ final class NotesPDFPrinter: NSObject, WKNavigationDelegate {
             return true
             """, arguments: [:], in: nil, contentWorld: .page)
 
+        forcedBreaks = try await paginate(web, host: host, width: width)
+
         let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("askfree-notes-\(UUID().uuidString).pdf")
         defer { try? FileManager.default.removeItem(at: temporary) }
         let info = NSPrintInfo()
@@ -168,6 +177,97 @@ final class NotesPDFPrinter: NSObject, WKNavigationDelegate {
         guard ok else { throw NotesExportError.printFailed }
         return try await Self.numberPages(of: temporary, title: title, to: url)
     }
+
+    /// 在隐藏页面里按打印的宽度和样式量一遍：每个「不能切开的块」（题目加截图、每条要点、代码块、独立公式……）
+    /// 放不下当前这页时给它加 .pbk；比一页还高的块不动，由 WebKit 在行和行之间断。返回加了几个
+    private func paginate(_ web: WKWebView, host: NSWindow, width: CGFloat) async throws -> Int {
+        let layoutWidth = width * Self.printScale
+        let pageHeight = (Self.paper.height - Self.margin.top - Self.margin.bottom) * Self.printScale
+        let original = web.frame.size
+        host.setContentSize(NSSize(width: layoutWidth, height: 1000))
+        web.setFrameSize(NSSize(width: layoutWidth, height: 1000))
+        defer {
+            host.setContentSize(original)
+            web.setFrameSize(original)
+        }
+        let count = try await web.callAsyncJavaScript(Self.paginationScript, arguments: ["pageHeight": pageHeight, "margin": 14],
+                                                       in: nil, contentWorld: .page)
+        return (count as? Int) ?? 0
+    }
+
+    private nonisolated static let paginationScript = """
+        // 1 把 @media print 里的规则拿出来当普通规则用，页面就按打印的样子排（宽度是上面把窗口设成的打印排版宽度）
+        const emu = document.createElement('style');
+        let css = '';
+        for (const sheet of document.styleSheets) {
+          for (const rule of sheet.cssRules) {
+            if (rule instanceof CSSMediaRule && rule.media.mediaText.includes('print')) {
+              for (const inner of rule.cssRules) css += inner.cssText + '\\n';
+            }
+          }
+        }
+        emu.textContent = css;
+        document.head.appendChild(emu);
+        document.documentElement.style.overflow = 'hidden';
+        document.querySelectorAll('.pbk').forEach(e => e.classList.remove('pbk'));
+        // 2 不能切开的单位：标题和截图一起，「回答的要点」标签、小标题跟着后面第一块，每条要点、代码块、公式、段落各一块
+        const units = [];
+        const add = (...els) => { const list = els.filter(Boolean); if (list.length) units.push(list); };
+        add(document.querySelector('.hd'));
+        add(document.querySelector('.sum'));
+        for (const sec of document.querySelectorAll('.sec')) {
+          const head = sec.querySelector('.sech');
+          const fig = sec.querySelector('figure.shot');
+          const blocks = [];
+          for (const child of sec.querySelectorAll('.ptsw > *')) {
+            if (child.matches('ul.pts')) blocks.push(...child.children); else blocks.push(child);
+          }
+          let pending = [];
+          if (fig) add(head, fig); else pending.push(head);
+          for (const block of blocks) {
+            if (block.matches('.lab, .hd3')) { pending.push(block); continue; }
+            add(...pending, block);
+            pending = [];
+          }
+          add(...pending);
+        }
+        add(document.querySelector('.foot'));
+        // 3 从上往下排：放不下当前页的整块挪到下一页（用一个撑高的空块代替，量后面的才对），记下来
+        const top = el => el.getBoundingClientRect().top + window.scrollY;
+        const bottom = el => el.getBoundingClientRect().bottom + window.scrollY;
+        const usable = pageHeight - margin;
+        let pageTop = 0;
+        const breaks = [];
+        const spacers = [];
+        for (const els of units) {
+          const first = els[0];
+          const t = top(first);
+          const b = bottom(els[els.length - 1]);
+          if (b - pageTop <= usable) continue;
+          if (b - t > usable) {
+            // 比一页还高：不动，它之后新的一页从 WebKit 自己切的地方起算
+            pageTop += Math.floor((b - pageTop) / pageHeight) * pageHeight;
+            continue;
+          }
+          const shift = pageTop + pageHeight - t;
+          if (shift <= 0) { pageTop += Math.floor((t - pageTop) / pageHeight) * pageHeight; continue; }
+          const spacer = document.createElement('div');
+          spacer.style.cssText = 'height:' + shift + 'px;margin:0;padding:0;border:0';
+          first.before(spacer);
+          spacers.push(spacer);
+          breaks.push(first);
+          pageTop += pageHeight;
+        }
+        // 4 撤掉撑高的空块和模拟用的样式；只留 .pbk（往上挪到「它是父级第一个孩子」的最外层，分页符才算在这一块的开头）
+        spacers.forEach(s => s.remove());
+        emu.remove();
+        document.documentElement.style.overflow = '';
+        for (let el of breaks) {
+          while (el.parentElement && el.parentElement.firstElementChild === el && !el.parentElement.matches('.page, main, body')) el = el.parentElement;
+          el.classList.add('pbk');
+        }
+        return breaks.length;
+        """
 
     @objc private func printDidRun(_ operation: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) {
         printed?.resume(returning: success)

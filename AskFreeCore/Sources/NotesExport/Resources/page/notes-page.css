@@ -124,7 +124,6 @@ pre.texsrc{padding:6px 12px 6px 0;width:auto}
   .shell,.shell.rail{display:block;padding:0;max-width:none}
   .page{max-width:none}
   .toc,.seg,.copy,.zb,.tip,.lb{display:none!important}
-  .qb{grid-template-columns:minmax(0,1fr);gap:12px}
   .pic{cursor:auto}
   .pic img{max-height:150mm;width:auto;max-width:100%;margin:0 auto}
   .keep>.sech,.qb>figure{break-inside:avoid;page-break-inside:avoid;break-after:avoid;page-break-after:avoid}
@@ -132,10 +131,14 @@ pre.texsrc{padding:6px 12px 6px 0;width:auto}
   .scrollx{overflow:visible;-webkit-mask-image:none;mask-image:none}
   pre{white-space:pre-wrap;overflow-wrap:anywhere;width:auto}
   .code,.math,ul.pts li,.para,.sum{break-inside:avoid;page-break-inside:avoid}
-  /* 每个问题另起一页（第一个跟小结排在第一页）。WebKit 打印按页高硬切，break-inside 只在块的开头管用，
-     一页里接着排下一节时实测会把一行字、代码块的顶栏切成两半（两页各留半行）；每节都从页顶开始就切不到 */
-  .sec{break-inside:auto;margin-top:0;padding-top:0;border-top:0;padding-bottom:0}
-  .sec+.sec{break-before:page;page-break-before:always}
+  /* 分页：WebKit 打印按页高硬切，break-inside 只在块的开头管用，一页里接着排下一块时会把一行字、代码块顶栏切成两半（实测）。
+     所以 App 打印前先在隐藏的页面里按这套打印样式量一遍（NotesPDFPrinter 的分页脚本），只给「放不下、会被页边切开」的那一块
+     加 .pbk（整块挪到下一页）；一页能排几块排几块。栅格在打印里改成普通块，免得栅格里的分页出岔子 */
+  .sec{break-inside:auto}
+  .qb,.qb.solo{display:block}
+  .qb>figure{margin:0 0 12px}
+  .pbk{break-before:page;page-break-before:always;margin-top:0!important}
+  .sec.pbk{border-top:0;padding-top:0}
   .sum{padding-bottom:24px;margin-bottom:24px;border-bottom:.5px solid var(--line)}
 }
 .qb.solo{grid-template-columns:minmax(0,1fr)}

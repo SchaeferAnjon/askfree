@@ -354,6 +354,34 @@ h3, h4 { font-weight: 600; }
 .hist-l .hr b { display: block; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hist-l .hr span:not(.th) { font-size: 12px; color: var(--text-2); }
 .hist-l .hr em { font-style: normal; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.hist + .hist { margin-top: 16px; }
+.cb { margin: 8px 0 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.cb .ch svg { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.cb .ch { display: flex; justify-content: space-between; height: 28px; align-items: center; padding: 0 12px; font-size: 12px; font-weight: 500; color: var(--text-2); border-bottom: 1px solid var(--line); }
+.cb pre { margin: 0; padding: 12px; font: 12.5px/1.6 var(--mono); color: var(--text); overflow-x: auto; }
+.cb .k { color: #9b2393; } .cb .s { color: #c41a16; } .cb .n { color: #1c00cf; }
+:root[data-theme="dark"] .cb .k { color: #fc5fa3; } :root[data-theme="dark"] .cb .s { color: #fc6a5d; } :root[data-theme="dark"] .cb .n { color: #d0bf69; }
+.hist > * { min-width: 0; }
+.hist p { text-wrap: pretty; }
+.fm { margin: 10px 2px 4px; font-size: 15px; font-family: "Latin Modern Math", "STIX Two Math", "Cambria Math", math; }
+.np { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 12px; }
+.np-h { white-space: nowrap; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--line); color: var(--text-2); }
+.np-h .d { color: var(--text); font-weight: 500; font-size: 13px; }
+.np-h .sp { flex: 1; }
+@media (max-width: 520px) { .np-h .lb { display: none; } .np-h { gap: 14px; } }
+.np-h svg, .np-t svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; }
+.np-b { display: grid; grid-template-columns: 92px 1fr; }
+.np-t { padding: 8px 6px; border-right: 1px solid var(--line); display: grid; gap: 2px; align-content: start; color: var(--text-2); }
+.np-t span { padding: 4px 8px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-t span.on { background: var(--accent-soft); color: var(--text); font-weight: 500; }
+.np-s { padding: 12px 14px; min-width: 0; }
+.np-q { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+.np-q i { flex: none; width: 13px; height: 13px; border: 1.5px solid var(--line-2); border-radius: 4px; }
+.np-q span { color: var(--text-2); font-weight: 400; }
+.np-q b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.np-s .shot { margin: 8px 0; height: 54px; border-radius: 8px; background: #1d1e22; position: relative; overflow: hidden; }
+.np-s .shot::after { content: ""; position: absolute; left: 14px; top: 20px; width: 110px; height: 14px; border: 1.5px solid #ff5a4f; }
+.np-s ul { margin: 0; padding-left: 16px; color: var(--text-2); line-height: 1.7; }
 .th { width: 46px; height: 32px; border-radius: 5px; border: 1px solid var(--line-2); flex: none; position: relative; overflow: hidden; }
 .th1 { background: #1c1c1e; }
 .th1::after { content: ""; position: absolute; left: 6px; top: 13px; width: 26px; height: 6px; border: 1px solid var(--mark); }
@@ -726,7 +754,7 @@ h3, h4 { font-weight: 600; }
   <p class="hero-desc">按住你设的键说出问题，松开就问。AI 看着你此刻的屏幕回答，鼠标指着哪就重点看哪；回答出现在屏幕右上角，不打断你手上的事。</p>
   <div class="hero-cta"><button class="btn dark big" data-dl><svg class="ico" viewBox="0 0 16 16"><path d="M8 2v8M4.5 6.5L8 10l3.5-3.5M2.5 13.5h11"/></svg>免费下载 Mac 版</button><a class="btn light big" href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 16 16"><path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/></svg>在 GitHub 看源码</a></div>
   <div class="hero-meta"><b>不用注册，不用登录</b> · 开源 GPL-3.0 · macOS 14+ · Apple 芯片和 Intel 通用</div>
-  <div class="hero-meta2"><span data-ver-row hidden>最新 <span data-ver>v1.2.0 · 5.0 MB</span> · </span><a data-go="privacy">你的录音和截图去了哪里</a></div>
+  <div class="hero-meta2"><span data-ver-row hidden>最新 <span data-ver>v1.3.0 · 10.1 MB</span> · </span><a data-go="privacy">你的录音和截图去了哪里</a></div>
 </div>
 
 <div class="wrap" data-part="演示舞台">
@@ -783,6 +811,28 @@ h3, h4 { font-weight: 600; }
       <div class="hr"><span class="th th2"></span><div><b>这是哪座山？</b><span>2 轮 · 预览</span></div><em>11:05</em></div>
       <div class="hd">昨天</div>
       <div class="hr"><span class="th th3"></span><div><b>这一列有几个是空的？</b><span>1 轮 · Numbers</span></div><em>17:48</em></div>
+    </div>
+  </div>
+  <div class="card hist" data-part="每天的笔记">
+    <div class="hist-t"><h3>一天问过的，整理成一页笔记</h3><p><b>历史</b>页点<b>今天的笔记</b>，AI 把这一天整理成一页图文笔记：小结、每题的截图和要点，目录能收起。能用浏览器打开、导出 PDF，也能挑几题导进 Anki。整理时只发文字，不发截图。</p></div>
+    <div class="np" aria-label="每日笔记页的示意">
+      <div class="np-h"><span>‹ 历史</span><span class="d">10 月 31 日</span><span class="sp"></span><span><svg viewBox="0 0 16 16"><path d="M9 3h4v4M13 3L7 9M12 10v3H3V4h3"/></svg><span class="lb"> 用浏览器打开</span></span><span><svg viewBox="0 0 16 16"><path d="M4 2h5l3 3v9H4zM9 2v3h3"/></svg><span class="lb"> 导出 PDF</span></span></div>
+      <div class="np-b">
+        <div class="np-t"><span class="on">这一天</span><span>1　这个报错</span><span>2　这是哪座山</span><span>3　这一列空值</span></div>
+        <div class="np-s">
+          <div class="np-q"><i></i><span>1</span><b>这个报错是什么意思？怎么弄好？</b></div>
+          <div class="shot"></div>
+          <ul><li>缺少依赖，先装再重新运行</li><li>命令在回答里，点复制就行</li></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card hist" data-part="公式和代码">
+    <div class="hist-t"><h3>公式和代码，排成该有的样子</h3><p>回答里的数学公式像书上那样排；代码分成一块一块，按语言着色，每块有<b>复制</b>按钮，复制整个回答时代码块原样保留。放不下的在块里横向滚动。</p></div>
+    <div class="hist-l">
+      <math class="fm" display="block"><mi>x</mi><mo>=</mo><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math>
+      <div class="cb"><div class="ch"><span>Python</span><span><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1H3.5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5"/></svg>复制</span></div><pre><span class="k">def</span> area(r):
+    <span class="k">return</span> <span class="n">3.14159</span> * r ** <span class="n">2</span></pre></div>
     </div>
   </div>
 </div></section>
@@ -879,8 +929,9 @@ h3, h4 { font-weight: 600; }
     <details><summary>为什么装好后没有快捷键？</summary><p>每台 Mac 的键盘不一样，顺手的键也不一样，所以默认不设。在设置的<b>快捷键</b>页里选一个平时少用的键，比如右 Option、右 Command。</p></details>
     <details><summary>第一次打开提示无法验证，怎么办？</summary><p>Ask Free 有开发者签名，没有经过苹果公证。打开<b>系统设置</b>的<b>隐私与安全性</b>，在底部点<b>仍要打开</b>，只需要一次。</p></details>
     <details><summary>Intel 芯片的 Mac 能用吗？</summary><p>能。安装包是通用的，Apple 芯片和 Intel 芯片的 Mac 都能用，需要 macOS 14 或更新。</p></details>
-    <details><summary>会自动更新吗？</summary><p>会，从 1.2.0 起。每 6 小时到 GitHub 查一次新版本，有新版就在后台下好、核对签名，菜单栏里出<b>重启更新</b>；不点的话，下次退出时装上。在主窗口<b>通用</b>页的<b>更新</b>里能关。装着 1.1.0 或更早版本的，要手动下载一次 1.2.0。</p></details>
+    <details><summary>会自动更新吗？</summary><p>会，从 1.2.0 起。每 6 小时到 GitHub 查一次新版本，有新版就在后台下好、核对签名，菜单栏里出<b>重启更新</b>；不点的话，下次退出时装上。在主窗口<b>通用</b>页的<b>更新</b>里能关。装着 1.1.0 或更早版本的，要手动下载一次最新版。</p></details>
     <details><summary>能用英文问吗？</summary><p>能。说话问：火山引擎不指定语种时能认普通话和英语，也认粤语、上海话、闽南语、四川话、陕西话（按它的文档写的，没逐一实测）。打字问：DeepSeek 和千问读得懂的语言都行。问题是英文时，Ask Free 让它用英文答。软件界面只有中文。</p></details>
+    <details><summary>每天的笔记怎么导进 Anki？</summary><p>先在 Anki 里装 AnkiConnect 插件并打开 Anki。然后在<b>历史</b>页点<b>今天的笔记</b>，勾上问题标题前的方框，选牌组，点<b>导入 Anki</b>。导完会告诉你加了几张、几张已经有了；Anki 没开着时会说明，勾选还留着。</p></details>
     <details><summary>截图会存下来吗？</summary><p>会存在你自己的 Mac 上，回头在<b>历史</b>页能看到当时的画面；不会上传到别处，在<b>历史</b>页能删。</p></details>
     <details><summary>回答面板会打断我正在做的事吗？</summary><p>不会。面板出现在屏幕右上角，不把你正在用的窗口挤到后面，正在打字的地方还在原处。</p></details>
     <details><summary>能换别的模型吗？</summary><p>自带 Key 时，回答支持 DeepSeek 和阿里百炼千问，语音识别用火山引擎（豆包）。会员固定用 DeepSeek 回答、火山引擎识别。</p></details>
@@ -901,7 +952,7 @@ h3, h4 { font-weight: 600; }
       <div class="rail-n" id="railN">已完成 0 / 5</div>
     </aside>
     <div class="steps">
-      <div class="step" id="s1"><div class="st-t"><div class="st-n">1</div><h3>下载，拖进<b>应用程序</b></h3><p>一个 <span data-size>5.0 MB</span> 的安装包（dmg），Apple 芯片和 Intel 芯片通用。打开它，把 Ask Free 拖到旁边的<b>应用程序</b>文件夹，再从<b>应用程序</b>里打开；它就住在右上角菜单栏里，图标是一个指针加问号。</p><p class="g">别在 dmg 窗口或<b>下载</b>文件夹里直接打开，那样给过的权限下次不认。Ask Free 没有经过苹果公证：第一次打开如果提示无法验证，打开<b>系统设置</b>的<b>隐私与安全性</b>，在底部点<b>仍要打开</b>。以后有新版本会自动下载，提示你重启更新。</p></div>
+      <div class="step" id="s1"><div class="st-t"><div class="st-n">1</div><h3>下载，拖进<b>应用程序</b></h3><p>一个 <span data-size>10.1 MB</span> 的安装包（dmg），Apple 芯片和 Intel 芯片通用。打开它，把 Ask Free 拖到旁边的<b>应用程序</b>文件夹，再从<b>应用程序</b>里打开；它就住在右上角菜单栏里，图标是一个指针加问号。</p><p class="g">别在 dmg 窗口或<b>下载</b>文件夹里直接打开，那样给过的权限下次不认。Ask Free 没有经过苹果公证：第一次打开如果提示无法验证，打开<b>系统设置</b>的<b>隐私与安全性</b>，在底部点<b>仍要打开</b>。以后有新版本会自动下载，提示你重启更新。</p></div>
         <div class="st-w"><div class="filecard"><svg viewBox="80 80 864 864" aria-label="Ask Free"><rect x="100" y="100" width="824" height="824" rx="185" fill="#fff" stroke="rgba(0,0,0,.14)" stroke-width="10"/><path d="M300,268 L300,690 L404,590 L470,744 L540,714 L474,562 L616,562 Z" fill="#111113" stroke="#111113" stroke-width="28" stroke-linejoin="round"/><circle cx="660" cy="330" r="128" fill="#111113"/><path d="M584,428 L560,482 L628,452 Z" fill="#111113"/><path d="M618,300 A42,42 0 1,1 680.0,336.9 C666,345 660,355 660,371 L660,379" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round"/><circle cx="660" cy="420" r="17" fill="#fff"/></svg><div><b data-fname>AskFree-1.2.0.dmg</b><span><span data-ver>v1.2.0 · 5.0 MB</span> · Apple 芯片和 Intel 通用 · macOS 14 或更新</span></div><button class="btn dark sm" data-dl>下载</button></div>
           <div class="req"><span><i class="okd"></i>Apple 芯片（M1 及以后）</span><span><i class="okd"></i>Intel 芯片</span><span><i class="okd"></i>macOS 14 或更新</span></div></div></div>
 
@@ -962,9 +1013,9 @@ h3, h4 { font-weight: 600; }
   <nav><b>隐私说明</b><a data-to="pv-1" class="on">一句话</a><a data-to="pv-who">我们是谁</a><a data-to="pv-2">留在你电脑上的</a><a data-to="pv-3">什么时候发出去</a><a data-to="pv-4">发给谁、发什么</a><a data-to="pv-member">会员发什么</a><a data-to="pv-stats">匿名使用统计</a><a data-to="pv-5">我们不做的</a><a data-to="pv-6">本网站</a><a data-to="pv-7">怎么删掉</a><a data-to="pv-chg">政策变更</a></nav>
   <article>
     <h1 id="pv-1">隐私说明</h1>
-    <p class="g">更新于 2026 年 10 月 29 日，按加了会员的那一版 Ask Free 和会员服务器的代码逐条核对。</p>
+    <p class="g">更新于 2026 年 10 月 31 日，按 Ask Free 1.3.0 和会员服务器的代码逐条核对。</p>
     <p><b>我们会给前 100 位用户免费额度，所以需要统计有多少人在用。统计是匿名的。</b>你同意了才发，见下面<b>匿名使用统计</b>一节。</p>
-    <p class="sum">录音、问题和截图只在你按下提问键的时候发出去。用自带 Key 时直接发给你自己选的服务商，不经过我们；用会员时发到我们的服务器，由它转给火山引擎和 DeepSeek，服务器不存这些内容，只记每个问题用了多少。问过的问题和当时的截图只存在你的 Mac 上。另外还有两件事会连网：检查更新连 GitHub；你同意了的话，每天给我们的服务器发一次匿名统计。</p>
+    <p class="sum">录音、问题和截图只在你按下提问键的时候发出去。用自带 Key 时直接发给你自己选的服务商，不经过我们；用会员时发到我们的服务器，由它转给火山引擎和 DeepSeek，服务器不存这些内容，只记每个问题用了多少。问过的问题和当时的截图只存在你的 Mac 上。你点<b>今天的笔记</b>整理时，会把那一天问答的文字（不含截图）发给模型。另外还有两件事会连网：检查更新连 GitHub；你同意了的话，每天给我们的服务器发一次匿名统计。</p>
     <h2 id="pv-who">我们是谁</h2>
     <p>Ask Free 是 SchaeferAnjon 个人做的开源软件，基于 kdsz001 的 <a href="https://github.com/kdsz001/typefree" target="_blank" rel="noopener">Typefree</a> 修改而来，以 GPL-3.0 发布，源码在 <a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GitHub</a>。我们的服务器是 api.us-cloud.uk。用会员时，Ask Free 的识别、回答和联网都经过它；用自带 Key 时，只有你同意了匿名使用统计，才每天连它报到一次。</p>
     <p>对这份说明有疑问，写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，或者在 GitHub <a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">提问题</a>。</p>
@@ -974,6 +1025,7 @@ h3, h4 { font-weight: 600; }
       <li><b>会员凭据</b>：用会员时，服务器发给这台 Mac 的一串令牌，也存在钥匙串里。用的是会员还是自带 Key，记在下面的设置文件里。</li>
       <li><b>设置</b>：在 <span class="pathlink">~/.config/askfree/</span>，这个文件夹只有你的账户能打开。同意匿名使用统计以后，这里多一个 <span class="pathlink">usage-ping.json</span>，记着那个随机编号和上次报到的日期。</li>
       <li><b>问答历史</b>：每一轮的问题、回答和时间在 <span class="pathlink">history.jsonl</span>；这一轮真发给模型的两张截图（整屏的缩小图和指针附近的放大图），以及回答里找到的图的缩略图，在 <span class="pathlink">history-images/</span>。都在上面那个文件夹里，在<b>历史</b>页能看、能删。历史每一问都会记，1.2.0 还没有关掉它的开关。</li>
+      <li><b>每天的笔记</b>：整理出来的笔记在 <span class="pathlink">day-notes/</span>，导出的网页在 <span class="pathlink">notes/</span>，里面有问题、回答要点和截图。在<b>历史</b>页删某一条或清空时，对应那一天的笔记一起删。导进 Anki 的卡片由 Anki 自己存，Ask Free 只通过 Anki 在本机开的 AnkiConnect 接口（127.0.0.1）交给它，不经过网络。</li>
       <li><b>录音</b>：不存。松开键后临时转一次格式，转完的临时文件马上删掉，再发给识别服务。</li>
       <li><b>运行日志</b>：<span class="pathlink">~/Library/Logs/AskFree.log</span>，只记步骤和耗时（比如这一问有几个字、花了多少毫秒），不记问题、回答和截图。</li>
     </ul>
@@ -988,6 +1040,7 @@ h3, h4 { font-weight: 600; }
       <div class="tr"><span>回答问题</span><span>自带 Key 时，你在语音与模型页选的那家：DeepSeek 或阿里百炼千问（手动改配置还能用豆包、智谱）</span><span>识别出的文字或你打的字；看屏幕问、打字问时加上按键那一刻的两张截图；追问时带上这个话题前几轮的问答文字</span></div>
       <div class="tr"><span>联网查</span><span>还是同一家：DeepSeek 用它自己的搜索接口，千问用自带的联网搜索。选了豆包或智谱、又填了百炼 Key 时，转给千问</span><span>一个搜索词，说“搜一下”时就是你这句话。转给千问的那一问只带文字，不带截图</span></div>
       <div class="tr"><span>回答配图</span><span>DuckDuckGo 图片搜索，和图片所在的服务器</span><span>默认开着。模型想给你看图、或这一问要联网时，把一个找图的词发给 DuckDuckGo（模型写的搜索词，说“搜一下”时就是你这句话），不含截图和录音；再从图片服务器下载 3 张缩略图，这些服务器能看到你的 IP 地址。在<b>回答方式</b>页关掉<b>联网的回答附上图</b>就都不发</span></div>
+      <div class="tr"><span>每天的笔记</span><span>自带 Key 时，你选的那家模型；用会员时，我们的服务器，再转给 DeepSeek</span><span>你点了<b>今天的笔记</b>或<b>重新整理</b>时，把那一天的问题和回答文字发出去，不含截图和录音。用会员时整理一次算一个问题</span></div>
       <div class="tr"><span>检查更新</span><span>GitHub（github.com 上的 Release）</span><span>每 6 小时取一次最新版本信息（appcast.xml），有新版就下载安装包、核对签名。不带你的问题、录音、截图和 Key；GitHub 能看到你的 IP 地址。在主窗口<b>通用</b>页的<b>更新</b>里关掉<b>自动检查并下载新版本</b>，就不再自动查</span></div>
       <div class="tr"><span>匿名使用统计</span><span>我们的服务器（api.us-cloud.uk）</span><span>你同意了才发，每天一次。内容见下一节</span></div>
     </div>
@@ -997,6 +1050,7 @@ h3, h4 { font-weight: 600; }
     <ul>
       <li><b>第一次领试用时</b>：发一个设备标识给我们的服务器。它是这台 Mac 的硬件编号加上软件名算出的哈希，看不出硬件编号本身；服务器收到后再加一道盐哈希才存。同时发平台、芯片和版本号，服务器只存平台。服务器还记下你的网络段（IPv4 的前三段、IPv6 的前 48 位），只用来限制同一个网络一天能领几份试用，不存完整的 IP 地址。</li>
       <li><b>每次提问</b>：录音、问题文字和截图发到我们的服务器，服务器原样转给火山引擎（语音识别）和 DeepSeek（回答、联网搜索），拿到结果就回给你。服务器不存录音、截图、问题和回答，只记这个问题用了多少：算不算一次、用了多少 token、识别了多长、联网查了几次。火山引擎和 DeepSeek 看到的是我们的服务器，看不到你的 IP 地址。</li>
+      <li><b>每天的笔记</b>：你点<b>今天的笔记</b>或<b>重新整理</b>时，那一天的问题和回答文字经我们的服务器转给 DeepSeek，不含截图和录音；服务器同样不存内容，整理一次记作一个问题。</li>
       <li><b>付款</b>：由 Stripe 处理，卡号和微信付款信息只在 Stripe 那里，我们拿不到。Stripe 告诉我们付款邮箱、Stripe 的客户编号、订阅和付款的状态，我们用它们发授权码、算会员到哪天。</li>
       <li><b>管理订阅</b>：点会员页的<b>管理订阅</b>，或打开<a href="https://billing.stripe.com/p/login/28EaEQ7Ia9ir3ohabR2Nq00" target="_blank" rel="noopener">管理订阅的登录页</a>，都是在 Stripe 的页面里操作，按 <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe 的隐私政策</a>处理。</li>
     </ul>
@@ -1017,7 +1071,7 @@ h3, h4 { font-weight: 600; }
     <h2 id="pv-6">本网站</h2>
     <p>askfree.us-cloud.uk 是静态网页，放在 GitHub Pages 上，经 Cloudflare 和我们的服务器转发。网页不用 Cookie，不做访问统计。打开网页时，你的浏览器会向 GitHub 的接口（api.github.com）查一次最新版本号和文件大小；点下载时，文件由 GitHub 提供。这些服务照惯例会记访问日志（IP 地址、时间、浏览器），我们不拿它做统计。</p>
     <h2 id="pv-7">怎么删掉</h2>
-    <ol><li><b>历史</b>页右键一条删除，或者全部清空，当时的截图和找到的图一起删掉。</li><li>退出 Ask Free，删掉 <span class="pathlink">~/.config/askfree/</span> 文件夹（随机编号也在里面）和 <span class="pathlink">~/Library/Logs/AskFree.log</span>。</li><li>打开<b>钥匙串访问</b>，搜索 askfree，删掉里面的 Key。</li><li>已经发给服务商的内容，按那一家的规定在它的控制台或客服那里处理。自带 Key 时我们手上只有匿名统计，对不上是谁；不想再发，在通用页里关掉匿名使用统计。</li><li>用过会员的：设备记录、用量记录和付款邮箱在我们的服务器上。写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，附上授权码（只领过试用的写一句就行），我们删掉。订阅要先在管理订阅里取消；Stripe 那边的付款记录按 Stripe 和税务的规定保留。</li></ol>
+    <ol><li><b>历史</b>页右键一条删除，或者全部清空，当时的截图、找到的图和那一天的笔记一起删掉。</li><li>退出 Ask Free，删掉 <span class="pathlink">~/.config/askfree/</span> 文件夹（随机编号也在里面）和 <span class="pathlink">~/Library/Logs/AskFree.log</span>。</li><li>打开<b>钥匙串访问</b>，搜索 askfree，删掉里面的 Key。</li><li>已经发给服务商的内容，按那一家的规定在它的控制台或客服那里处理。自带 Key 时我们手上只有匿名统计，对不上是谁；不想再发，在通用页里关掉匿名使用统计。</li><li>用过会员的：设备记录、用量记录和付款邮箱在我们的服务器上。写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，附上授权码（只领过试用的写一句就行），我们删掉。订阅要先在管理订阅里取消；Stripe 那边的付款记录按 Stripe 和税务的规定保留。</li></ol>
     <h2 id="pv-chg">政策变更</h2>
     <p>这份说明跟着 Ask Free 的版本走。哪一版改了数据的去向（比如加了一家服务商），会改这一页和上面的日期，并写进那一版的更新说明。</p>
   </article>
@@ -1054,7 +1108,7 @@ h3, h4 { font-weight: 600; }
   <div><h5>开源</h5><a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GitHub 源码</a><a href="https://github.com/SchaeferAnjon/askfree/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a><a href="https://github.com/kdsz001/typefree" target="_blank" rel="noopener">上游 Typefree</a></div>
   <div><h5>条款</h5><a data-go="privacy">隐私说明</a><a data-go="terms">服务条款</a></div>
   <div class="xstrip"><a class="by" href="https://apps.us-cloud.uk"><span>SchaeferAnjon 出品</span> <span class="sep">·</span> <u>全部软件</u></a><span class="icons"><a class="cur" href="./" data-go="home" aria-label="Ask Free"><img src="askfree.png" alt=""><span class="xtip">Ask Free · 你在这里</span></a><a href="https://meetcaption.us-cloud.uk" aria-label="MeetCaption"><img src="meetcaption.png" alt=""><span class="xtip">MeetCaption · 会议字幕</span></a><a href="https://apps.us-cloud.uk/#app-gnw" aria-label="GetNewWord"><img src="getnewword.png" alt=""><span class="xtip">GetNewWord · 查词</span></a></span></div>
-  <div class="cp"><span>© 2026 Ask Free · 基于 kdsz001 的 Typefree 修改而来，以 GPL-3.0 发布</span><span>macOS 14+ · Apple 芯片和 Intel · <span data-tag>v1.2.0</span></span></div>
+  <div class="cp"><span>© 2026 Ask Free · 基于 kdsz001 的 Typefree 修改而来，以 GPL-3.0 发布</span><span>macOS 14+ · Apple 芯片和 Intel · <span data-tag>v1.3.0</span></span></div>
 </div></footer>
 
 <div class="scrim" id="dl" data-part="下载小卡"><div class="dl" role="dialog" aria-label="下载 Ask Free">
@@ -1625,7 +1679,7 @@ function makeStage(fit, opts) {
 
 
 /* 版本号、大小、文件名和下载地址：读 GitHub 最新一版，优先用 dmg（1.2.0 起每版都有），没有 dmg 的旧版用 zip。
-   读不到时页面上留着写死的 v1.2.0，下载按钮退回 releases/latest/download 下不带版本号的 AskFree.dmg（发版时每版都传一份），
+   读不到时页面上留着写死的 v1.3.0，下载按钮退回 releases/latest/download 下不带版本号的 AskFree.dmg（发版时每版都传一份），
    首屏最新那行不显示 */
 (function () {
   const ctl = new AbortController();
@@ -1635,7 +1689,7 @@ function makeStage(fit, opts) {
     .then(rel => {
       const pick = (re) => {
         const files = (rel.assets || []).filter(a => re.test(a.name));
-        return files.find(a => /\d/.test(a.name)) || files[0];   // 带版本号的那份（AskFree-1.2.0.dmg）优先
+        return files.find(a => /\d/.test(a.name)) || files[0];   // 带版本号的那份（AskFree-1.3.0.dmg）优先
       };
       const zip = pick(/\.dmg$/i) || pick(/\.zip$/i);
       if (!zip) return;

@@ -31,6 +31,7 @@ You are reading a web page, a paper or some code and hit something you don't get
 - **Follow-up questions**: press the key again while the answer is still showing and you continue the same topic; start with 新话题 ("new topic") to start over.
 - **Searches the web by itself**: for news, prices or exchange rates it looks them up; start with 搜一下 ("search") to search right away.
 - **Pictures in the answer**: ask to see a photo of something and 3 images from the web appear below the answer; click one to open the original.
+- **Formulas and code laid out properly**: math in answers is typeset like a textbook, code comes in blocks with syntax colours and a copy button; copying a whole answer keeps the code blocks as written.
 - **History with screenshots**: every question and answer is kept on your Mac with the screenshots sent to the AI, listed by day; search, copy or delete them.
 - **Daily illustrated notes**: on the **历史** (History) page, **今天的笔记** (Today's notes) turns the day's questions into one page of notes (a summary, then each question's screenshot and the key points of its answer). Pick questions to add to Anki; open the page in your browser or export it as PDF. Writing the notes sends that day's questions and answers as text (no screenshots) to your model, or to the membership backend, where one run counts as one question.
 - **Type instead**: when you can't talk, double-tap a key (Control, say), it captures the screen and you type the question.

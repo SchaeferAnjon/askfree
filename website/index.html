@@ -1024,7 +1024,7 @@ h3, h4 { font-weight: 600; }
       <li><b>API Key</b>：自带 Key 时填的 Key 存在 macOS 钥匙串里，不写进普通文件。</li>
       <li><b>会员凭据</b>：用会员时，服务器发给这台 Mac 的一串令牌，也存在钥匙串里。用的是会员还是自带 Key，记在下面的设置文件里。</li>
       <li><b>设置</b>：在 <span class="pathlink">~/.config/askfree/</span>，这个文件夹只有你的账户能打开。同意匿名使用统计以后，这里多一个 <span class="pathlink">usage-ping.json</span>，记着那个随机编号和上次报到的日期。</li>
-      <li><b>问答历史</b>：每一轮的问题、回答和时间在 <span class="pathlink">history.jsonl</span>；这一轮真发给模型的两张截图（整屏的缩小图和指针附近的放大图），以及回答里找到的图的缩略图，在 <span class="pathlink">history-images/</span>。都在上面那个文件夹里，在<b>历史</b>页能看、能删。历史每一问都会记，1.2.0 还没有关掉它的开关。</li>
+      <li><b>问答历史</b>：每一轮的问题、回答和时间在 <span class="pathlink">history.jsonl</span>；这一轮真发给模型的两张截图（整屏的缩小图和指针附近的放大图），以及回答里找到的图的缩略图，在 <span class="pathlink">history-images/</span>。都在上面那个文件夹里，在<b>历史</b>页能看、能删。历史每一问都会记，目前还没有关掉它的开关。</li>
       <li><b>每天的笔记</b>：整理出来的笔记在 <span class="pathlink">day-notes/</span>，导出的网页在 <span class="pathlink">notes/</span>，里面有问题、回答要点和截图。在<b>历史</b>页删某一条或清空时，对应那一天的笔记一起删。导进 Anki 的卡片由 Anki 自己存，Ask Free 只通过 Anki 在本机开的 AnkiConnect 接口（127.0.0.1）交给它，不经过网络。</li>
       <li><b>录音</b>：不存。松开键后临时转一次格式，转完的临时文件马上删掉，再发给识别服务。</li>
       <li><b>运行日志</b>：<span class="pathlink">~/Library/Logs/AskFree.log</span>，只记步骤和耗时（比如这一问有几个字、花了多少毫秒），不记问题、回答和截图。</li>

@@ -71,6 +71,9 @@ private struct ScrollProbe: NSViewRepresentable {
         }
 
         private func attach() {
+            // 系统设了「始终显示滚动条」（接着鼠标时的默认）会在块底下多出 15 点的滚动条，测出的高度就和实际对不上；
+            // 一律用悬浮滚动条：滚动时才出现，不占高度
+            enclosingScrollView?.scrollerStyle = .overlay
             guard let clip = enclosingScrollView?.contentView, clip !== observed else { return }
             if let old = observed { NotificationCenter.default.removeObserver(self, name: NSView.boundsDidChangeNotification, object: old) }
             observed = clip

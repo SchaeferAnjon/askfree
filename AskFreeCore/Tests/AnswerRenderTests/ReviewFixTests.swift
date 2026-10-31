@@ -174,10 +174,12 @@ final class OverflowFadeTests: XCTestCase {
         RunLoop.main.run(until: Date().addingTimeInterval(0.05))
         func inkNear(_ rep: NSBitmapImageRep, x: CGFloat, width: CGFloat = 4) -> Double {
             // 代码那一行：标题 28 + 发丝线 1 + 上边 12，再往下 5 点
-            let y = Int((28 + 1 + 12 + 5) * 2)
+            // 位图每点几个像素看屏幕：有显示器是 2，没接显示器的机器（CI）是 1
+            let scale = CGFloat(rep.pixelsWide) / 300
+            let y = Int((28 + 1 + 12 + 5) * scale)
             var sum = 0.0
-            for px in Int(x * 2)..<Int((x + width) * 2) { sum += 1 - (rep.colorAt(x: px, y: y)?.brightnessComponent ?? 1) }
-            return sum
+            for px in Int(x * scale)..<Int((x + width) * scale) { sum += 1 - (rep.colorAt(x: px, y: y)?.brightnessComponent ?? 1) }
+            return sum * 2 / scale // 折成 2 倍屏上的量，下面的数都是按它定的
         }
         // 代码块的底色（hover，4% 黑）本身每 4 点有 0.3 左右
         let background = 0.35

@@ -19,7 +19,7 @@ final class AppearanceTests: XCTestCase {
                 n += 1
             }
         }
-        XCTAssertGreaterThan(n, 100, "公式画出来了")
+        XCTAssertGreaterThan(n, 30, "公式画出来了") // 没接显示器（CI）位图是 1 倍，有字的像素只有 2 倍屏的一半多
         return sum / Double(max(n, 1))
     }
 

@@ -224,6 +224,7 @@ public final class CloudASRTranscriber {
     /// 带这一问的用量号：识别成功那一刻就算了这一次，后面问答失败、点重试（同一个号）不再算。
     /// 后台说「识别服务忙」（火山 55000031 → 503 upstream）原地再试一次，同一个号。
     public func transcribeMember(samples: [Float], sampleRate: Int = 16000, credentials: MemberCredentials, useId: String,
+                                 context: ASRContext? = nil,
                                  onUse: ((MemberUseHeaders) -> Void)? = nil,
                                  completion: @escaping (Result<String, Error>) -> Void) {
         let audio: Data
@@ -237,8 +238,9 @@ public final class CloudASRTranscriber {
             return
         }
         let seconds = Double(samples.count) / Double(max(sampleRate, 1))
-        let request = Self.memberRequest(audio: audio, format: format, seconds: seconds, credentials: credentials, useId: useId)
-        debugLog?("Cloud ASR: member audio=\(format)/\(audio.count / 1024)KB seconds=\(Int(seconds))")
+        let request = Self.memberRequest(audio: audio, format: format, seconds: seconds, credentials: credentials, useId: useId,
+                                         context: context?.corpusContext())
+        debugLog?("Cloud ASR: member audio=\(format)/\(audio.count / 1024)KB seconds=\(Int(seconds)) hotwords=\(context?.hotwords.count ?? 0) dialog=\(context?.dialog.count ?? 0)")
         func attempt(_ n: Int) {
             URLSession.shared.dataTask(with: request) { data, response, error in
                 if let error {
@@ -261,13 +263,16 @@ public final class CloudASRTranscriber {
     }
 
     /// 发给后台的识别请求：请求体就是音频字节，Content-Type 说是 m4a 还是 wav，X-Audio-Seconds 让后台先拦超长的。
+    /// context 是 corpus.context 的 JSON，base64 放进 X-Asr-Context，后台清洗后交给火山（后台 2026-11-07 起认，旧后台不看这个头）。
     /// 极速版一次请求直接出字，后台给火山 120 秒，这边等 150 秒
-    static func memberRequest(audio: Data, format: String, seconds: Double, credentials: MemberCredentials, useId: String) -> URLRequest {
+    static func memberRequest(audio: Data, format: String, seconds: Double, credentials: MemberCredentials, useId: String,
+                              context: String? = nil) -> URLRequest {
         var request = URLRequest(url: MemberEndpoint.url(credentials.base, MemberEndpoint.asrPath), timeoutInterval: 150)
         request.httpMethod = "POST"
         request.setValue(format == "m4a" ? "audio/mp4" : "audio/wav", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%.1f", seconds), forHTTPHeaderField: "X-Audio-Seconds")
         for (name, value) in credentials.headers(useId: useId) { request.setValue(value, forHTTPHeaderField: name) }
+        if let context { request.setValue(Data(context.utf8).base64EncodedString(), forHTTPHeaderField: "X-Asr-Context") }
         request.httpBody = audio
         return request
     }

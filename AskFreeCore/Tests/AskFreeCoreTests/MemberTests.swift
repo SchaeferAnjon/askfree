@@ -380,6 +380,22 @@ final class MemberRequestTests: XCTestCase {
         XCTAssertEqual(r.timeoutInterval, 150)
         let wav = CloudASRTranscriber.memberRequest(audio: audio, format: "wav", seconds: 1, credentials: creds, useId: useId)
         XCTAssertEqual(wav.value(forHTTPHeaderField: "Content-Type"), "audio/wav")
+        XCTAssertNil(wav.value(forHTTPHeaderField: "X-Asr-Context"), "没有上下文不带这个头")
+    }
+
+    /// 会员识别也带屏幕上的英文词和前几轮问答：corpus.context 的 JSON 原样 base64 进 X-Asr-Context（后台 2026-11-07 起认）
+    func testASRCarriesContextHeader() throws {
+        let context = ASRContext(screenLines: ["SyntaxError: EOL while scanning string literal"], pointerWord: "EOL",
+                                 dialog: [ASRDialogTurn(question: "这是什么", answer: "一个报错")])
+        let json = try XCTUnwrap(context.corpusContext())
+        let r = CloudASRTranscriber.memberRequest(audio: Data([1]), format: "m4a", seconds: 1, credentials: creds, useId: useId, context: json)
+        let header = try XCTUnwrap(r.value(forHTTPHeaderField: "X-Asr-Context"))
+        let decoded = try XCTUnwrap(Data(base64Encoded: header))
+        XCTAssertEqual(String(data: decoded, encoding: .utf8), json)
+        let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: decoded) as? [String: Any])
+        XCTAssertEqual((obj["hotwords"] as? [[String: String]])?.first?["word"], "EOL")
+        XCTAssertEqual(obj["context_type"] as? String, "dialog_ctx")
+        XCTAssertLessThan(header.count, 12_000, "后台只收 12000 字以内的头")
     }
 
     func testASRResponses() {

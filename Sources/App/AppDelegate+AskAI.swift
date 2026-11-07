@@ -65,7 +65,7 @@ extension AppDelegate {
     }
 
     /// 识别：自带 Key 照旧直连火山 / 百炼；会员模式把录音交给后台，令牌失效就重新注册再试一次。回调在主线程
-    /// context 只在自带 Key 时交给火山；会员的录音经后台转发，后台只收音频
+    /// context：屏幕上的英文词和前几轮问答。自带 Key 时直接交给火山；会员放进请求头，后台转给火山
     private func transcribe(samples: [Float], useId: String, context: ASRContext, completion: @escaping (Result<String, Error>) -> Void) {
         let done: (Result<String, Error>) -> Void = { result in DispatchQueue.main.async { completion(result) } }
         guard UsageModeStore.isMember else {
@@ -74,7 +74,7 @@ extension AppDelegate {
         }
         Task { @MainActor in
             do {
-                self.transcribeMember(samples: samples, useId: useId, credentials: try await MemberClient.shared.credentials(),
+                self.transcribeMember(samples: samples, useId: useId, context: context, credentials: try await MemberClient.shared.credentials(),
                                       retry: true, completion: done)
             } catch {
                 done(.failure(error))
@@ -83,17 +83,18 @@ extension AppDelegate {
     }
 
     @MainActor
-    private func transcribeMember(samples: [Float], useId: String, credentials: MemberCredentials, retry: Bool,
+    private func transcribeMember(samples: [Float], useId: String, context: ASRContext, credentials: MemberCredentials, retry: Bool,
                                   completion: @escaping (Result<String, Error>) -> Void) {
         let member = MemberClient.shared
-        cloudTranscriber.transcribeMember(samples: samples, credentials: credentials, useId: useId, onUse: { headers in
+        cloudTranscriber.transcribeMember(samples: samples, credentials: credentials, useId: useId,
+                                          context: context.isEmpty ? nil : context, onUse: { headers in
             DispatchQueue.main.async { MainActor.assumeIsolated { member.apply(headers) } }
         }) { [weak self] result in
             if retry, case .failure(let e as MemberAPIError) = result, e.isBadDevice {
                 Task { @MainActor in
                     do {
                         let fresh = try await member.recoverDevice(after: credentials)
-                        self?.transcribeMember(samples: samples, useId: useId, credentials: fresh, retry: false, completion: completion)
+                        self?.transcribeMember(samples: samples, useId: useId, context: context, credentials: fresh, retry: false, completion: completion)
                     } catch {
                         completion(.failure(error))
                     }

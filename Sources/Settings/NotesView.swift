@@ -954,7 +954,7 @@ private struct NotesAnkiBar: View {
 
     var body: some View {
         let count = model.picks.count
-        // 整理中、或者一个都没整理好（试用用完、没填 Key、停在 0）：方框都是灰的，说整理好后才能勾
+        // 整理中、或者一个都没整理好（没填 Key、出错、停在 0）：方框都是灰的，说整理好后才能勾
         let generating = model.phase == .generating || model.finished.isEmpty
         HStack(spacing: 8) {
             if generating {

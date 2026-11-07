@@ -66,11 +66,8 @@ extension AppDelegate {
     func canStartRecording(showFeedback: Bool) -> Bool {
         if isProcessing { return false }
         guard cloudTranscriber.isConfigured(), askAI.isConfigured() else {
-            // 会员模式只有开发版没设 ASKFREE_API 时会走到这里
-            if showFeedback, UsageModeStore.isMember {
-                overlayWindow.showHint(MemberAPIError.noServer.message)
-            } else if showFeedback {
-                overlayWindow.showHint("请先在「模型」页填入语音识别和问答模型的 API Key")
+            if showFeedback {
+                overlayWindow.showHint("请先在「语音与模型」页填入语音识别和问答模型的 API Key")
                 showModelSettings()
             }
             return false

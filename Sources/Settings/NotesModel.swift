@@ -2,7 +2,7 @@
 // Ask Free
 //
 // 「历史」页里看的每日图文笔记（design/daily-notes/redesign，方向 A）：哪一天、整理到哪了、勾了哪些题、Anki 底栏、提示条。
-// 整理走和回答同一条通道（自带 Key，或会员后台：一次整理算一次），整理好的笔记存在历史旁边，开着就能看；
+// 整理走和回答同一条通道（用户自己的 Key），整理好的笔记存在历史旁边，开着就能看；
 // 整理、读文件、拼 HTML 都不在主线程上做。
 
 import SwiftUI
@@ -93,7 +93,6 @@ final class NotesModel: ObservableObject {
     private struct Job {
         var generation: Int
         var handle: AskRequestHandle?
-        var use: MemberUseRef
         /// 重新整理之前的那份笔记：新的一个问题都没整理出来就失败了，页面上还是它
         var previous: DayNotes?
         /// 重新整理一个问题都没整理出来就失败了：报错卡上的「重试」要重新整理，不是接着旧笔记补
@@ -190,7 +189,7 @@ final class NotesModel: ObservableObject {
         ledger = store.ankiLedger()
         if states[key]?.phase == .generating { return }
         guard let cached = store.load(day: key) else {
-            if states[key]?.notes == nil { start(key, resume: nil, reuseUse: false) }
+            if states[key]?.notes == nil { start(key, resume: nil, retrying: false) }
             return
         }
         var state = NotesDayState(notes: cached)
@@ -257,18 +256,18 @@ final class NotesModel: ObservableObject {
 
     func regenerate() {
         guard let key = openDay else { return }
-        start(key, resume: nil, reuseUse: false)
+        start(key, resume: nil, retrying: false)
     }
 
     func resume() {
         guard let key = openDay, let notes = states[key]?.notes else { return }
-        start(key, resume: notes, reuseUse: true)
+        start(key, resume: notes, retrying: true)
     }
 
-    /// 报错卡上的「重试」：同一个用量号（会员只算一次）。重新整理一个都没整理出来就失败的，重试仍是重新整理
+    /// 报错卡上的「重试」：接着整理。重新整理一个都没整理出来就失败的，重试仍是重新整理
     private func retry() {
         guard let key = openDay else { return }
-        if jobs[key]?.retryRegenerates == true { start(key, resume: nil, reuseUse: true) } else { resume() }
+        if jobs[key]?.retryRegenerates == true { start(key, resume: nil, retrying: true) } else { resume() }
     }
 
     func stop() {
@@ -283,68 +282,26 @@ final class NotesModel: ObservableObject {
         log("stopped \(key) after \(state.notes?.items.count ?? 0) questions")
     }
 
-    /// reuseUse：停下再接着整理、报错后重试，在后台的重试窗口里用同一个用量号（会员只算一次）；重新整理换新号
-    private func start(_ key: String, resume: DayNotes?, reuseUse: Bool) {
+    /// retrying：停下再接着整理、报错后重试（重新整理之前的那份笔记留着）；重新整理是 false
+    private func start(_ key: String, resume: DayNotes?, retrying: Bool) {
         guard let day = days.first(where: { $0.key == key }) else { return }
         jobs[key]?.handle?.cancel()
         let generation = (jobs[key]?.generation ?? 0) + 1
-        let (use, sameUse) = MemberUse.resolve(last: jobs[key]?.use, reuse: reuseUse)
         // 前一次失败时页面放回去的旧笔记，在重试里仍是「重新整理之前的那份」
-        let previous = resume == nil ? (reuseUse ? jobs[key]?.previous : nil) ?? states[key]?.notes ?? store.load(day: key) : nil
-        jobs[key] = Job(generation: generation, handle: nil, use: use, previous: previous)
+        let previous = resume == nil ? (retrying ? jobs[key]?.previous : nil) ?? states[key]?.notes ?? store.load(day: key) : nil
+        jobs[key] = Job(generation: generation, handle: nil, previous: previous)
         var state = NotesDayState(notes: resume ?? DayNotes.begin(day), phase: .generating)
         for thread in day.threads where !(state.notes?.covered.contains { $0.thread == thread.id } ?? false) {
             state.notes?.covered.append(DayNoteCoverage(thread: thread.id, turns: thread.turns.count))
         }
         states[key] = state
-        // 沿用已经开出来的用量号（后台已经算过这一次）时不在本地拦：最后一次试用用在这次整理上，
-        // 本地剩 0 次，接着整理仍然能完成；后台对同一个号不再查额度。新开的号才先在本地拦
-        if UsageModeStore.isMember, !sameUse, let block = MemberClient.shared.knownBlock(voice: false, log: { [weak self] in self?.log($0) }) {
-            finish(key, generation, .failure(block))
-            return
-        }
-        log("start \(key) questions=\(day.threads.count) resume=\(resume != nil) member=\(UsageModeStore.isMember)")
-        if UsageModeStore.isMember {
-            Task { @MainActor [weak self] in
-                do {
-                    let credentials = try await MemberClient.shared.credentials()
-                    self?.run(key, generation, day: day, resume: resume, credentials: credentials, mayRecover: true)
-                } catch {
-                    self?.finish(key, generation, .failure(error))
-                }
-            }
-        } else {
-            run(key, generation, day: day, resume: resume, credentials: nil, mayRecover: false)
-        }
-    }
-
-    private func run(_ key: String, _ generation: Int, day: HistoryDay, resume: DayNotes?, credentials: MemberCredentials?, mayRecover: Bool) {
-        guard jobs[key]?.generation == generation else { return }
-        let member = credentials.map { credentials in
-            AskMember(credentials: credentials, useId: jobs[key]?.use.id ?? MemberUse.newId(), onUse: { headers in
-                DispatchQueue.main.async { MainActor.assumeIsolated { MemberClient.shared.apply(headers) } }
-            })
-        }
+        log("start \(key) questions=\(day.threads.count) resume=\(resume != nil)")
         // 接着整理从已经整理好的往下；失败后「再试一次」同样接着来
         let base = resume ?? states[key]?.notes.flatMap { $0.items.isEmpty ? nil : $0 }
-        let handle = DayNotesGenerator(ai: ai).run(day: day, resume: base, member: member, onUpdate: { [weak self] notes in
+        let handle = DayNotesGenerator(ai: ai).run(day: day, resume: base, onUpdate: { [weak self] notes in
             MainActor.assumeIsolated { self?.apply(key, generation, notes) }
         }, completion: { [weak self] result in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                if mayRecover, let credentials, case .failure(let e as MemberAPIError) = result, e.isBadDevice {
-                    Task { @MainActor in
-                        do {
-                            let fresh = try await MemberClient.shared.recoverDevice(after: credentials)
-                            self.run(key, generation, day: day, resume: resume, credentials: fresh, mayRecover: false)
-                        } catch {
-                            self.finish(key, generation, .failure(error))
-                        }
-                    }
-                    return
-                }
-                self.finish(key, generation, result)
-            }
+            MainActor.assumeIsolated { self?.finish(key, generation, result) }
         })
         if jobs[key]?.generation == generation { jobs[key]?.handle = handle }
     }
@@ -365,13 +322,7 @@ final class NotesModel: ObservableObject {
             state.phase = complete ? .idle : .stopped(byUser: false)
             log("finished \(key) items=\(notes.items.count) complete=\(complete)")
         case .failure(let error):
-            if let member = error as? MemberAPIError {
-                MemberClient.shared.noteUsageError(member)
-                // 后台说这个号过了重试窗口：下次换新号
-                if member.code == "use-expired" { jobs[key]?.use = MemberUse.forRetry(nil) }
-            }
-            let trial = MemberClient.shared.status?.trialResult
-            state.phase = .failed(AskFailure(error: error, trialResult: trial))
+            state.phase = .failed(AskFailure(error: error))
             // 重新整理一个都没整理出来就失败了：页面上留着原来的笔记（文件本来也没动）
             let restored = state.notes?.items.isEmpty ?? true
             if restored, let previous = jobs[key]?.previous, !previous.items.isEmpty {
@@ -389,17 +340,13 @@ final class NotesModel: ObservableObject {
     func perform(_ action: AskFailure.Action) {
         switch action {
         case .openModels: SettingsWindowController.show(page: .models)
-        case .openMembership: (NSApp.delegate as? AppDelegate)?.openMembership()
-        case .openPortal: (NSApp.delegate as? AppDelegate)?.openMemberPortal()
-        case .useOwnKeys: (NSApp.delegate as? AppDelegate)?.switchToOwnKeys()
         case .retry: retry()
-        case .typeInstead: break   // 笔记不用语音
         }
     }
 
     /// 提示条和报错卡里说是哪一家
     var providerName: String {
-        UsageMode.current() == .member ? "会员" : AnswerPanel.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
+        AnswerPanel.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
     }
 
     // MARK: 提示条

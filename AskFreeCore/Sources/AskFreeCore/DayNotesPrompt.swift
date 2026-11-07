@@ -128,7 +128,7 @@ public enum DayNotesPrompt {
         if let language {
             system += "\n\nIMPORTANT: The questions are in \(language). Write the whole notes (titles, points, summary) in \(language); keep the section markers (## 3, ## 小结, ## 记住) and the line prefix 标题： exactly as shown."
         }
-        // 每个问题大约 200 个字的要点，加上小结；会员后台一次最多放 8192
+        // 每个问题大约 200 个字的要点，加上小结；一次最多放 8192
         return (system, user, min(8000, 600 * todo.count + 1200))
     }
 }

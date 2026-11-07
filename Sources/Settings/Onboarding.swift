@@ -1,9 +1,8 @@
 // Onboarding.swift
 // Ask Free
 //
-// 欢迎引导（design/onboarding 方向 A「侧栏步骤」）：一个窗口，左边步骤清单，右边一屏一件事。
-// 欢迎 → 授权 → 用法（会员 / 自带 Key）→ [自带 Key：语音识别 → 问答模型] → 提问键 → 匿名统计（同意 / 不用了）→ 试问一次。
-// 选会员（默认）不用填 Key，少两步。和 GetNewWord 的欢迎页同一副骨架。
+// 欢迎引导（design/onboarding 方向 A「侧栏步骤」）：一个窗口六步，左边步骤清单，右边一屏一件事。
+// 欢迎 → 授权 → 语音识别 → 问答模型 → 提问键 → 试问一次。和 GetNewWord 的欢迎页同一副骨架。
 // 进度和主窗口「开始」三步读同一份（SetupStatus）：在哪做完，另一边一起打勾。
 
 import SwiftUI
@@ -66,24 +65,20 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         PermissionDragHelper.shared.hide()
         SetupStatus.shared.endWatching()
         Self.shared = nil
-        // 没答匿名使用统计那一步就关了引导、主窗口又开着：在主窗口上问
-        SettingsWindowController.shared?.askUsageConsentIfNeeded()
     }
 }
 
-/// 引导的每一步。选会员时没有「语音识别」「问答模型」两步（不用填 Key）
-enum OnboardingStep: String {
-    case welcome, permissions, usage, asr, ask, hotkey, consent, tryAsk
+/// 引导的每一步
+enum OnboardingStep: String, CaseIterable {
+    case welcome, permissions, asr, ask, hotkey, tryAsk
 
     var title: String {
         switch self {
         case .welcome: return "欢迎"
         case .permissions: return "授权"
-        case .usage: return "用法"
         case .asr: return "语音识别"
         case .ask: return "问答模型"
         case .hotkey: return "提问键"
-        case .consent: return "匿名统计"
         case .tryAsk: return "试问一次"
         }
     }
@@ -92,18 +87,10 @@ enum OnboardingStep: String {
         switch self {
         case .welcome: return "看一眼怎么用"
         case .permissions: return "麦克风、辅助功能、屏幕录制"
-        case .usage: return "会员或自带 Key"
         case .asr, .ask: return "填一个 Key"
         case .hotkey: return "自己选一个"
-        case .consent: return "同意或不用了"
         case .tryAsk: return "确认都通了"
         }
-    }
-
-    /// 「用法」那一步之前的几步两种用法一样，所以存的下标在换用法时不会跳
-    static func all(_ mode: UsageMode) -> [OnboardingStep] {
-        mode == .member ? [.welcome, .permissions, .usage, .hotkey, .consent, .tryAsk]
-            : [.welcome, .permissions, .usage, .asr, .ask, .hotkey, .consent, .tryAsk]
     }
 }
 
@@ -112,17 +99,15 @@ struct OnboardingView: View {
     @StateObject private var models = ModelSettings()
     @ObservedObject private var status = SetupStatus.shared
     @ObservedObject private var store = SettingsStore.shared
-    @ObservedObject private var member = MemberClient.shared
-    @State private var mode = UsageMode.current()
     @State private var step = min(OnboardingProgress.step, Self.lastStep)
     @State private var moreASR = false
     @State private var moreAsk = false
     @State private var moreKeys = false
 
-    private var steps: [OnboardingStep] { OnboardingStep.all(mode) }
+    private let steps = OnboardingStep.allCases
     private var current: OnboardingStep { steps[min(step, steps.count - 1)] }
-    /// 最后一步（试问一次）的下标，跟着现在的用法
-    static var lastStep: Int { OnboardingStep.all(UsageMode.current()).count - 1 }
+    /// 最后一步（试问一次）的下标
+    static let lastStep = OnboardingStep.allCases.count - 1
 
     var body: some View {
         HStack(spacing: 0) {
@@ -134,11 +119,9 @@ struct OnboardingView: View {
                         switch current {
                         case .welcome: welcome
                         case .permissions: permissions
-                        case .usage: usageStep
                         case .asr: asrStep
                         case .ask: askStep
                         case .hotkey: hotkeyStep
-                        case .consent: consentStep
                         case .tryAsk: TryAskStep()
                         }
                     }
@@ -161,7 +144,7 @@ struct OnboardingView: View {
         .onChange(of: step) { _, now in OnboardingProgress.step = now }
     }
 
-    /// 还没填过回答的 Key：推荐的 DeepSeek 先选好（会员模式下 askReady 是真的，所以看框里有没有 Key，以后换成自带 Key 时默认就是它）
+    /// 还没填过回答的 Key：推荐的 DeepSeek 先选好
     private func prepare() {
         if !models.askKeyFilled && models.ask != "deepseek" { models.selectAsk("deepseek") }
     }
@@ -201,12 +184,10 @@ struct OnboardingView: View {
         switch steps[i] {
         case .welcome: return step > 0
         case .permissions: return status.permissionsReady
-        case .usage: return UsageMode.isChosen() && (mode == .own || member.status != nil)
         // 选中那家框里有 Key、没测出错就算填好（回来看时 Key 早就填过）；能不能「继续」仍要这一步测通
         case .asr: return status.asrReady && models.asrKeyFilled && [.idle, .ok].contains(models.asrTest)
         case .ask: return status.askReady && models.askKeyFilled && [.idle, .ok].contains(models.askTest)
         case .hotkey: return status.screenHotkeySet
-        case .consent: return !store.usageConsent.needsAsking
         case .tryAsk: return false
         }
     }
@@ -259,36 +240,21 @@ struct OnboardingView: View {
             if step > 0 {
                 Button("上一步") { go(step - 1) }.buttonStyle(PlainTextButtonStyle())
             }
-            if step > 0 && ![.consent, .tryAsk].contains(current) && !canContinue {
+            if step > 0 && current != .tryAsk && !canContinue {
                 Button("先跳过") { go(step + 1) }.buttonStyle(PlainTextButtonStyle())
             }
-            if current == .consent {
-                // 两个一样的按钮代替「继续」：不替用户选，回车也不选
-                UsageConsentButtons(current: store.usageConsent) { agree in
-                    store.setUsageConsent(agree: agree)
-                    go(step + 1)
-                }
-            } else {
-                Button(nextTitle) { next() }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .keyboardShortcut(.return, modifiers: [])
-                    .disabled(!canContinue)
-            }
+            Button(nextTitle) { next() }
+                .buttonStyle(PrimaryButtonStyle())
+                .keyboardShortcut(.return, modifiers: [])
+                .disabled(!canContinue)
         }
     }
 
     private var footerHint: String {
         switch current {
         case .permissions: return status.permissionsReady ? "三项都好了" : "还差 \(status.missingPermissions) 项"
-        case .usage: return canContinue ? "" : (member.isRefreshing ? "正在连接会员服务器…" : "连上会员服务器就能继续")
         case .asr, .ask: return canContinue ? "" : "测试连接通过后就能继续"
         case .hotkey: return canContinue ? "" : "选好提问键就能继续"
-        case .consent:
-            switch store.usageConsent {
-            case .yes: return "已选：\(UsageConsentCopy.agree)"
-            case .no: return "已选：\(UsageConsentCopy.decline)"
-            case .unasked: return ""
-            }
         case .tryAsk: return "试不试都行，之后随时能问"
         default: return ""
         }
@@ -297,8 +263,6 @@ struct OnboardingView: View {
     private var canContinue: Bool {
         switch current {
         case .permissions: return status.permissionsReady
-        // 会员：先点「领取免费试用」注册这台电脑，领到（或名额发完、照实说了）再继续；自带 Key 下一步去填
-        case .usage: return !member.isRefreshing
         case .asr: return models.asrTest == .ok
         case .ask: return models.askTest == .ok
         case .hotkey: return status.screenHotkeySet
@@ -309,7 +273,6 @@ struct OnboardingView: View {
     private var nextTitle: String {
         switch current {
         case .welcome: return "开始设置"
-        case .usage where mode == .member && member.status == nil: return "领取免费试用"
         case .tryAsk: return "完成"
         default: return "继续"
         }
@@ -317,22 +280,13 @@ struct OnboardingView: View {
 
     private func go(_ target: Int) {
         if [.asr, .ask].contains(current) { models.saveKeys() }
-        // 走过「用法」这一步就算选了（默认的会员也记下来）
-        if current == .usage, !UsageMode.isChosen() || UsageMode.current() != mode { UsageModeStore.set(mode, refresh: false) }
         PermissionDragHelper.shared.hide()
         withAnimation(.easeOut(duration: 0.2)) { step = max(0, min(steps.count - 1, target)) }
     }
 
     private func next() {
         if current == .tryAsk { onFinish(); return }
-        // 会员还没注册：这一下是「领取免费试用」，领完留在这一步，把结果（领到几个、名额发完了）照实说
-        if current == .usage, mode == .member, member.status == nil { join(); return }
         go(step + 1)
-    }
-
-    private func join() {
-        UsageModeStore.set(.member, refresh: false)
-        Task { await member.refresh() }
     }
 
     private func header(_ title: String, _ subtitle: String) -> some View {
@@ -348,16 +302,16 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 22) {
             DemoStage(height: 190, showsKeyHint: false)
             header("按一个键说出问题，AI 看着屏幕回答",
-                   "按下那一刻鼠标指在哪，AI 就重点看哪。接下来 \(steps.count - 1) 步，大约 \(mode == .member ? 2 : 3) 分钟。")
+                   "按下那一刻鼠标指在哪，AI 就重点看哪。接下来 \(steps.count - 1) 步，大约 3 分钟。")
             HStack(alignment: .top, spacing: 10) {
                 introCard("hand.raised", "授权三项", "麦克风点「允许」；另外两项把图标拖进系统设置。")
-                introCard("sparkles", "选用法", "会员不用填 Key，前 100 位新用户免费问 30 个；也能用自己的 Key。")
+                introCard("key", "填两个 Key", "语音识别和问答模型，都有免费额度。")
                 introCard("keyboard", "选键，试一次", "提问键由你选，然后真的问一句。")
             }
             .fixedSize(horizontal: false, vertical: true)
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: "lock").font(.system(size: 12)).foregroundStyle(Theme.text3).accessibilityHidden(true)
-                Text("自带 Key 时，语音和截图直接发给你选的服务商；用会员时经我们的服务器转给火山引擎和 DeepSeek，服务器不存这些内容。")
+                Text("语音和截图直接发给你选的服务商，不经过任何中间服务器。")
                     .font(.system(size: 12)).foregroundStyle(Theme.text2).fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -392,42 +346,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: 3 用法
-
-    private var usageStep: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            header("怎么用：会员，还是自带 Key",
-                   "会员不用申请任何 Key，装好就能问；自带 Key 永久免费，费用直接付给服务商。以后在主窗口「会员」页随时能换。")
-            UsageModeCards(mode: mode) { picked in
-                mode = picked
-                UsageModeStore.set(picked, refresh: false)
-            }
-            if mode == .member {
-                VStack(alignment: .leading, spacing: 10) {
-                    if let s = member.status {
-                        let line = MemberSummary.line(s)
-                        StatusText(text: MemberSummary.registration(member.registration, status: s) ?? "\(line.title) · \(line.detail)",
-                                   kind: s.canUse ? .ok : .warn)
-                        if !s.canUse {
-                            Text("可以在主窗口「会员」页订阅，或者在上面改选「自带 Key」。")
-                                .font(.system(size: 12)).foregroundStyle(Theme.text2)
-                        }
-                    } else if member.isRefreshing {
-                        HStack(spacing: 8) {
-                            ProgressView().controlSize(.small)
-                            Text("正在领免费试用…").font(.system(size: 12)).foregroundStyle(Theme.text2)
-                        }
-                    } else if let e = member.error {
-                        StatusText(text: e.message, kind: .danger)
-                    }
-                    Text(MemberCopy.deviceNote + MemberCopy.countingReason)
-                        .font(.system(size: 12)).foregroundStyle(Theme.text3).fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-    }
-
-    // MARK: 4 语音识别
+    // MARK: 3 语音识别
 
     private var asrStep: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -581,19 +500,6 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: 6 匿名统计
-
-    /// 正文和主窗口的询问共用（UsageConsentBody）；两个按钮在底栏
-    private var consentStep: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text(UsageConsentCopy.title).font(.system(size: 22, weight: .semibold)).foregroundStyle(Theme.text)
-            UsageConsentBody()
-                .padding(16)
-                .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.border, lineWidth: 0.5))
-        }
-    }
-
     private var customTitle: String? {
         if case .custom(let custom)? = store.hotkeys.screen { return custom.displayName }
         return nil
@@ -625,12 +531,11 @@ struct OnboardingView: View {
     }
 }
 
-// MARK: - 7 试问一次
+// MARK: - 6 试问一次
 
 /// 真的问一句：指着左边的图按提问键（或按住屏幕上的按钮）说话，回答出在右上角，下面三项打勾
 struct TryAskStep: View {
     @ObservedObject private var store = SettingsStore.shared
-    @ObservedObject private var member = MemberClient.shared
     @State private var heard = false
     @State private var captured = false
     @State private var answered = false
@@ -644,12 +549,6 @@ struct TryAskStep: View {
                 Text("试问一次").font(.system(size: 22, weight: .semibold)).foregroundStyle(Theme.text)
                 Text("真的问一句，确认麦克风、截屏和 AI 都通了。回答会出现在屏幕右上角。")
                     .font(.system(size: 13)).foregroundStyle(Theme.text2)
-                if UsageMode.current() == .member {
-                    // 试问也走会员后台，照样算次数：先说清楚
-                    let left = member.status.flatMap { $0.plan == "trial" ? $0.trial.left : nil }
-                    Text("用会员问，这一问算 1 个问题\(left.map { "（免费试用还剩 \($0) 个）" } ?? "")。")
-                        .font(.system(size: 12)).foregroundStyle(Theme.text3)
-                }
             }
             HStack(alignment: .top, spacing: 24) {
                 chart

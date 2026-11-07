@@ -431,13 +431,6 @@ struct GeneralPage: View {
                         ScreenShareHiding.setEnabled(on)
                     })).toggleStyle(.square)
                 }
-                Hairline()
-                // 三态（没问过 / 同意 / 不用了）里只有同意画成开着；打开算同意，关掉算不用了
-                SettingsRow(title: UsageConsentCopy.settingTitle, detail: UsageConsentCopy.settingDetail) {
-                    Toggle(UsageConsentCopy.settingTitle, isOn: Binding(get: { store.usageConsent.allowsPing },
-                                                                       set: { store.setUsageConsent(agree: $0) }))
-                        .toggleStyle(.square)
-                }
             }
             UpdateSettingsGroup()
             VStack(alignment: .leading, spacing: 8) {
@@ -580,10 +573,6 @@ struct AboutPage: View {
                 SettingsRow(title: "检查更新：GitHub",
                             detail: "每 6 小时取一次新版本信息，有新版就下载安装包；不带你的问题、录音、截图和 Key。在「通用 → 更新」能关。",
                             icon: "arrow.down.circle")
-                Hairline(inset: 46)
-                SettingsRow(title: "匿名使用统计：我们的服务器（\(Self.pingHost)）",
-                            detail: "\(UsageConsentCopy.reason)你同意了才发，每天一次：随机编号、是哪个软件、版本号、系统和芯片、用会员还是自带 Key、界面语言。现在\(Self.consentState(store.usageConsent))，在「通用 → 隐私」能改。",
-                            icon: "chart.bar")
             }
 
             SettingsGroup(title: "存在这台 Mac 上") {
@@ -616,15 +605,6 @@ struct AboutPage: View {
 
     private static var websiteHost: String { URL(string: AppLinks.websiteURL)?.host ?? AppLinks.websiteURL }
     private static var appsHost: String { URL(string: AppLinks.appsURL)?.host ?? AppLinks.appsURL }
-    private static var pingHost: String { UsagePing.apiBase()?.host ?? "api.us-cloud.uk" }
-
-    private static func consentState(_ consent: UsageConsent) -> String {
-        switch consent {
-        case .yes: return "开着"
-        case .no: return "关着"
-        case .unasked: return "还没问过你，不发"
-        }
-    }
 
     private static var asrProviderName: String {
         ModelSettings.asrName(CloudASRTranscriber().currentVersion().provider == .bailian ? .bailian : .volcano)

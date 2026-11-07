@@ -58,12 +58,6 @@ final class AnswerPanel {
     var onRetry: ((_ question: String) -> Void)?
     /// 报错卡「去填 Key」「去换一家」
     var onOpenModels: (() -> Void)?
-    /// 报错卡「订阅会员」「续订」
-    var onOpenMembership: (() -> Void)?
-    /// 报错卡「管理订阅」（欠费换卡）
-    var onOpenPortal: (() -> Void)?
-    /// 报错卡「改用自带 Key」（试用用完、没领到、会员到期）
-    var onUseOwnKeys: (() -> Void)?
     /// 「这次没看屏幕」那条的「去授权」
     var onGrantScreen: (() -> Void)?
 
@@ -324,14 +318,6 @@ final class AnswerPanel {
         switch action {
         case .openModels:
             onOpenModels?()
-        case .openMembership:
-            onOpenMembership?()
-        case .openPortal:
-            onOpenPortal?()
-        case .typeInstead:
-            onType?()
-        case .useOwnKeys:
-            onUseOwnKeys?()
         case .retry:
             guard let last = model.turns.last, last.state == .failed else { return }
             model.turns.removeLast()
@@ -401,8 +387,7 @@ final class AnswerPanel {
         let typing = TypeAskHotkey.isActive() ? TypeAskHotkey.current().map(\.symbol) : nil
         if model.voiceKey != voice { model.voiceKey = voice }
         if model.typeKey != typing { model.typeKey = typing }
-        // 会员模式下回答是我们的后台给的，状态条写「会员」
-        let provider = UsageMode.current() == .member ? "会员" : Self.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
+        let provider = Self.providerName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen")
         if model.providerName != provider { model.providerName = provider }
     }
 
@@ -964,21 +949,11 @@ struct AnswerView: View {
                     .padding(.leading, 6)
                 Spacer(minLength: 0)
             case .idle:
-                // 最后一张是会员的上限卡：今天的用量到上限了就不给追问的按钮（按了也只是再出这张卡）；识别分钟用完只留打字
-                let limit = model.turns.last?.failure?.memberCode
-                if limit == "daily-limit" {
-                    Text("北京时间早上 8 点重置以后再问").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
-                        .padding(.leading, 6)
-                    Spacer(minLength: 0)
-                } else {
-                    if limit != "asr-limit" {
-                        HoldToAskButton(keyCap: model.voiceKey, onStart: onHoldStart, onEnd: onHoldEnd, model: model)
-                    }
-                    FooterButton(symbol: "keyboard", title: "打字", prefix: model.typeKey == nil ? nil : "双击", keyCap: model.typeKey, action: onType)
-                    Spacer(minLength: 4)
-                    Text("开头说「新话题」另起").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
-                        .padding(.trailing, 4)
-                }
+                HoldToAskButton(keyCap: model.voiceKey, onStart: onHoldStart, onEnd: onHoldEnd, model: model)
+                FooterButton(symbol: "keyboard", title: "打字", prefix: model.typeKey == nil ? nil : "双击", keyCap: model.typeKey, action: onType)
+                Spacer(minLength: 4)
+                Text("开头说「新话题」另起").font(.system(size: 12)).foregroundStyle(Theme.text3).lineLimit(1)
+                    .padding(.trailing, 4)
             }
         }
         .padding(.leading, 8)
@@ -1056,18 +1031,14 @@ struct TurnsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 1) {
-                    // 问题是空的（还没问出来就被会员后台拦下，卡片接在对话后面）：不写「追问」
-                    if multi && index > 0 && !turn.question.isEmpty {
+                    if multi && index > 0 {
                         Text("追问").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text3)
                     }
-                    // 问题是空的：还没问出来就被会员后台拦下了（试用用完……），只放报错卡
-                    if !turn.question.isEmpty {
-                        Text(turn.question)
-                            .font(.system(size: compact ? 13 : 15, weight: .semibold))
-                            .foregroundStyle(compact ? Theme.text2 : Theme.text)
-                            .lineSpacing(2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    Text(turn.question)
+                        .font(.system(size: compact ? 13 : 15, weight: .semibold))
+                        .foregroundStyle(compact ? Theme.text2 : Theme.text)
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if let shot = turn.screenshot, !compact { ScreenThumb(shot: shot) }

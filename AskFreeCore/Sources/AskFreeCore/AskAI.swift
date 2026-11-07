@@ -20,40 +20,15 @@ final class AskImageRequest: @unchecked Sendable {
     }
 }
 
-/// 会员模式下这一问要带的：凭据、用量号（同一个问题下的请求只算一次）、计量返回头交回哪里（后台线程回调）
-public struct AskMember {
-    public let credentials: MemberCredentials
-    public let useId: String
-    public let onUse: (MemberUseHeaders) -> Void
-
-    public init(credentials: MemberCredentials, useId: String, onUse: @escaping (MemberUseHeaders) -> Void = { _ in }) {
-        self.credentials = credentials
-        self.useId = useId
-        self.onUse = onUse
-    }
-
-    var headers: [String: String] { credentials.headers(useId: useId) }
-}
-
-/// 问答走的那一家：自带 Key 的服务商（qwen / deepseek / zhipu / doubao），或会员后台。
-/// 会员后台把请求转给 deepseek-flash，所以名字也是 deepseek：联网工具、看屏幕工具、视觉候选都照 DeepSeek 走，
-/// 只是地址换成后台、Key 换成设备令牌、多带一个 X-Use-Id，思考一律关（后台也会关）
+/// 问答走的那一家：用户自己填了 Key 的服务商（qwen / deepseek / zhipu / doubao）
 struct AskProvider {
     let name: String
     let url: URL
     let model: String
     let apiKey: String
-    var member: AskMember? = nil
 
-    var isMember: Bool { member != nil }
-
-    /// 带图的请求发到哪：会员也是同一个后台地址
-    var visionURL: URL? { member != nil ? url : AskVision.visionEndpoint(provider: name) }
-
-    static func member(_ member: AskMember) -> AskProvider {
-        AskProvider(name: "deepseek", url: MemberEndpoint.url(member.credentials.base, MemberEndpoint.chatPath),
-                    model: MemberEndpoint.model, apiKey: member.credentials.token, member: member)
-    }
+    /// 带图的请求发到哪
+    var visionURL: URL? { AskVision.visionEndpoint(provider: name) }
 }
 
 /// 已经发出去的一个请求，能中途掐掉（整理笔记时的「停下」）
@@ -87,7 +62,6 @@ public final class AskRequestHandle: @unchecked Sendable {
 }
 
 /// 语音问答：把问题（可带屏幕截图）交给用户配置的模型，流式返回回答；要联网时自己搜或转千问联网。
-/// 会员模式下（answer 带了 member）问答和联网都走我们的后台
 public class AskAI {
     private static let defaultDoubaoModel = "doubao-seed-2-0-pro-260215"
     private let doubaoURL = URL(string: "https://ark.cn-beijing.volces.com/api/v3/chat/completions")!
@@ -111,10 +85,9 @@ public class AskAI {
         return nil
     }
 
-    /// 有没有一家能用的问答模型（首页健康卡用）。会员模式下不用 Key，连得到后台就算有
+    /// 有没有一家能用的问答模型（首页健康卡用）
     public func isConfigured() -> Bool {
-        if UsageMode.current() == .member { return MemberEndpoint.current != nil }
-        return askProvider() != nil
+        askProvider() != nil
     }
 
     private func providerConfig(_ provider: String) -> AskProvider? {
@@ -215,11 +188,9 @@ public class AskAI {
     /// onScreenUsed：这一问真的把 screen 发给了模型（主线程回调），面板据此挂截图。
     /// onPartial：流式输出，每收到一段就回调累计文本。
     /// onStats：一段可以直接拼进日志的元信息（模型、思考字数、首字耗时），不含任何问答内容。
-    /// member：会员模式下这一问的凭据和用量号；给了就不看用户自己填的 Key，问答和联网都走后台
     public func answer(question: String,
                        history: [(question: String, answer: String)] = [],
                        screen: AskScreenContext? = nil,
-                       member: AskMember? = nil,
                        onPartial: ((String) -> Void)? = nil,
                        onImages: (([AskImage]) -> Void)? = nil,
                        onScreenUsed: (() -> Void)? = nil,
@@ -240,13 +211,12 @@ public class AskAI {
             if let query, imageRequest.markNamed() { self?.searchImages(query: query, question: question, onImages: onImages) }
             completion(.success(display))
         }
-        let ownProvider = member.map(AskProvider.member) ?? askProvider()
+        let ownProvider = askProvider()
         let looksOnRequest = screen != nil && !history.isEmpty && AskScreenTool.isSupported(provider: ownProvider?.name)
         // 已经发给模型的屏幕：按需看的追问一开始没有，模型要看之后才有；联网作答时跟着它走
         var sentScreen = looksOnRequest ? nil : screen
         if sentScreen != nil { onScreenUsed?() }
-        // 会员没有千问联网这条路（要用户自己的百炼 Key）：要联网时走后台的搜索转发
-        let qwenKey = member != nil ? "" : (AskFreeConfig.shared.string(forKey: "dashscope_api_key", envKey: "DASHSCOPE_API_KEY") ?? "")
+        let qwenKey = AskFreeConfig.shared.string(forKey: "dashscope_api_key", envKey: "DASHSCOPE_API_KEY") ?? ""
         let searchProvider: AskProvider? = {
             guard !qwenKey.isEmpty, let url = AskVision.qwenChatCompletions else { return nil }
             return AskProvider(name: "qwen", url: url, model: AskVision.searchModel, apiKey: qwenKey)
@@ -280,7 +250,7 @@ public class AskAI {
             onRouteNote?(AskSearch.searchingNotice)
             searchImages(query: query, question: question, onImages: onImages, unlessNamed: imageRequest)
             let started = ProcessInfo.processInfo.systemUptime
-            DeepSeekSearch.search(query: q, apiKey: provider.apiKey, member: provider.member) { [weak self] result in
+            DeepSeekSearch.search(query: q, apiKey: provider.apiKey) { [weak self] result in
                 guard let self else { return }
                 let searchMs = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
                 var context: String?
@@ -365,16 +335,16 @@ public class AskAI {
                          onThinking: onThinking, onStats: onStats, completion: routed)
     }
 
-    /// 不是问答的一次性请求（整理一天的笔记）：和回答走同一条通道（用户自己的 Key，或会员后台），
+    /// 不是问答的一次性请求（整理一天的笔记）：和回答走同一条通道（用户自己的 Key），
     /// 不联网、不看屏幕、不思考，流式收文字。onPartial 在主线程，completion 在后台线程。
     /// 返回的 handle 能中途掐掉；掐掉之后调用方别再等回调
     @discardableResult
-    public func complete(system: String, user: String, maxTokens: Int, member: AskMember? = nil,
+    public func complete(system: String, user: String, maxTokens: Int,
                          onPartial: ((String) -> Void)? = nil,
                          onFinishReason: ((String?) -> Void)? = nil,
                          completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle {
         let handle = AskRequestHandle()
-        guard let provider = member.map(AskProvider.member) ?? askProvider() else {
+        guard let provider = askProvider() else {
             completion(.failure(AskError.noAPIKey))
             return handle
         }
@@ -392,7 +362,7 @@ public class AskAI {
             if provider.name == "qwen" { body["top_p"] = 0.8 }
             AskVision.applyThinkingSettings(in: &body, provider: provider.name, model: model, thinking: nil)
             debugLog?("Notes request provider=\(provider.name) model=\(model) maxTokens=\(maxTokens) chars=\(user.count)")
-            streamChat(url: provider.url, apiKey: provider.apiKey, body: body, member: provider.member,
+            streamChat(url: provider.url, apiKey: provider.apiKey, body: body,
                        onPartial: onPartial, handle: handle, onFinishReason: onFinishReason) { result in
                 if case .failure(let err) = result, case AskError.quotaExhausted = err, index + 1 < candidates.count {
                     QwenModelRouter.markExhausted(model)
@@ -453,8 +423,7 @@ public class AskAI {
 
         let forceSearch = Self.isTimeSensitive(question)
         // 转千问联网的那一问不思考：它要的是查到的事实，再想几秒不值
-        // 会员一律不思考：后台定死关思考，开了也只会让 max_tokens 留得太多
-        let thinking = (route == .qwenSearch || !allowThinking || provider.isMember) ? nil : AskThinkingSettings.current
+        let thinking = (route == .qwenSearch || !allowThinking) ? nil : AskThinkingSettings.current
         debugLog?("Ask route=\(route.rawValue) provider=\(provider.name) model=\(provider.model) forceSearch=\(forceSearch) thinking=\(thinking?.rawValue ?? "off") history=\(history.count) screenTool=\(offerScreenTool)")
         func makeBody(_ model: String, search: Bool) -> [String: Any] {
             var body: [String: Any] = ["model": model, "messages": messages, "stream": true]
@@ -492,7 +461,6 @@ public class AskAI {
             }
             let model = candidates[index]
             streamChat(url: provider.url, apiKey: provider.apiKey, body: makeBody(model, search: search),
-                       member: provider.member,
                        onPartial: onPartial, onThinking: onThinking,
                        toolNames: tools.compactMap { ($0["function"] as? [String: Any])?["name"] as? String },
                        thinkingDeadline: thinking?.deadline,
@@ -545,9 +513,9 @@ public class AskAI {
                                   onThinking: (() -> Void)?,
                                   onStats: ((String) -> Void)?,
                                   completion: @escaping (Result<String, Error>) -> Void) {
-        let override = provider.isMember ? nil : AskSettings.visionOverride(provider: provider.name)
-        // 联网这一问模型已经定死（AskVision.searchModel），不走视觉候选表；会员的模型由后台定
-        let all = route == .qwenSearch || provider.isMember
+        let override = AskSettings.visionOverride(provider: provider.name)
+        // 联网这一问模型已经定死（AskVision.searchModel），不走视觉候选表
+        let all = route == .qwenSearch
             ? [provider.model]
             : AskVision.visionCandidates(provider: provider.name, override: override)
         // 沿用千问那套额度标记：某个模型免费额度用完了就跳过，冷却到期自动再试
@@ -576,7 +544,7 @@ public class AskAI {
         // 但 2026-09-21 本机实测千问 enable_search + forced_search + 两张 image_url 能同时用，
         // 而且搜索结果确实被用上了（关掉搜索同一问就答成两年前的旧数据），所以走千问联网时照样带图。
         let search = route == .qwenSearch
-        let thinking = (search || !allowThinking || provider.isMember) ? nil : AskThinkingSettings.current
+        let thinking = (search || !allowThinking) ? nil : AskThinkingSettings.current
         func makeBody(_ model: String) -> [String: Any] {
             var body: [String: Any] = ["model": model, "messages": messages, "stream": true, "temperature": 0.5,
                                        "max_tokens": thinking != nil ? AskVision.thinkingMaxTokens : AskVision.maxTokens(provider: provider.name)]
@@ -601,7 +569,7 @@ public class AskAI {
                 return
             }
             let model = candidates[index]
-            streamChat(url: url, apiKey: provider.apiKey, body: makeBody(model), member: provider.member,
+            streamChat(url: url, apiKey: provider.apiKey, body: makeBody(model),
                        // 开了思考，难题可能想很久，30 秒不够
                        timeout: thinking != nil ? 120 : AskVision.requestTimeout, onPartial: onPartial,
                        onThinking: onThinking,
@@ -638,7 +606,6 @@ public class AskAI {
 
     /// OpenAI 兼容的流式对话（SSE）：每收到一段增量就回调累计文本，结束时给完整文本。
     private func streamChat(url: URL, apiKey: String, body: [String: Any],
-                            member: AskMember? = nil,
                             timeout: TimeInterval = 90,
                             onPartial: ((String) -> Void)?,
                             onThinking: (() -> Void)? = nil,
@@ -653,10 +620,9 @@ public class AskAI {
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-        for (name, value) in member?.headers ?? [:] { request.setValue(value, forHTTPHeaderField: name) }
         request.timeoutInterval = timeout
         let reader = SSEReader(onPartial: onPartial, onThinking: onThinking,
-                               toolNames: toolNames, onStats: onStats, member: member,
+                               toolNames: toolNames, onStats: onStats,
                                onFinishReason: onFinishReason, completion: completion)
         reader.armThinkingDeadline(thinkingDeadline)
         // 带截图的请求体有几百 KB，序列化和发出去放到后台：调用方多半在主线程上，
@@ -730,10 +696,6 @@ public class AskAI {
 
     /// 提问前预热与模型端点的连接：用户说话那几秒里把 TLS 握手做掉，首字能早几百毫秒。
     public func warmUpConnection() {
-        if UsageMode.current() == .member {
-            if let base = MemberEndpoint.current { StreamHub.shared.warmUp(MemberEndpoint.url(base, MemberEndpoint.chatPath)) }
-            return
-        }
         guard let provider = askProvider() else { return }
         StreamHub.shared.warmUp(AskVision.visionEndpoint(provider: provider.name) ?? provider.url)
     }
@@ -751,9 +713,6 @@ public class AskAI {
         private let completion: (Result<String, Error>) -> Void
         /// 成功收完时先交出流是怎么结束的（stop / length…），再调 completion；整理笔记靠它知道输出被 max_tokens 截断了
         private let onFinishReason: ((String?) -> Void)?
-        /// 会员后台的请求：错误按后台的 {"error": {"code", "message"}} 读，返回头里的剩几次交回去
-        private let member: AskMember?
-        private var response: HTTPURLResponse?
         private var buffer = Data()
         private var accumulated = ""
         private var reasoningChars = 0
@@ -789,7 +748,6 @@ public class AskAI {
              onThinking: (() -> Void)? = nil,
              toolNames: [String] = [],
              onStats: ((Int, Int?) -> Void)? = nil,
-             member: AskMember? = nil,
              onFinishReason: ((String?) -> Void)? = nil,
              completion: @escaping (Result<String, Error>) -> Void) {
             self.onFinishReason = onFinishReason
@@ -797,16 +755,11 @@ public class AskAI {
             self.onThinking = onThinking
             self.toolNames = toolNames
             self.onStats = onStats
-            self.member = member
             self.completion = completion
         }
 
         func receive(response: URLResponse) {
-            let http = response as? HTTPURLResponse
-            self.response = http
-            statusCode = http?.statusCode ?? 200
-            // 只在 200 时改剩几次：出错的这一问后台不算
-            if let member, let http, http.statusCode == 200, let headers = MemberUseHeaders(http) { member.onUse(headers) }
+            statusCode = (response as? HTTPURLResponse)?.statusCode ?? 200
         }
 
         func receive(data: Data) {
@@ -875,12 +828,7 @@ public class AskAI {
                 return
             }
             if let error {
-                // 会员：连不上后台按会员的话说（「连不上会员服务器」），不说成某家服务商没回应
-                completion(.failure(member != nil ? MemberAPIError.network(error) : error))
-                return
-            }
-            if member != nil, statusCode != 200 {
-                completion(.failure(MemberAPIError.from(status: statusCode, data: errorBody, response: response)))
+                completion(.failure(error))
                 return
             }
             guard statusCode == 200 else {

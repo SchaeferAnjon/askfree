@@ -3,7 +3,7 @@ import Foundation
 /// 整理笔记要用的那一条模型通道（AskAI 就是它；测试里换成假的）
 public protocol NotesCompleting: AnyObject {
     @discardableResult
-    func complete(system: String, user: String, maxTokens: Int, member: AskMember?,
+    func complete(system: String, user: String, maxTokens: Int,
                   onPartial: ((String) -> Void)?, onFinishReason: ((String?) -> Void)?, completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle
 }
 
@@ -34,7 +34,7 @@ public final class DayNotesGenerator {
     /// onUpdate：又收尾了一个问题（参数是现在的整份笔记，小结还没写时是空的）。
     /// completion：success 的笔记可能还缺几个问题（模型少写了、字数到头被截断），看 DayNotes.status
     @discardableResult
-    public func run(day: HistoryDay, resume: DayNotes?, member: AskMember?, calendar: Calendar = .current,
+    public func run(day: HistoryDay, resume: DayNotes?, calendar: Calendar = .current,
                     onUpdate: @escaping (DayNotes) -> Void,
                     completion: @escaping (Result<DayNotes, Error>) -> Void) -> AskRequestHandle {
         let all = DayNotesPrompt.questions(for: day, calendar: calendar)
@@ -74,7 +74,7 @@ public final class DayNotesGenerator {
         var lastCount = working.items.count
         // 输出写到 max_tokens 就被截断，流是正常结束的：最后一节写了一半，不能算整理好
         var truncated = false
-        return ai.complete(system: request.system, user: request.user, maxTokens: request.maxTokens, member: member,
+        return ai.complete(system: request.system, user: request.user, maxTokens: request.maxTokens,
                            onPartial: { text in
             queue.async {
                 _ = absorb(text, final: false)

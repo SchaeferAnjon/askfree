@@ -33,7 +33,7 @@ final class DayNotesPromptTests: XCTestCase {
         let request = DayNotesPrompt.request(todo: qs, total: 40, dayLabel: "2026-10-29")
         XCTAssertLessThan(request.user.count, 75_000)
         XCTAssertTrue(request.user.contains("（后面省略）"))
-        XCTAssertLessThanOrEqual(request.maxTokens, 8000, "会员后台最多放 8192")
+        XCTAssertLessThanOrEqual(request.maxTokens, 8000, "一次最多放 8192")
     }
 
     func testRequestMentionsOnlyTheRemainingQuestionsWhenResuming() {

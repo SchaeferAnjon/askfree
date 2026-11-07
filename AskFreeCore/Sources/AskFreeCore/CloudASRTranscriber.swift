@@ -158,12 +158,15 @@ public final class CloudASRTranscriber {
     // MARK: - 识别入口
 
     /// 用当前选择的版本识别。
-    public func transcribe(samples: [Float], sampleRate: Int = 16000, completion: @escaping (Result<String, Error>) -> Void) {
-        transcribe(samples: samples, sampleRate: sampleRate, version: currentVersion(), completion: completion)
+    /// context：屏幕上指针附近的字、前几轮问答（火山直传热词和上下文，百炼不用）
+    public func transcribe(samples: [Float], sampleRate: Int = 16000, context: ASRContext? = nil,
+                           completion: @escaping (Result<String, Error>) -> Void) {
+        transcribe(samples: samples, sampleRate: sampleRate, version: currentVersion(), context: context, completion: completion)
     }
 
     /// 用指定版本识别。
-    public func transcribe(samples: [Float], sampleRate: Int = 16000, version: ASRVersion, completion: @escaping (Result<String, Error>) -> Void) {
+    public func transcribe(samples: [Float], sampleRate: Int = 16000, version: ASRVersion, context: ASRContext? = nil,
+                           completion: @escaping (Result<String, Error>) -> Void) {
         // 优先压缩为 AAC/M4A 上传（体积约为 WAV 的 1/10，弱网更快、更不易超时），编码失败回退 WAV
         let audioData: Data
         let audioFormat: String
@@ -189,8 +192,8 @@ public final class CloudASRTranscriber {
                 completion(.failure(TranscriptionError.missingCredentials))
                 return
             }
-            let body = makeRequestBody(audioData: audioData, format: audioFormat)
-            debugLog?("Cloud ASR: version=\(version.rawValue) provider=volcano resource=\(version.resourceID) sync=\(version.isSync) audio=\(audioFormat)/\(audioData.count / 1024)KB budget=\(Int(budget))s")
+            let body = makeRequestBody(audioData: audioData, format: audioFormat, context: context?.corpusContext())
+            debugLog?("Cloud ASR: version=\(version.rawValue) provider=volcano resource=\(version.resourceID) sync=\(version.isSync) audio=\(audioFormat)/\(audioData.count / 1024)KB budget=\(Int(budget))s hotwords=\(context?.hotwords.count ?? 0) dialog=\(context?.dialog.count ?? 0)")
             if version.isSync {
                 transcribeSync(body: body, credentials: credentials, resourceID: version.resourceID, budgetSeconds: budget, completion: completion)
             } else {
@@ -409,7 +412,7 @@ public final class CloudASRTranscriber {
         return request
     }
 
-    private func makeRequestBody(audioData: Data, format: String) -> [String: Any] {
+    func makeRequestBody(audioData: Data, format: String, context: String?) -> [String: Any] {
         var requestDict: [String: Any] = [
             "model_name": "bigmodel",
             "enable_itn": true,
@@ -421,9 +424,9 @@ public final class CloudASRTranscriber {
             "vad_segment": false,
             "sensitive_words_filter": ""
         ]
-        for (key, value) in hotWordRequestOptions() {
-            requestDict[key] = value
-        }
+        var corpus = (hotWordRequestOptions()["corpus"] as? [String: Any]) ?? [:]
+        if let context { corpus["context"] = context }
+        if !corpus.isEmpty { requestDict["corpus"] = corpus }
         return [
             "user": ["uid": "豆包语音"],
             "audio": [

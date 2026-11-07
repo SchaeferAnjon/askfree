@@ -113,6 +113,8 @@ final class AnswerPanel {
         guard let last = model.turns.indices.last else { return }
         model.turns[last].answer = text
         model.turns[last].state = .streaming
+        // 「模型在先想一下」只管出字之前；出字了还挂着，答完也一直在
+        if model.turns[last].note == AskVision.thinkingNotice { model.turns[last].note = nil }
         scheduleStreamingRelayout()
     }
 
@@ -150,6 +152,14 @@ final class AnswerPanel {
         guard let last = model.turns.indices.last else { return }
         model.turns[last].screenNote = text
         model.turns[last].screenAction = action
+        relayoutAfterStateChange()
+    }
+
+    /// 模型认为语音识别听错了：卡上的问题换成改正后的，原话留一行小字
+    func fixQuestion(_ fixed: String) {
+        guard let last = model.turns.indices.last, model.turns[last].heard == nil else { return }
+        model.turns[last].heard = model.turns[last].question
+        model.turns[last].question = fixed
         relayoutAfterStateChange()
     }
 
@@ -762,7 +772,9 @@ private final class KeyablePanel: NSPanel {
 struct AnswerTurn: Identifiable {
     enum State { case thinking, streaming, answered, failed }
     let id = UUID()
-    let question: String
+    var question: String
+    /// 语音识别听成的原话：模型认为听错了、改正了问题时才有（卡上问题下面一行小字）
+    var heard: String?
     var answer = ""
     var state: State = .thinking
     /// 这一轮的小灰字（正在联网查、网络较慢、在想），显示在回答上方
@@ -1039,6 +1051,14 @@ struct TurnsView: View {
                         .foregroundStyle(compact ? Theme.text2 : Theme.text)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
+                    if let heard = turn.heard, !compact {
+                        Text("听成「\(heard)」")
+                            .font(.system(size: 12)).foregroundStyle(Theme.text3)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 2)
+                            .accessibilityLabel("语音识别听成：\(heard)")
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if let shot = turn.screenshot, !compact { ScreenThumb(shot: shot) }

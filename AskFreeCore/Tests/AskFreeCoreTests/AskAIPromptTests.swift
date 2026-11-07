@@ -16,6 +16,6 @@ final class AskAIPromptTests: XCTestCase {
     func testBackslashDelimitersAreLiteral() {
         let prompt = AskAI.askSystemPrompt
         XCTAssertTrue(prompt.contains("不用 \\(、\\[、\\boxed、\\tag。"))
-        XCTAssertEqual(prompt.components(separatedBy: "\n").count, 2, "还是两段")
+        XCTAssertEqual(prompt.components(separatedBy: "\n").count, 3, "三段：是谁、怎么答、排版（2026-11-07 改写）")
     }
 }

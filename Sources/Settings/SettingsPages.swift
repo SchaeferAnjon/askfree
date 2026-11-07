@@ -560,10 +560,10 @@ struct AboutPage: View {
 
             SettingsGroup(title: "发给谁、发什么",
                           footer: "你的问题、录音和截图只在你提问时直接发给前两家，用的是你自己的 Key，不经过我们。DuckDuckGo 不用 Key，只收到一个找图的搜索词，不收录音和截图。各家按自己的隐私政策处理收到的内容。") {
-                SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音。", icon: "waveform")
+                SettingsRow(title: "语音识别：\(Self.asrProviderName)", detail: "这一次的录音；看屏幕问时加上指针附近认出的英文词，追问时加上这个话题前几轮的问答，帮它认准专有名词。", icon: "waveform")
                 Hairline(inset: 46)
                 SettingsRow(title: "回答问题：\(ModelSettings.askName(AskFreeConfig.shared.string(forKey: "ask_provider") ?? "qwen"))",
-                            detail: "识别出的文字；看屏幕问时加上这一刻的两张截图；追问时带上这个话题前几轮的问答。在「语音与模型」换服务商。",
+                            detail: "识别出的文字；看屏幕问时加上这一刻的两张截图、本机从截图里认出的指针附近的字和你选中的文字；追问时带上这个话题前几轮的问答。在「语音与模型」换服务商。",
                             icon: "text.bubble")
                 Hairline(inset: 46)
                 SettingsRow(title: "回答配图：DuckDuckGo 图片搜索",

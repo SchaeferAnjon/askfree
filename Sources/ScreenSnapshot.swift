@@ -8,9 +8,14 @@ import AskFreeCore
 
 /// 触发瞬间的屏幕快照：一张整屏上下文图 + 一张指针附近的放大图，两张都用细红框框住了指针附近。
 /// 模型认画出来的标记比认坐标数字可靠得多，所以只画标记、不给坐标。
+/// 本机认出了指针下的词时，框只框住那个词，那个词、那一行、上下几行用文字另外交给模型（pointer）。
 struct ScreenSnapshot {
     let overviewJPEG: Data
     let closeUpJPEG: Data
+    /// 指针下的字、选中的文字；都没有是 nil
+    let pointer: PointerText?
+    /// 认字、读选中文字的耗时
+    let readMs: Int
     /// 从发起到拿到 CGImage 的耗时
     let captureMs: Int
     /// 画标记 + 缩放 + JPEG 编码的耗时
@@ -129,19 +134,26 @@ enum ScreenSnapshotCapturer {
                     let cursorPixel = CGPoint(x: (point.x - bounds.minX) * scale,
                                               y: (point.y - bounds.minY) * scale)
                     // 指针所在窗口在这张图里的像素范围；清晰图优先截整个窗口
-                    let windowPixel = Self.windowFrame(at: point).map {
-                        CGRect(x: ($0.minX - bounds.minX) * scale, y: ($0.minY - bounds.minY) * scale,
-                               width: $0.width * scale, height: $0.height * scale)
+                    let window = Self.window(at: point)
+                    let windowPixel = window.map {
+                        CGRect(x: ($0.frame.minX - bounds.minX) * scale, y: ($0.frame.minY - bounds.minY) * scale,
+                               width: $0.frame.width * scale, height: $0.frame.height * scale)
                     }
                     renderQueue.async {
+                        let readStarted = ProcessInfo.processInfo.systemUptime
+                        let pointer = PointerReader.read(lines: PointerReader.recognize(image: image, around: cursorPixel, scale: scale),
+                                                         selection: PointerReader.selectedText(at: point),
+                                                         cursorPixel: cursorPixel, scale: scale, ownerPID: window?.pid)
                         let encodeStarted = ProcessInfo.processInfo.systemUptime
-                        guard let pair = Self.render(image: image, cursorPixel: cursorPixel, windowPixel: windowPixel, scale: scale) else {
+                        guard let pair = Self.render(image: image, cursorPixel: cursorPixel, windowPixel: windowPixel, scale: scale,
+                                                     marker: Self.markerBox(pointer: pointer, cursorPixel: cursorPixel, scale: scale)) else {
                             finish(.failure(.encodeFailed))
                             return
                         }
                         let encodeMs = Int((ProcessInfo.processInfo.systemUptime - encodeStarted) * 1000)
                         DispatchQueue.main.async { capturedSinceLaunch = true }
-                        finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp,
+                        finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp, pointer: pointer,
+                                                       readMs: Int((encodeStarted - readStarted) * 1000),
                                                        captureMs: captureMs, encodeMs: encodeMs)))
                     }
                 } catch {
@@ -158,21 +170,26 @@ enum ScreenSnapshotCapturer {
             let scale = DemoScreen.scale
             let cursorPixel = CGPoint(x: demo.pointer.x * scale, y: demo.pointer.y * scale)
             let windowPixel = demo.window.map { CGRect(x: $0.minX * scale, y: $0.minY * scale, width: $0.width * scale, height: $0.height * scale) }
-            guard let pair = render(image: demo.image, cursorPixel: cursorPixel, windowPixel: windowPixel, scale: scale) else {
+            let pointer = PointerReader.read(lines: PointerReader.recognize(image: demo.image, around: cursorPixel, scale: scale),
+                                             selection: nil, cursorPixel: cursorPixel, scale: scale, ownerPID: nil)
+            let readMs = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+            guard let pair = render(image: demo.image, cursorPixel: cursorPixel, windowPixel: windowPixel, scale: scale,
+                                    marker: markerBox(pointer: pointer, cursorPixel: cursorPixel, scale: scale)) else {
                 finish(.failure(.encodeFailed))
                 return
             }
-            let encodeMs = Int((ProcessInfo.processInfo.systemUptime - started) * 1000)
+            let encodeMs = Int((ProcessInfo.processInfo.systemUptime - started) * 1000) - readMs
             DispatchQueue.main.async { capturedSinceLaunch = true }
-            finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp, captureMs: 0, encodeMs: encodeMs)))
+            finish(.success(ScreenSnapshot(overviewJPEG: pair.overview, closeUpJPEG: pair.closeUp, pointer: pointer, readMs: readMs,
+                                           captureMs: 0, encodeMs: encodeMs)))
         }
     }
 
     // MARK: - 渲染
 
-    /// 指针底下最上层的普通窗口（Quartz 全局坐标，原点左上）。CGWindowList 按前后顺序给，第一个包含指针的就是。
+    /// 指针底下最上层的普通窗口（Quartz 全局坐标，原点左上）和它属于哪个进程。CGWindowList 按前后顺序给，第一个包含指针的就是。
     /// 自己的窗口（回答浮窗、胶囊）不算：截图里本来就排除了它们。
-    private static func windowFrame(at point: CGPoint) -> CGRect? {
+    private static func window(at point: CGPoint) -> (frame: CGRect, pid: pid_t?)? {
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return nil }
         let ownPID = ProcessInfo.processInfo.processIdentifier
         for info in list {
@@ -180,12 +197,19 @@ enum ScreenSnapshotCapturer {
                   (info[kCGWindowOwnerPID as String] as? pid_t) != ownPID,
                   let dict = info[kCGWindowBounds as String] as? NSDictionary,
                   let frame = CGRect(dictionaryRepresentation: dict), frame.contains(point) else { continue }
-            return frame
+            return (frame, info[kCGWindowOwnerPID as String] as? pid_t)
         }
         return nil
     }
 
-    private static func render(image: CGImage, cursorPixel: CGPoint, windowPixel: CGRect?, scale: CGFloat) -> (overview: Data, closeUp: Data)? {
+    /// 截图上的框：认出了指针下的词就只框住它（四周留 3 点），没认出来照旧以指针为中心画一块（AskVision.markerBox）
+    private static func markerBox(pointer: PointerText?, cursorPixel: CGPoint, scale: CGFloat) -> CGRect {
+        if let word = pointer?.wordBox { return word.insetBy(dx: -3 * scale, dy: -3 * scale) }
+        return AskVision.markerBox(center: cursorPixel, scale: scale)
+    }
+
+    private static func render(image: CGImage, cursorPixel: CGPoint, windowPixel: CGRect?, scale: CGFloat,
+                               marker: CGRect) -> (overview: Data, closeUp: Data)? {
         let full = CGSize(width: CGFloat(image.width), height: CGFloat(image.height))
 
         // 整屏图：只用来看「这是什么界面」，压得狠一点，图片 token 直接影响首字延迟
@@ -193,7 +217,7 @@ enum ScreenSnapshotCapturer {
         guard let overview = draw(image: image,
                                   source: CGRect(origin: .zero, size: full),
                                   outputScale: overviewScale,
-                                  markerAt: cursorPixel, scale: scale),
+                                  marker: marker),
               let overviewData = jpeg(overview, quality: AskVision.overviewQuality) else { return nil }
 
         // 清晰图：指针所在的整个窗口（太大就取指针周围一块），小字才认得出来
@@ -202,14 +226,14 @@ enum ScreenSnapshotCapturer {
         guard let closeUp = draw(image: image,
                                  source: cropRect,
                                  outputScale: closeUpScale,
-                                 markerAt: cursorPixel, scale: scale),
+                                 marker: marker),
               let closeUpData = jpeg(closeUp, quality: AskVision.closeUpQuality) else { return nil }
 
         return (overviewData, closeUpData)
     }
 
-    /// 把 source 这块（原图像素坐标、原点左上）画成一张新图，并用细红框框住指针附近。
-    private static func draw(image: CGImage, source: CGRect, outputScale: CGFloat, markerAt cursorPixel: CGPoint, scale: CGFloat) -> CGImage? {
+    /// 把 source 这块（原图像素坐标、原点左上）画成一张新图，并用细红框框住 box（原图像素坐标）。
+    private static func draw(image: CGImage, source: CGRect, outputScale: CGFloat, marker box: CGRect) -> CGImage? {
         let width = max(1, Int((source.width * outputScale).rounded()))
         let height = max(1, Int((source.height * outputScale).rounded()))
         guard let ctx = CGContext(data: nil, width: width, height: height,
@@ -223,7 +247,6 @@ enum ScreenSnapshotCapturer {
         ctx.draw(piece, in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
 
         // 框在输出图里的位置。CGContext 原点在左下，所以 y 要翻过来。
-        let box = AskVision.markerBox(center: cursorPixel, scale: scale)
         let rect = CGRect(x: (box.minX - source.minX) * outputScale,
                           y: CGFloat(height) - (box.maxY - source.minY) * outputScale,
                           width: box.width * outputScale, height: box.height * outputScale)

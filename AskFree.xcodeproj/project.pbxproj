@@ -34,6 +34,7 @@
 		618B2BB8EB6B4BF342BE2CFE /* PendingAskScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5869458DC7AED482B7D73C /* PendingAskScreen.swift */; };
 		6227124BAC4A13A59D23A40B /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3380BDE8DB6A892B921F092A /* LaunchAtLogin.swift */; };
 		64356DE834A637629573CD1F /* MicrophonePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F4B42C39CB68F974F2AB10 /* MicrophonePickerSheet.swift */; };
+		65A19CE403A85B112EC0B394 /* PointerReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAEDCB0BD677311FF0F17D74 /* PointerReader.swift */; };
 		6F5F125736C6426B641DA67C /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FF3B94E20B83AF3E001633 /* HistoryView.swift */; };
 		7164EBD3F29287C2332C4261 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32ED7A931B40AAB6742E528D /* SettingsStore.swift */; };
 		75E3E4CB0E58968D1429A966 /* VUMeterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0A64D620F7019E21A2378C /* VUMeterView.swift */; };
@@ -120,6 +121,7 @@
 		C65FF5D404E1E1042700722E /* MicrophoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MicrophoneManager.swift; sourceTree = "<group>"; };
 		C7D09DC5E4B368BEC52F0624 /* AppDelegate+Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Permissions.swift"; sourceTree = "<group>"; };
 		C92AFC008A783675431DEE1D /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
+		CAEDCB0BD677311FF0F17D74 /* PointerReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerReader.swift; sourceTree = "<group>"; };
 		D28566DA6245E4B6B39E6B01 /* NotesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesModel.swift; sourceTree = "<group>"; };
 		D5B5B39FCF487201E24E2BCD /* AppDelegate+TypeAsk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+TypeAsk.swift"; sourceTree = "<group>"; };
 		DE7928DC40D2AF04FDD9EF8C /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
@@ -218,6 +220,7 @@
 				C65FF5D404E1E1042700722E /* MicrophoneManager.swift */,
 				89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */,
 				315440BC111A78CD6CC11E51 /* PermissionDragHelper.swift */,
+				CAEDCB0BD677311FF0F17D74 /* PointerReader.swift */,
 				A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */,
 				32ED7A931B40AAB6742E528D /* SettingsStore.swift */,
 				35BC95FD9432395907798308 /* statusbar-icon.png */,
@@ -447,6 +450,7 @@
 				4033E8982B6CC0CAD71D9C6E /* OverlayWindow.swift in Sources */,
 				618B2BB8EB6B4BF342BE2CFE /* PendingAskScreen.swift in Sources */,
 				94667F3DC00B0FC7760D241C /* PermissionDragHelper.swift in Sources */,
+				65A19CE403A85B112EC0B394 /* PointerReader.swift in Sources */,
 				46B1DDD7385CE1C76BB689EA /* ScreenSnapshot.swift in Sources */,
 				EA65C8F3456FAFA505EB5897 /* SettingsPages.swift in Sources */,
 				7164EBD3F29287C2332C4261 /* SettingsStore.swift in Sources */,

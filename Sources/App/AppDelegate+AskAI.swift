@@ -22,6 +22,11 @@ extension AppDelegate {
             if followUp { self.answerPanel.setListening(.noSpeech) } else { self.overlayWindow.showHint("没听到问题", accent: .neutral) }
         }
         let transcribeStartedAt = Date()
+        // 识别时把屏幕上的字（截图这时多半已经认好了，没好不等）和这个话题前几轮的问答交给火山，专有名词更容易认对
+        let pointer = pendingAskScreen?.readyPointer
+        let dialog = continuesThread && answerPanel.isVisible
+            ? answerPanel.history.suffix(3).map { ASRDialogTurn(question: $0.question, answer: $0.answer) } : []
+        let context = ASRContext(screenLines: pointer?.context ?? [], pointerWord: pointer?.word, dialog: dialog)
         audioRecorder.stopRecording { [weak self] samples in
             guard let self else { return }
             guard let samples, samples.count > 16000 / 2 else {
@@ -29,7 +34,7 @@ extension AppDelegate {
                 return
             }
             DispatchQueue.main.async {
-                self.cloudTranscriber.transcribe(samples: samples) { result in DispatchQueue.main.async { [weak self] in
+                self.cloudTranscriber.transcribe(samples: samples, context: context.isEmpty ? nil : context) { result in DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     switch result {
                     case .success(let raw):
@@ -159,7 +164,7 @@ extension AppDelegate {
                 case .success(let answer):
                     self.debugLog("ASK answered chars=\(answer.count) \(self.askTiming.summary(totalMs: totalMs))")
                     self.answerPanel.finish(answer: answer)
-                    self.recordHistory(draft, thread: thread, question: question, answer: answer,
+                    self.recordHistory(draft, thread: thread, question: draft.question ?? question, answer: answer,
                                        screen: draft.screenUsed ? screen : nil)
                 case .failure(let err):
                     let reason = (err as? LocalizedError)?.errorDescription ?? "\(err)"
@@ -168,7 +173,16 @@ extension AppDelegate {
                 }
             }
         }
-        askAI.answer(question: question, history: history, screen: screen, onPartial: { [weak self] partial in
+        // 打字问的是原文，不会听错；语音问的（开发版 -askText 也当语音）让模型按屏幕纠正听错的字
+        let spoken = askTiming.trigger != "hotkey-type"
+        askAI.answer(question: question, history: history, screen: screen, spoken: spoken, onHeardFix: { [weak self] fixed in
+            DispatchQueue.main.async {
+                guard let self, self.askRound == round, self.answerPanel.threadID == thread else { return }
+                self.debugLog("ASK heard fix chars=\(fixed.count)")
+                draft.question = fixed
+                self.answerPanel.fixQuestion(fixed)
+            }
+        }, onPartial: { [weak self] partial in
             guard let self, self.askRound == round else { return }
             self.askSlowHintWork?.cancel()
             self.answerPanel.updatePartial(partial)
@@ -353,8 +367,11 @@ extension AppDelegate {
                 self.askTiming.captureMs = snapshot.captureMs
                 self.askTiming.encodeMs = snapshot.encodeMs
                 self.askTiming.screenKB = (snapshot.overviewJPEG.count + snapshot.closeUpJPEG.count) / 1024
+                let p = snapshot.pointer
+                // 只记认没认出来、花了多久，不记认出来的字
+                self.debugLog("AC: pointer read \(snapshot.readMs)ms word=\(p?.word != nil) line=\(p?.line != nil) context=\(p?.context.count ?? 0) selection=\(p?.selection != nil) code=\(p?.looksLikeCode == true)")
                 callback(AskAI.AskScreenContext(overviewJPEG: snapshot.overviewJPEG,
-                                                     closeUpJPEG: snapshot.closeUpJPEG), nil)
+                                                     closeUpJPEG: snapshot.closeUpJPEG, pointer: snapshot.pointer), nil)
             case .failure(let error):
                 self.askTiming.fallback = error.debugName
                 callback(nil, error.userMessage)
@@ -375,4 +392,6 @@ private final class AskHistoryDraft {
     var recorded = false
     var via: String?
     var searched = false
+    /// 模型改正过的问题（语音识别听错时）；历史里记改正后的
+    var question: String?
 }

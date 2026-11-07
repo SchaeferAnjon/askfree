@@ -27,7 +27,9 @@
 You are reading a web page, a paper or some code and hit something you don't get. Point at it, hold the key, ask "what does this mean?" and let go: the answer appears in the top right corner of the screen. No switching windows, no screenshots to take, no typing. A macOS menu bar app that uses your own API keys; free and open source.
 
 - **Answers about your screen**: the moment you press the key, it captures the whole screen and the window under the pointer and sends them to the AI with your question.
-- **Knows what you point at**: a red box marks where the pointer is. Ask about "this word" or "this button" and it answers about what is in the box; ask "what is this page about" and it reads the whole page.
+- **Knows what you point at**: Ask Free reads the exact word and line under the pointer on your Mac (or the text you selected), boxes just that word and tells the AI in words. Ask about "this word" or "this line of code" and it answers about that one; ask "what is this page about" and it reads the whole page.
+- **Fixes what it misheard**: the AI knows the question came from speech recognition and reads it against the text on screen; when it is sure a word was misheard, the card shows the corrected question with what was heard in small print.
+- **Explains code**: point at a line of code, an error or a terminal command and it takes the line apart: what it does, what each part is, why it fails and how to fix it.
 - **Follow-up questions**: press the key again while the answer is still showing and you continue the same topic; start with 新话题 ("new topic") to start over.
 - **Searches the web by itself**: for news, prices or exchange rates it looks them up; start with 搜一下 ("search") to search right away.
 - **Pictures in the answer**: ask to see a photo of something and 3 images from the web appear below the answer; click one to open the original.
@@ -118,8 +120,8 @@ Open the downloaded `AskFree.dmg`, drag **Ask Free** onto the **Applications** f
 
 - No account, no sign-up.
 - Your questions, recordings and screenshots go straight to the providers you choose, never through us; we run no server of our own:
-  - Your voice goes straight to Volcano Engine to be turned into text. Recordings are not kept.
-  - Your question and the screenshots go to the answer model you chose, DeepSeek or Alibaba Cloud Bailian.
+  - Your voice goes straight to Volcano Engine to be turned into text. Recordings are not kept. When you ask about the screen, the English words recognized near the pointer go along, and in a follow-up the earlier questions and answers of the topic, so it gets names and terms right.
+  - Your question and the screenshots go to the answer model you chose, DeepSeek or Alibaba Cloud Bailian, together with the text Ask Free reads near the pointer (with the text recognition built into macOS, offline) and any text you have selected.
   - Web searches go to the same provider: DeepSeek's search API, or Qwen's built-in web search.
 - The screen is captured only at the moment you press the key (or double-tap the typing key): a scaled-down image of the whole screen and a sharp one of the window under the pointer. The "just ask" key captures nothing, and nothing is captured with **让 AI 看屏幕** (Let AI see the screen) turned off on the **回答方式** (Answers) page.
 - **联网的回答附上图** (Pictures with web answers) is on by default: when the answer needs pictures, one image search term (or your question, if there is no term) goes to DuckDuckGo, never the screenshots or the recording. Turn it off on the **回答方式** (Answers) page.

@@ -145,7 +145,10 @@ final class AskVisionTests: XCTestCase {
     /// 思考关不掉的模型，输出上限要留出思考的份额，不然在思考阶段就被截断
     func testMaxTokensLeavesRoomForForcedThinking() {
         XCTAssertGreaterThan(AskVision.maxTokens(provider: "zhipu"), AskVision.maxTokens(provider: "qwen"))
-        XCTAssertEqual(AskVision.maxTokens(provider: "qwen"), 600)
+        XCTAssertEqual(AskVision.maxTokens(provider: "qwen"), 1500)
+        // 讲代码放得更长；智谱不比平时少
+        XCTAssertEqual(AskVision.maxTokens(provider: "deepseek", code: true), 2400)
+        XCTAssertGreaterThanOrEqual(AskVision.maxTokens(provider: "zhipu", code: true), AskVision.maxTokens(provider: "zhipu"))
     }
 
     // MARK: 模型与端点

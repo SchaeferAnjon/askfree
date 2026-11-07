@@ -33,6 +33,12 @@ final class PendingAskScreen {
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { once(nil) }
     }
 
+    /// 图已经好了时，本机认出的指针下的字（识别语音时拿来当热词）；还没好就是 nil，不等
+    var readyPointer: PointerText? {
+        if case .success(let snapshot)? = result { return snapshot.pointer }
+        return nil
+    }
+
     func cancel() {
         cancelled = true
         waiters.removeAll()

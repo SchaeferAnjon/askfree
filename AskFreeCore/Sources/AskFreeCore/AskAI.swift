@@ -132,9 +132,12 @@ public class AskAI {
 
     // MARK: - 语音问答
 
+    /// 2026-11-07 重写：以前是一串规矩（先给结论、不要客套、不要复述、不要追问、200 字以内……），
+    /// 答得像查表，用户说「没有灵性」。现在只说要成为什么样的回答者，篇幅和取舍交给模型；排版规矩留着，面板要渲染
     static let askSystemPrompt = """
-    你是用户身边的语音问答助手。用户用语音提问，问题可能带口语、可能不完整。直接回答：先给结论，再展开要点；用用户提问的语言回答；不要客套，不要复述问题，结尾不要追问「要不要……」；不确定就说不确定。篇幅随问题而定：简单问题两三句说完，复杂问题可以分组展开，但不要注水。
-    排版用轻量 Markdown（面板会渲染）：段落之间空一行，每段只说一件事；列举多项时逐条分行，用「1. 」或「- 」开头；内容分几组时用「### 组名」做小标题；每条里的关键词用 **加粗** 标出（一条最多一处）；不用表格、引用。代码和命令用 Markdown 代码块，开头的 ``` 后面标上语言（如 ```python）。数学公式用 LaTeX：行内公式用 $...$，单独成行的公式用 $$...$$ 并单独占一行；不用 \\(、\\[、\\boxed、\\tag。
+    你是坐在用户旁边的一位懂行的朋友。他在电脑前碰到不懂的东西，按一个键随口问你。
+    像高手当面讲那样回答：第一句就给出答案，再讲清楚为什么、关键在哪；值得的时候，顺手补一个他多半会想知道的东西：贴切的例子、常见的坑、更好的做法，或者你自己的判断。用他听得懂的话，打个比方常常比堆术语管用。简单的事几句话说完，值得展开的就展开；不客套，不复述问题，不为了显得全面而罗列。拿不准的地方直说。用他提问的语言回答。
+    排版用轻量 Markdown（面板会渲染）：段落之间空一行；列举多项时逐条分行，用「1. 」或「- 」开头；内容分几组时用「### 组名」做小标题；要强调的词用 **加粗**，少用；不用表格、引用。代码和命令用 Markdown 代码块，开头的 ``` 后面标上语言（如 ```python）。数学公式用 LaTeX：行内公式用 $...$，单独成行的公式用 $$...$$ 并单独占一行；不用 \\(、\\[、\\boxed、\\tag。
     """
 
     /// 设置里开着「附图」才告诉模型面板能放图
@@ -170,10 +173,13 @@ public class AskAI {
     public struct AskScreenContext {
         public let overviewJPEG: Data
         public let closeUpJPEG: Data
+        /// 本机认出的指针下的字、选中的文字（没认出来是 nil）
+        public let pointer: PointerText?
 
-        public init(overviewJPEG: Data, closeUpJPEG: Data) {
+        public init(overviewJPEG: Data, closeUpJPEG: Data, pointer: PointerText? = nil) {
             self.overviewJPEG = overviewJPEG
             self.closeUpJPEG = closeUpJPEG
+            self.pointer = pointer
         }
 
         public var sizeSummary: String {
@@ -188,9 +194,12 @@ public class AskAI {
     /// onScreenUsed：这一问真的把 screen 发给了模型（主线程回调），面板据此挂截图。
     /// onPartial：流式输出，每收到一段就回调累计文本。
     /// onStats：一段可以直接拼进日志的元信息（模型、思考字数、首字耗时），不含任何问答内容。
+    /// spoken：问题是语音识别出来的（可能听错）。模型确定听错时回答开头写改正后的问题，经 onHeardFix 交出来（主线程外）
     public func answer(question: String,
                        history: [(question: String, answer: String)] = [],
                        screen: AskScreenContext? = nil,
+                       spoken: Bool = false,
+                       onHeardFix: ((String) -> Void)? = nil,
                        onPartial: ((String) -> Void)? = nil,
                        onImages: (([AskImage]) -> Void)? = nil,
                        onScreenUsed: (() -> Void)? = nil,
@@ -200,17 +209,26 @@ public class AskAI {
                        completion: @escaping (Result<String, Error>) -> Void) {
         // 模型点名要图（`[[图片: 搜索词]]`）：标记行不给用户看，一出现就去找图，和回答并行
         let imageRequest = AskImageRequest()
+        // 语音问的：开头那行 `[[问题: …]]`（模型改正的问题）不给用户看，交给面板换掉卡上的问题
+        let heardFix = AskHeardFix()
+        func stripHeard(_ text: String, isFinal: Bool) -> String {
+            guard spoken else { return text }
+            let (display, fixed) = AskHeard.extractMarker(text, isFinal: isFinal)
+            if let fixed, AskHeard.isMeaningfulFix(heard: question, fixed: fixed), heardFix.markReported() { onHeardFix?(fixed) }
+            return display
+        }
         let onPartial: (String) -> Void = { [weak self] text in
-            let (display, query) = ImageSearch.extractMarker(text)
+            let (display, query) = ImageSearch.extractMarker(stripHeard(text, isFinal: false))
             if let query, imageRequest.markNamed() { self?.searchImages(query: query, question: question, onImages: onImages) }
             onPartial?(display)
         }
         let completion: (Result<String, Error>) -> Void = { [weak self] result in
             guard case .success(let text) = result else { completion(result); return }
-            let (display, query) = ImageSearch.extractMarker(text, isFinal: true)
+            let (display, query) = ImageSearch.extractMarker(stripHeard(text, isFinal: true), isFinal: true)
             if let query, imageRequest.markNamed() { self?.searchImages(query: query, question: question, onImages: onImages) }
             completion(.success(display))
         }
+        let extraSystem = spoken ? AskHeard.promptSuffix : ""
         let ownProvider = askProvider()
         let looksOnRequest = screen != nil && !history.isEmpty && AskScreenTool.isSupported(provider: ownProvider?.name)
         // 已经发给模型的屏幕：按需看的追问一开始没有，模型要看之后才有；联网作答时跟着它走
@@ -238,7 +256,7 @@ public class AskAI {
             let stats: (String) -> Void = { line in
                 onStats?("decide=\(decidedMs.map { "\($0)ms" } ?? "explicit") " + line)
             }
-            answerDirectText(question: AskSearch.searchQuestion(question, query: query), history: history, provider: provider,
+            answerDirectText(question: AskSearch.searchQuestion(question, query: query), history: history, extraSystem: extraSystem, provider: provider,
                              route: .qwenSearch, offerSearchTool: false, onPartial: partial,
                              onThinking: onThinking, onStats: stats, completion: completion)
         }
@@ -271,11 +289,11 @@ public class AskAI {
                     onStats?("decide=\(decidedMs.map { "\($0)ms" } ?? "explicit") webSearch=\(searchMs)ms " + line)
                 }
                 if let sentScreen {
-                    self.answerWithScreen(question: question, history: history, screen: sentScreen, provider: provider,
+                    self.answerWithScreen(question: question, history: history, extraSystem: extraSystem, screen: sentScreen, provider: provider,
                                           route: .deepseekSearch, offerSearchTool: false, searchContext: context,
                                           onPartial: partial, onThinking: onThinking, onStats: stats, completion: completion)
                 } else {
-                    self.answerDirectText(question: question, history: history, provider: provider,
+                    self.answerDirectText(question: question, history: history, extraSystem: extraSystem, provider: provider,
                                           route: .deepseekSearch, offerSearchTool: false, searchContext: context,
                                           onPartial: partial, onThinking: onThinking, onStats: stats, completion: completion)
                 }
@@ -301,7 +319,7 @@ public class AskAI {
                 debugLog?("Ask follow-up looks at screen decide=\(ms)ms")
                 sentScreen = screen
                 DispatchQueue.main.async { onScreenUsed?() }
-                answerWithScreen(question: question, history: history, screen: screen, provider: ownProvider,
+                answerWithScreen(question: question, history: history, extraSystem: extraSystem, screen: screen, provider: ownProvider,
                                  route: .direct, offerSearchTool: offerTool, onPartial: onPartial,
                                  onThinking: onThinking, onStats: onStats, completion: routed)
                 return
@@ -320,7 +338,7 @@ public class AskAI {
         }
 
         if let sentScreen, let provider = ownProvider {
-            answerWithScreen(question: question, history: history, screen: sentScreen, provider: provider,
+            answerWithScreen(question: question, history: history, extraSystem: extraSystem, screen: sentScreen, provider: provider,
                              route: .direct, offerSearchTool: offerTool, onPartial: onPartial,
                              onThinking: onThinking, onStats: onStats, completion: routed)
             return
@@ -330,7 +348,7 @@ public class AskAI {
             completion(.failure(AskError.noAPIKey))
             return
         }
-        answerDirectText(question: question, history: history, provider: provider, route: .direct,
+        answerDirectText(question: question, history: history, extraSystem: extraSystem, provider: provider, route: .direct,
                          offerSearchTool: offerTool, offerScreenTool: looksOnRequest, onPartial: onPartial,
                          onThinking: onThinking, onStats: onStats, completion: routed)
     }
@@ -400,6 +418,7 @@ public class AskAI {
     /// （2026-09-11 实测「美联储主席是谁」standard 档 3 次都答成已卸任的前任，默认档每次都对）。
     private func answerDirectText(question: String,
                                   history: [(question: String, answer: String)],
+                                  extraSystem: String,
                                   provider: AskProvider,
                                   route: AskVision.AskRoute,
                                   offerSearchTool: Bool,
@@ -410,7 +429,7 @@ public class AskAI {
                                   onThinking: (() -> Void)?,
                                   onStats: ((String) -> Void)?,
                                   completion: @escaping (Result<String, Error>) -> Void) {
-        let system = Self.askSystemPrompt + Self.imagePromptSuffix + (offerSearchTool ? AskSearch.toolPromptSuffix : "")
+        let system = Self.askSystemPrompt + Self.imagePromptSuffix + extraSystem + (offerSearchTool ? AskSearch.toolPromptSuffix : "")
             + (offerScreenTool ? AskScreenTool.promptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")
             + AskReplyLanguage.promptLine(for: question)
         let tools = (offerSearchTool ? AskSearch.tools() : []) + (offerScreenTool ? [AskScreenTool.tool()] : [])
@@ -437,9 +456,8 @@ public class AskAI {
                 }
             } else {
                 body["temperature"] = 0.5
-                // 关思考万一没生效，思考内容占 max_tokens，给 1200 会被截断，所以多留余量
-                body["max_tokens"] = thinking != nil ? AskVision.thinkingMaxTokens
-                    : (AskVision.forcesThinking(model: model) ? 2048 : 1200)
+                // 只管截断不管快慢：给足，长短由提示词管。关思考万一没生效，思考内容也占 max_tokens
+                body["max_tokens"] = thinking != nil ? AskVision.thinkingMaxTokens : 2048
                 AskVision.applyThinkingSettings(in: &body, provider: provider.name, model: model, thinking: thinking)
             }
             if !tools.isEmpty { body["tools"] = tools }
@@ -475,7 +493,7 @@ public class AskAI {
                     if case AskError.emptyAnswer = err, thinking != nil, let self {
                         // 开着思考时偶发：想了一大段却没有正文。关掉思考重问一次，保证用户拿得到答案
                         self.debugLog?("Ask: \(err.localizedDescription) → 关思考重问")
-                        self.answerDirectText(question: question, history: history, provider: provider, route: route,
+                        self.answerDirectText(question: question, history: history, extraSystem: extraSystem, provider: provider, route: route,
                                               offerSearchTool: offerSearchTool, offerScreenTool: offerScreenTool,
                                               searchContext: searchContext,
                                               allowThinking: false, onPartial: onPartial,
@@ -503,6 +521,7 @@ public class AskAI {
     /// 速度上的三件事：显式关思考、压住输出长度（max_tokens）、照常走流式，首字越早越好。
     private func answerWithScreen(question: String,
                                   history: [(question: String, answer: String)],
+                                  extraSystem: String,
                                   screen: AskScreenContext,
                                   provider: AskProvider,
                                   route: AskVision.AskRoute,
@@ -526,8 +545,10 @@ public class AskAI {
             return
         }
 
+        let code = screen.pointer?.looksLikeCode == true
         var messages: [[String: Any]] = [
             ["role": "system", "content": Self.askSystemPrompt + Self.imagePromptSuffix + AskVision.screenPromptSuffix
+                + (code ? AskVision.codePromptSuffix : "") + extraSystem
                 + (history.isEmpty ? "" : AskScreenTool.followUpScreenNote) + (offerSearchTool ? AskSearch.toolPromptSuffix : "") + "\n" + Self.askTimeLine() + (searchContext ?? "")
                 + AskReplyLanguage.promptLine(for: question)]
         ]
@@ -538,7 +559,8 @@ public class AskAI {
         messages.append(["role": "user",
                          "content": AskVision.visionUserContent(question: question,
                                                                 overviewJPEG: screen.overviewJPEG,
-                                                                closeUpJPEG: screen.closeUpJPEG)])
+                                                                closeUpJPEG: screen.closeUpJPEG,
+                                                                pointerText: screen.pointer?.promptText)])
 
         // 一般情况下带图不开联网：智谱的视觉请求 schema 里根本没有 web_search 这个工具类型。
         // 但 2026-09-21 本机实测千问 enable_search + forced_search + 两张 image_url 能同时用，
@@ -547,7 +569,7 @@ public class AskAI {
         let thinking = (search || !allowThinking) ? nil : AskThinkingSettings.current
         func makeBody(_ model: String) -> [String: Any] {
             var body: [String: Any] = ["model": model, "messages": messages, "stream": true, "temperature": 0.5,
-                                       "max_tokens": thinking != nil ? AskVision.thinkingMaxTokens : AskVision.maxTokens(provider: provider.name)]
+                                       "max_tokens": thinking != nil ? AskVision.thinkingMaxTokens : AskVision.maxTokens(provider: provider.name, code: code)]
             AskVision.applyThinkingSettings(in: &body, provider: provider.name, model: model, thinking: thinking)
             if search {
                 body["enable_search"] = true
@@ -585,7 +607,7 @@ public class AskAI {
                 case .failure(let err):
                     if case AskError.emptyAnswer = err, thinking != nil, let self {
                         self.debugLog?("Ask vision: \(err.localizedDescription) → 关思考重问")
-                        self.answerWithScreen(question: question, history: history, screen: screen, provider: provider,
+                        self.answerWithScreen(question: question, history: history, extraSystem: extraSystem, screen: screen, provider: provider,
                                               route: route, offerSearchTool: offerSearchTool, searchContext: searchContext,
                                               allowThinking: false,
                                               onPartial: onPartial, onThinking: onThinking, onStats: onStats, completion: completion)

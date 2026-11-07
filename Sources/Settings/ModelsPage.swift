@@ -14,8 +14,17 @@ struct ModelsPage: View {
     @ObservedObject private var status = SetupStatus.shared
     @State private var autoHelp = false
 
+    @State private var usageMode = UsageMode.current()
+
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
+            if usageMode == .member {
+                // 会员模式下这一页的 Key 不起作用：顶上说一句，给个换用法的入口
+                Callout(icon: "sparkles", title: "正在用会员的语音识别和回答",
+                        detail: "会员模式下识别和回答由 Ask Free 会员服务提供，不用填 Key。下面的设置在换成「自带 Key」以后才用。") {
+                    Button("改用自带 Key") { UsageModeStore.set(.own) }.buttonStyle(SecondaryButtonStyle(height: 28))
+                }
+            }
             Stage(height: 150) { chain }
             SettingsGroup(title: "① 听懂你说的话") {
                 asrRow(.volcano, detail: "每个识别版本送 20 小时，最稳", recommended: true)
@@ -35,6 +44,7 @@ struct ModelsPage: View {
             }
         }
         .onDisappear { settings.saveKeys() }
+        .onReceive(NotificationCenter.default.publisher(for: .askFreeUsageModeDidChange)) { _ in usageMode = UsageMode.current() }
     }
 
     // MARK: 链路示意

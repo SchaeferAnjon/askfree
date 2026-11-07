@@ -7,11 +7,11 @@ private final class FakeAI: NotesCompleting {
     var failure: Error?
     /// 流是怎么结束的：stop；"length" = 输出到 max_tokens 被截断
     var finishReason: String? = "stop"
-    private(set) var requests: [(system: String, user: String, maxTokens: Int)] = []
+    private(set) var requests: [(system: String, user: String, maxTokens: Int, member: String?)] = []
 
-    func complete(system: String, user: String, maxTokens: Int,
+    func complete(system: String, user: String, maxTokens: Int, member: AskMember?,
                   onPartial: ((String) -> Void)?, onFinishReason: ((String?) -> Void)?, completion: @escaping (Result<String, Error>) -> Void) -> AskRequestHandle {
-        requests.append((system, user, maxTokens))
+        requests.append((system, user, maxTokens, member?.useId))
         var text = ""
         for chunk in chunks {
             text += chunk
@@ -38,11 +38,11 @@ final class DayNotesGeneratorTests: XCTestCase {
         return HistoryDay.group(threads, calendar: calendar)[0]
     }
 
-    private func run(_ ai: FakeAI, day: HistoryDay, resume: DayNotes? = nil) -> (updates: [DayNotes], result: Result<DayNotes, Error>) {
+    private func run(_ ai: FakeAI, day: HistoryDay, resume: DayNotes? = nil, member: AskMember? = nil) -> (updates: [DayNotes], result: Result<DayNotes, Error>) {
         let done = expectation(description: "done")
         var updates: [DayNotes] = []
         var result: Result<DayNotes, Error>!
-        DayNotesGenerator(ai: ai).run(day: day, resume: resume, calendar: calendar,
+        DayNotesGenerator(ai: ai).run(day: day, resume: resume, member: member, calendar: calendar,
                                       onUpdate: { updates.append($0) }, completion: { result = $0; done.fulfill() })
         wait(for: [done], timeout: 5)
         // onUpdate 的最后一次排在 completion 前面，已经都到了
@@ -82,6 +82,14 @@ final class DayNotesGeneratorTests: XCTestCase {
         XCTAssertEqual(notes.summary, "今天三件事。")
         XCTAssertEqual(notes.keep, ["记一", "记二"])
         XCTAssertTrue(notes.status(against: day(3)).isComplete)
+    }
+
+    func testMemberUseIdIsPassedThrough() {
+        let ai = FakeAI()
+        ai.chunks = [full]
+        let member = AskMember(credentials: MemberCredentials(base: URL(string: "http://x")!, token: "t"), useId: "use-123")
+        _ = run(ai, day: day(3), member: member)
+        XCTAssertEqual(ai.requests.first?.member, "use-123")
     }
 
     func testModelStoppedShortLeavesAPartialNotesWithoutSummary() throws {

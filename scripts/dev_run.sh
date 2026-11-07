@@ -10,6 +10,9 @@
 #         --stop       只结束正在运行的开发版
 #   App 启动参数原样透传，例如 -openPage settings、-askText "这是什么"
 #   环境变量里的 API Key（ARK_API_KEY、DASHSCOPE_API_KEY、ZHIPU_API_KEY、DEEPSEEK_API_KEY 等）会带进开发版；
+#   ASKFREE_API=http://127.0.0.1:<端口> 让开发版的会员连这个后台；
+#   没设时开发版的会员不连任何后台（不拿开发版去线上注册设备）。
+#   ASKFREE_LINK_LOG=<文件> 结账页、管理订阅的网址只写进这个文件、不开浏览器（本机测假付款用）。
 #   ASKFREE_SHOT_DIR=<目录> 给开发版发 SIGUSR1，它把屏上自己的窗口画成 PNG 放进这个目录（不用屏幕录制权限）。
 set -euo pipefail
 
@@ -123,8 +126,9 @@ if [ "$SKIP_PROMPTS" = "1" ]; then
 fi
 
 ENV_ARGS=()
+# ASKFREE_API：会员的后台地址，开发版设了它才连（指到本机后台测）
 for name in ARK_API_KEY DASHSCOPE_API_KEY ZHIPU_API_KEY DEEPSEEK_API_KEY \
-            BIGASR_API_KEY BIGASR_ACCESS_TOKEN BIGASR_APP_ID BIGASR_VERSION ASKFREE_SHOT_DIR; do
+            BIGASR_API_KEY BIGASR_ACCESS_TOKEN BIGASR_APP_ID BIGASR_VERSION ASKFREE_API ASKFREE_LINK_LOG ASKFREE_SHOT_DIR; do
     if [ -n "${!name:-}" ]; then
         ENV_ARGS+=(--env "$name=${!name}")
     fi

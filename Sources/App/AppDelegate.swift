@@ -40,21 +40,21 @@ enum AppLinks {
 }
 
 /// 启动参数（scripts/dev_run.sh 透传）：
-/// - `-openPage <start|history|hotkeys|models|answer|recording|permissions|general|about|onboarding>`：
-///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导），正式版也认
+/// - `-openPage <start|history|member|hotkeys|models|answer|recording|permissions|general|about|onboarding|pricing>`：
+///   启动后打开主窗口并切到该页（onboarding 打开欢迎引导，pricing 打开会员页再弹出收费页），正式版也认
 /// - `-openNotes <yyyy-MM-dd|today>`：启动后打开主窗口的「历史」页，直接看（没整理过的就开始整理）那一天的图文笔记，只在开发版生效。
 ///   开发版还认环境变量 ASKFREE_ANKI_URL（把 AnkiConnect 指到本机的假服务）、ASKFREE_NOTES_NO_OPEN（导出时只写文件，不打开浏览器和 PDF）
 /// - `-skipPermissionPrompts`：不弹系统授权框，只在开发版（Ask Free Dev）生效
 /// - `-askText <问题>`：启动 3 秒后在指针处截屏并问这句话，走的是看屏幕问 AI 的整条流程、只跳过说话，只在开发版生效；
 ///   可以给几个，后面的等前一句答完 4 秒后当追问接着问
-/// - `-freshData <目录>`：配置、历史、密钥全换到这个目录，像刚装好；快捷键照常收，只在开发版生效。实测新装用
+/// - `-freshData <目录>`：配置、历史、密钥（含会员令牌）全换到这个目录，像刚装好；快捷键照常收，只在开发版生效。实测新装、会员用
 /// - `-demoData <目录>`：配置和历史换到这个目录，Key 照旧读开发版的；不收全局快捷键（不会误开麦），只在开发版生效。
 ///   拍 README 截图用（scripts/readme-shots.mjs）；调试日志也写进这个目录（AskFree-dev.log）
 /// - `-demoScreen <png> -demoPointer x,y [-demoWindow x,y,w,h]`：看屏幕问时不截真屏幕，把这张图当成整个屏幕，
 ///   指针和指针所在的窗口按图上的点算（图是 2 倍像素），只在开发版生效。截图、发给模型的图、历史里存的图都只有这张图
 /// - `-pretendScreenGrantedLater`：当作屏幕录制是启动后才给的（权限页出「重新打开 Ask Free」），只在开发版生效
 /// - `-updateFeedURL <地址>`：查这个地址的 appcast.xml 而不是正式版的，开发版本来不更新、带了才更新，实测自动更新用
-/// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导六步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
+/// - `-snapshotPages <目录>`：把主窗口九页和欢迎引导七步各存一张 PNG，存完退出，只在开发版生效；用空的临时配置
 /// - `-stallLog`：主线程一次连续忙超过 16 毫秒就在调试日志里记一行 `stall <ms> ms`（MainThreadStallMonitor），只在开发版生效
 /// - `-selfTest`：启动自测，正式版也认（CI 用）：菜单栏图标和主窗口出来就退出，退出码 0；
 ///   配置和密钥换到临时目录（AppIdentity.usesTemporaryData），不读写你的设置、钥匙串，不弹授权框，不登记开机启动
@@ -152,6 +152,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var askInFlight = false
     /// 最近一问发出去的屏幕内容：报错卡「重试」时照原样再发
     var lastAskScreen: AskAI.AskScreenContext?
+    /// 最近一问的用量号和它开出来的时刻：报错卡「重试」14 分钟内用原来的号（会员不再算一次）
+    var lastAskUse: MemberUseRef?
     let answerPanel = AnswerPanel()
     /// 打字问 AI：双击修饰键弹出的输入框和它的监听
     let typeAskPanel = TypeAskPanel()
@@ -182,6 +184,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !selfTest {
             // 启动早期：把明文 config 残留的 API key 收敛进钥匙串（幂等、fail-closed）。
             AskFreeConfig.shared.reconcileSecrets()
+            // 更新上来、已经填了自己 Key 的老用户记成「自带 Key」，照旧直连服务商；新用户默认会员
+            UsageMode.migrate()
 
             // 首次启动默认开启「开机自启动」：只自动登记这一次，之后完全尊重用户的选择。
             LaunchAtLogin.applyDefaultIfFirstLaunch()
@@ -245,7 +249,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         updateAccessibilityDependentFeatures()
 
         // 后台查新版（开发版不查）
-        MainActor.assumeIsolated { AppUpdater.shared.start() }
+        MainActor.assumeIsolated {
+            AppUpdater.shared.start()
+            // 会员：注册过的启动时跟后台对一次剩几次。没注册的不在这时领试用（升级上来的老用户不声不响就占掉一份名额）：
+            // 等第一次提问、打开会员页，或在欢迎引导「用法」那一步点「领取免费试用」
+            if UsageModeStore.isMember, MemberClient.shared.hasDevice {
+                Task { await MemberClient.shared.refresh() }
+            }
+        }
 
         installDevWindowShots()
         installDevCommands()
@@ -264,6 +275,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else if let page = DevLaunchOptions.openPage {
             debugLog("Launch argument: opening page \(page)")
             SettingsWindowController.show(page: page)
+            if DevLaunchOptions.openPageArgument?.lowercased() == "pricing" {
+                MainActor.assumeIsolated { SettingsWindowController.shared?.model.showsPricing = true }
+            }
         } else if !cloudTranscriber.isConfigured() || !askAI.isConfigured() {
             SettingsWindowController.show(page: .start)
         }
@@ -294,5 +308,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleAppDidBecomeActive() {
         updateAccessibilityDependentFeatures()
+        // 从浏览器（结账、管理订阅）回来：问一次后台，60 秒内问过就不问
+        MainActor.assumeIsolated {
+            if UsageModeStore.isMember, MemberClient.shared.hasDevice { Task { await MemberClient.shared.refresh(maxAge: 60) } }
+        }
     }
 }

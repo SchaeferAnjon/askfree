@@ -86,8 +86,9 @@ final class MainPageTests: XCTestCase {
 
     func testSidebarOrderAndMenuKeys() {
         XCTAssertEqual(MainPage.allCases.map(\.title),
-                       ["开始", "历史", "会员", "快捷键", "语音与模型", "回答方式", "录音", "权限", "通用", "关于"])
-        XCTAssertEqual(MainPage.allCases.map(\.menuKeyEquivalent), (1...9).map(String.init) + ["0"])
+                       ["开始", "历史", "会员", "快捷键", "语音与模型", "回答方式", "Anki", "录音", "权限", "通用", "关于"])
+        // ⌘1 到 ⌘9、⌘0 给前十页，第十一页「关于」没有
+        XCTAssertEqual(MainPage.allCases.map(\.menuKeyEquivalent), (1...9).map(String.init) + ["0", ""])
         XCTAssertEqual(MainPage.settings, Array(MainPage.allCases.dropFirst(3)))
         XCTAssertEqual(MainPage(argument: "pricing"), .member)
     }

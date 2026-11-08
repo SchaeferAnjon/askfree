@@ -291,13 +291,26 @@ struct NotesBodyView: View {
             }
             .overlay(alignment: .bottom) {
                 if let toast = model.toast {
-                    NotesToastView(toast: toast) { model.dismissToast(toast.id) }
+                    NotesToastView(toast: toast, perform: { model.perform($0) }) { model.dismissToast(toast.id) }
                         .padding(.bottom, 64)
                         .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.toast)
             .overlay { if let zoomed { lightbox(zoomed) } }
+            .alert("「学习卡 · 问答」的样子你在 Anki 里改过", isPresented: $model.styleQuestion) {
+                Button("换成新样子") { model.answerStyleQuestion(replace: true) }
+                Button("留着我改的") { model.answerStyleQuestion(replace: false) }
+                Button("先不送", role: .cancel) {}
+            } message: {
+                Text("换成新样子会盖掉你改的模板和样式，卡片内容不变。选好以后不再问；ChatCards、GetNewWord 也用这个笔记类型。")
+            }
+            .alert("以前的卡在「Ask Free」牌组里", isPresented: Binding(get: { model.legacyQuestion != nil }, set: { if !$0 { model.legacyQuestion = nil } })) {
+                Button("移到「\(model.topDeck)」") { model.answerLegacyQuestion(move: true) }
+                Button("留着") { model.answerLegacyQuestion(move: false) }
+            } message: {
+                Text("以后送的卡放进「\(model.topDeck)」。要把「Ask Free」里的 \(model.legacyQuestion ?? 0) 张也移过去吗？复习记录跟着卡走，移完删掉空了的「Ask Free」牌组。只问这一次。")
+            }
             .background(Theme.bg)
         }
         .onChange(of: model.openDay) { _, _ in current = "ov"; offsets = [:] }
@@ -629,6 +642,13 @@ private struct NotesSectionView: View {
 
     private var head: some View {
         HStack(alignment: .top, spacing: 10) {
+            if model.isInAnki(entry) {
+                Circle().fill(Theme.ok).frame(width: 7, height: 7)
+                    .frame(width: 16, height: 16)
+                    .padding(.top, 3)
+                    .help("已经在 Anki 里了")
+                    .accessibilityLabel("第 \(entry.number) 个问题已在 Anki")
+            } else {
             Button { model.togglePick(entry) } label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 4).fill(picked ? Theme.ink : Theme.elevated)
@@ -642,10 +662,11 @@ private struct NotesSectionView: View {
             }
             .buttonStyle(.plain)
             .disabled(entry.item == nil || model.phase == .generating)
-            .help("选这个问题导入 Anki")
-            .accessibilityLabel("选第 \(entry.number) 个问题导入 Anki")
+            .help("勾上的送进 Anki")
+            .accessibilityLabel("选第 \(entry.number) 个问题送进 Anki")
             .accessibilityValue(picked ? "已选" : "没选")
             .accessibilityAddTraits(.isButton)
+            }
 
             VStack(alignment: .leading, spacing: 3) {
                 (Text("\(entry.number)  ").foregroundStyle(Theme.text3).fontWeight(.medium)
@@ -658,8 +679,6 @@ private struct NotesSectionView: View {
                     Text("\(entry.time) · \(kind)").font(.system(size: 12).monospacedDigit()).foregroundStyle(Theme.text3)
                     if model.isInAnki(entry) {
                         Text("已在 Anki").font(.system(size: 12)).foregroundStyle(Theme.text2)
-                            .padding(.horizontal, 6).frame(height: 18)
-                            .background(Theme.hover, in: RoundedRectangle(cornerRadius: 5))
                     }
                     Spacer(minLength: 8)
                     Button { model.showInHistory(entry) } label: {
@@ -949,109 +968,91 @@ struct NotesSmallButtonStyle: ButtonStyle {
 
 // MARK: - Anki 底栏
 
+/// 左边全选方框和「已选 3 / 5 个」，右边「牌组」菜单和实心「送进 Anki」；都送过以后换成「5 个都在 Anki 里了」（DESIGN.md「往 Anki 里加卡」）
 private struct NotesAnkiBar: View {
     @ObservedObject var model: NotesModel
 
     var body: some View {
-        let count = model.picks.count
-        // 整理中、或者一个都没整理好（试用用完、没填 Key、停在 0）：方框都是灰的，说整理好后才能勾
+        // 整理中、或者一个都没整理好（试用用完、没填 Key、停在 0）：说整理好后才能勾
         let generating = model.phase == .generating || model.finished.isEmpty
-        HStack(spacing: 8) {
+        let pickable = model.pickable.count
+        let inAnki = model.finished.count - pickable
+        let picked = model.pickedEntries.count
+        HStack(spacing: 10) {
             if generating {
-                Text("整理好后能勾选问题，导入 Anki 做卡片").font(.system(size: 12)).foregroundStyle(Theme.text3)
+                Text("整理好后能勾选问题，送进 Anki 做卡片").font(.system(size: 12)).foregroundStyle(Theme.text3)
+                Spacer(minLength: 8)
+                sendButton(enabled: false)
+            } else if pickable == 0 {
+                Circle().fill(Theme.ok).frame(width: 7, height: 7)
+                Text("\(inAnki) 个都在 Anki 里了").font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.text)
+                Spacer(minLength: 8)
+                Button("在 Anki 里看") { model.showInAnki() }.buttonStyle(NotesSmallButtonStyle(outlined: true))
             } else {
-                Text(count > 0 ? "选了 \(count) 个" : "没选问题")
-                    .font(.system(size: 13, weight: count > 0 ? .medium : .regular).monospacedDigit())
-                    .foregroundStyle(count > 0 ? Theme.text : Theme.text2)
-                    .frame(minWidth: 62, alignment: .leading)
-                Button(model.allPicked ? "全不选" : "全选") { model.toggleAll() }
-                    .buttonStyle(NotesHoverTextStyle())
-                    .disabled(model.finished.isEmpty)
-                if count == 0, model.bar == .idle {
-                    Text("勾上问题标题前的方框，就能导入 Anki").font(.system(size: 12)).foregroundStyle(Theme.text3)
+                Button { model.toggleAll() } label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 4).fill(picked > 0 ? Theme.ink : Theme.elevated)
+                        RoundedRectangle(cornerRadius: 4).stroke(picked > 0 ? Theme.ink : Theme.borderStrong, lineWidth: 1)
+                        if picked > 0 {
+                            Image(systemName: model.allPicked ? "checkmark" : "minus").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.onInk)
+                        }
+                    }
+                    .frame(width: 16, height: 16)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .help(model.allPicked ? "全不选" : "全选")
+                .accessibilityLabel(model.allPicked ? "全不选" : "全选")
+                Text("已选 \(picked) / \(pickable) 个").font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.text)
+                if inAnki > 0 {
+                    HStack(spacing: 6) {
+                        Circle().fill(Theme.ok).frame(width: 7, height: 7)
+                        Text("\(inAnki) 个已在 Anki").font(.system(size: 12).monospacedDigit()).foregroundStyle(Theme.text2)
+                    }
+                }
+                Spacer(minLength: 8)
+                Text("牌组").font(.system(size: 12)).foregroundStyle(Theme.text2)
+                deckMenu
+                sendButton(enabled: picked > 0)
             }
-            Spacer(minLength: 8)
-            right(count: count, generating: generating)
         }
         .padding(.horizontal, 16)
         .frame(height: 48)
         .background(Theme.bg)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("导入 Anki")
+        .accessibilityLabel("送进 Anki")
+        .task(id: model.openDay) { model.refreshDecks() }
     }
 
-    @ViewBuilder private func right(count: Int, generating: Bool) -> some View {
-        if generating {
-            importButton(enabled: false, busy: false)
-        } else {
-            switch model.bar {
-            case .importing:
-                deck
-                importButton(enabled: false, busy: true)
-            case .opening:
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small).scaleEffect(0.6).frame(width: 12, height: 12)
-                    Text("正在打开 Anki").font(.system(size: 12)).foregroundStyle(Theme.text2)
-                }
-                Button("再试一次") {}.buttonStyle(NotesSolidStyle()).disabled(true)
-            case .noAnki(let timedOut):
-                HStack(spacing: 8) {
-                    Circle().fill(Theme.warn).frame(width: 7, height: 7)
-                    Text("Anki 没开着，卡片还没导进去").font(.system(size: 13)).foregroundStyle(Theme.text)
-                    Text(timedOut ? "等了一阵还是连不上：要在 Anki 里装 AnkiConnect 插件（代码 2055492159）" : "选的都还勾着")
-                        .font(.system(size: 12)).foregroundStyle(Theme.text2).lineLimit(1)
-                }
-                Button("打开 Anki") { model.openAnki() }
-                    .buttonStyle(NotesSmallButtonStyle(outlined: true))
-                    .help("第一次用要在 Anki 里装 AnkiConnect 插件（代码 2055492159）")
-                Button("再试一次") { model.importPicked() }.buttonStyle(NotesSolidStyle()).disabled(count == 0)
-            case .result(let added, let skipped):
-                HStack(spacing: 8) {
-                    Circle().fill(Theme.ok).frame(width: 7, height: 7)
-                    Text(resultText(added: added, skipped: skipped)).font(.system(size: 13).monospacedDigit()).foregroundStyle(Theme.text)
-                    Text("在牌组 \(AnkiCardBuilder.deckName)").font(.system(size: 12)).foregroundStyle(Theme.text2)
-                }
-                Button("在 Anki 里看") { model.showInAnki() }.buttonStyle(NotesSmallButtonStyle(outlined: true))
-                Button("好") { model.dismissBar() }.buttonStyle(NotesHoverTextStyle())
-            case .failed(let message):
-                HStack(spacing: 8) {
-                    Circle().fill(Theme.danger).frame(width: 7, height: 7)
-                    Text("没导进去").font(.system(size: 13)).foregroundStyle(Theme.text)
-                    Text(message).font(.system(size: 12)).foregroundStyle(Theme.text2).lineLimit(1).truncationMode(.middle)
-                }
-                Button("再试一次") { model.importPicked() }.buttonStyle(NotesSolidStyle()).disabled(count == 0)
-            case .idle:
-                deck
-                importButton(enabled: count > 0, busy: false)
+    private var deckMenu: some View {
+        Menu {
+            Picker("送到哪个牌组", selection: Binding(get: { model.deckForSending },
+                                                   set: { model.chosenDeck = $0 == model.topDeck ? nil : $0 })) {
+                ForEach(model.deckChoices, id: \.self) { Text($0).tag($0) }
             }
+            .pickerStyle(.inline)
+            Divider()
+            Text("默认「\(model.topDeck)」；你在 Anki 里自己建的「\(model.topDeck)::…」也列在这。")
+        } label: {
+            Text(model.deckForSending).font(.system(size: 13))
         }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .help("送到哪个牌组")
     }
 
-    private func resultText(added: Int, skipped: Int) -> String {
-        if added > 0 && skipped > 0 { return "加了 \(added) 张，\(skipped) 张已经有了，跳过" }
-        if added > 0 { return "加了 \(added) 张" }
-        return skipped == 1 ? "这张已经有了，没有重复加" : "这 \(skipped) 张都已经有了，没有重复加"
-    }
-
-    private var deck: some View {
-        Text("牌组 \(AnkiCardBuilder.deckName)").font(.system(size: 12)).foregroundStyle(Theme.text2)
-            .padding(.horizontal, 8).frame(height: 28)
-            .help("卡片放进 Anki 的这个牌组")
-    }
-
-    private func importButton(enabled: Bool, busy: Bool) -> some View {
-        Button { model.importPicked() } label: {
+    private func sendButton(enabled: Bool) -> some View {
+        let busy = model.bar != .idle
+        return Button { model.importPicked() } label: {
             HStack(spacing: 6) {
                 if busy { ProgressView().controlSize(.small).scaleEffect(0.55).frame(width: 14, height: 14) }
-                else { Image(systemName: "rectangle.on.rectangle").font(.system(size: 12)).frame(width: 14, height: 14) }
-                Text(busy ? "正在导入" : "导入 Anki")
+                Text(model.bar == .opening ? "正在打开 Anki" : busy ? "正在送" : "送进 Anki")
             }
         }
         .buttonStyle(NotesSolidStyle())
-        .disabled(!enabled)
-        .accessibilityLabel(busy ? "正在导入" : "导入 Anki")
-        .accessibilityHint(enabled ? "把选中的 \(model.picks.count) 个问题做成 Anki 卡片" : "先勾上要导入的问题")
+        .disabled(!enabled || busy)
+        .accessibilityLabel(busy ? "正在送" : "送进 Anki")
+        .accessibilityHint(enabled ? "把选中的 \(model.picks.count) 个问题做成 Anki 卡片" : "先勾上要送的问题")
     }
 }
 
@@ -1090,6 +1091,7 @@ private struct NotesHoverTextStyle: ButtonStyle {
 /// 笔记页底部正中的提示条：卡片底、12 圆角、弹层阴影、7 点状态点（成功 ok、出错 danger）；不抢焦点，出错的有 ×
 private struct NotesToastView: View {
     let toast: NotesToast
+    var perform: (NotesToastAction) -> Void = { _ in }
     let close: () -> Void
 
     /// 宽度跟内容走，最小 300、最大 520；内容靠左，× 在右端
@@ -1106,7 +1108,8 @@ private struct NotesToastView: View {
     }
 
     var body: some View {
-        let textCap = Self.maxWidth - 2 * Self.padding - Self.dot - Self.gap - (toast.isError ? Self.closeSize + Self.gap : 0)
+        let actionWidth: CGFloat = toast.action.map { width($0.title, size: 13, weight: .regular, cap: 200) + 24 + Self.gap } ?? 0
+        let textCap = Self.maxWidth - 2 * Self.padding - Self.dot - Self.gap - (toast.isError || toast.action != nil ? Self.closeSize + Self.gap : 0) - actionWidth
         HStack(alignment: .top, spacing: Self.gap) {
             Circle().fill(toast.isError ? Theme.danger : Theme.ok).frame(width: Self.dot, height: Self.dot).padding(.top, 6)
             VStack(alignment: .leading, spacing: 1) {
@@ -1119,8 +1122,13 @@ private struct NotesToastView: View {
                         .frame(width: width(detail, size: 12, weight: .regular, cap: textCap), alignment: .leading)
                 }
             }
-            if toast.isError {
+            if let action = toast.action {
                 Spacer(minLength: 0)
+                Button(action.title) { perform(action) }
+                    .buttonStyle(NotesSmallButtonStyle(outlined: true))
+            }
+            if toast.isError || toast.action != nil {
+                if toast.action == nil { Spacer(minLength: 0) }
                 Button(action: close) {
                     Image(systemName: "xmark").font(.system(size: 12)).foregroundStyle(Theme.text2)
                         .frame(width: Self.closeSize, height: Self.closeSize).contentShape(Rectangle())
@@ -1135,7 +1143,8 @@ private struct NotesToastView: View {
         .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.borderStrong, lineWidth: 0.5))
         .shadow(color: .black.opacity(0.18), radius: 14, y: 4)
-        .accessibilityElement(children: .combine)
+        // 有按钮的提示条不能合成一个元素：合了以后旁白点不到「打开 Anki 再送」
+        .accessibilityElement(children: toast.action == nil ? .combine : .contain)
         .accessibilityLabel([toast.title, toast.detail].compactMap { $0 }.joined(separator: "，"))
         .onAppear { NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested, userInfo: [.announcement: [toast.title, toast.detail].compactMap { $0 }.joined(separator: "，")]) }
     }

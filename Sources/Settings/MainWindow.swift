@@ -28,6 +28,8 @@ final class MainWindowModel: ObservableObject {
     init() {
         // 笔记页开了、关了，主窗口的页头和内容跟着换
         notesChange = notes.$openDay.removeDuplicates().sink { [weak self] _ in self?.objectWillChange.send() }
+        // 提示条上的「怎么装」：到设置里的「Anki」页
+        notes.showAnkiPage = { [weak self] in self?.page = .anki }
         pickerChange = notes.$pickerOpen.removeDuplicates().sink { [weak self] _ in self?.objectWillChange.send() }
     }
 }
@@ -322,6 +324,7 @@ struct MainWindowView: View {
         case .hotkeys: HotkeysPage()
         case .models: ModelsPage()
         case .answer: AnswerPage()
+        case .anki: AnkiPage(notes: model.notes)
         case .recording: RecordingPage()
         case .permissions: PermissionsPage()
         case .general: GeneralPage()

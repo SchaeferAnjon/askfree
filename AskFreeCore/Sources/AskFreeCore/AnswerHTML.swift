@@ -15,11 +15,16 @@ public struct AnswerHTML {
 
     /// 笔记页：公式交给 KaTeX 排好的 HTML
     public func html(_ markdown: String) -> String {
+        html(blocks: AnswerBlocks.parse(markdown, streaming: false))
+    }
+
+    /// 已经拆好的块：Anki 卡片把第一条拿去当答案，其余的在这里排
+    public func html(blocks: [AnswerBlock]) -> String {
         var out = ""
         var inList = false
         func closeList() { if inList { out += "</ul>"; inList = false } }
         func openList() { if !inList { out += "<ul class=\"pts\">"; inList = true } }
-        for block in AnswerBlocks.parse(markdown, streaming: false) {
+        for block in blocks {
             switch block {
             case .heading(let text):
                 closeList()

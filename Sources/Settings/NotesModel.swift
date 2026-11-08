@@ -38,15 +38,74 @@ struct NotesDayState {
     var phase: NotesPhase = .idle
 }
 
-/// Anki 底栏的状态
+/// Anki 底栏在忙什么；送完的结果、Anki 没开、没装插件都用提示条说
 enum AnkiBarState: Equatable {
     case idle
     case importing
+    /// 点了「打开 Anki 再送」，等 AnkiConnect 连上
     case opening
-    /// Anki 没开着（或没装 AnkiConnect）；timedOut：点了「打开 Anki」等了一阵还是连不上
-    case noAnki(timedOut: Bool)
-    case result(added: Int, skipped: Int)
-    case failed(String)
+}
+
+/// 提示条上的那一个按钮
+enum NotesToastAction: Equatable {
+    /// Anki 没开：「打开 Anki 再送」
+    case openAnkiThenSend
+    /// 连不上插件：「怎么装」到设置里的「Anki」页
+    case howToInstall
+    /// 送好了：「在 Anki 里看」这几张
+    case browse([String])
+
+    var title: String {
+        switch self {
+        case .openAnkiThenSend: return "打开 Anki 再送"
+        case .howToInstall: return "怎么装"
+        case .browse: return "在 Anki 里看"
+        }
+    }
+}
+
+/// Anki 相关的几项设置（UserDefaults）
+enum AnkiPrefs {
+    static let deckKey = "askfree-anki-deck"
+    static let deckIDKey = "askfree-anki-deck-id"
+    static let styleKey = "askfree-anki-customized-style"
+    static let legacyAskedKey = "askfree-anki-legacy-asked"
+    static let ankiBundleIDs = ["net.ankiweb.anki", "net.ankiweb.dtop"]
+
+    static var deckName: String {
+        let s = UserDefaults.standard.string(forKey: deckKey)?.trimmingCharacters(in: .whitespaces) ?? ""
+        return s.isEmpty ? AnkiCardBuilder.defaultDeck : s
+    }
+    static var deckID: Int? {
+        get { UserDefaults.standard.object(forKey: deckIDKey) as? Int }
+        set { UserDefaults.standard.set(newValue, forKey: deckIDKey) }
+    }
+    /// 你在 Anki 里改了默认牌组的名字：设置里也跟着写新名字
+    static func followRename(_ name: String) {
+        if name != deckName { UserDefaults.standard.set(name, forKey: deckKey) }
+    }
+    /// 设置里改了名字：下次送卡按新名字找或建
+    static func setDeck(_ name: String) {
+        let name = name.trimmingCharacters(in: .whitespaces)
+        guard name != deckName else { return }
+        UserDefaults.standard.set(name.isEmpty ? nil : name, forKey: deckKey)
+        deckID = nil
+    }
+    static var customizedStyle: CustomizedStyle {
+        get { UserDefaults.standard.string(forKey: styleKey).flatMap(CustomizedStyle.init) ?? .ask }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: styleKey) }
+    }
+    /// 老版本的「Ask Free」牌组问过「移到知识 / 留着」没有
+    static var legacyAsked: Bool {
+        get { UserDefaults.standard.bool(forKey: legacyAskedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: legacyAskedKey) }
+    }
+    static var ankiURL: URL? {
+        ankiBundleIDs.lazy.compactMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }.first
+    }
+    static var ankiIsRunning: Bool {
+        ankiBundleIDs.contains { !NSRunningApplication.runningApplications(withBundleIdentifier: $0).isEmpty }
+    }
 }
 
 /// 页头按钮能不能点
@@ -63,6 +122,7 @@ struct NotesToast: Identifiable, Equatable {
     let title: String
     let detail: String?
     let isError: Bool
+    var action: NotesToastAction? = nil
 }
 
 @MainActor
@@ -77,6 +137,17 @@ final class NotesModel: ObservableObject {
     @Published private(set) var toast: NotesToast?
     @Published private(set) var busyExport: NotesExportKind?
     @Published var pickerOpen = false
+    /// 默认牌组现在在 Anki 里叫什么，和底栏菜单里能选的（默认的和它下面你自己建的）
+    @Published private(set) var topDeck = AnkiPrefs.deckName
+    @Published private(set) var deckChoices: [String] = [AnkiPrefs.deckName]
+    /// 底栏菜单里选的；nil 就是默认牌组
+    @Published var chosenDeck: String?
+    /// 你在 Anki 里改过「学习卡 · 问答」的模板：问换不换
+    @Published var styleQuestion = false
+    /// 老版本的「Ask Free」牌组里有卡：问「移到知识 / 留着」（几张）
+    @Published var legacyQuestion: Int?
+    /// 提示条上的「怎么装」：主窗口换到设置里的「Anki」页
+    var showAnkiPage: (() -> Void)?
     @Published var tocCollapsed: Bool {
         didSet { UserDefaults.standard.set(tocCollapsed, forKey: Self.tocKey) }
     }
@@ -404,12 +475,12 @@ final class NotesModel: ObservableObject {
 
     // MARK: 提示条
 
-    func showToast(_ title: String, detail: String? = nil, isError: Bool = false) {
-        let toast = NotesToast(title: title, detail: detail, isError: isError)
+    func showToast(_ title: String, detail: String? = nil, isError: Bool = false, action: NotesToastAction? = nil) {
+        let toast = NotesToast(title: title, detail: detail, isError: isError, action: action)
         self.toast = toast
         toastTask?.cancel()
         // 成功 5 秒，出错 6 秒（会议字幕里同样）；出错的还能点 × 先关
-        let seconds: Double = isError ? 6 : 5
+        let seconds: Double = action == nil ? (isError ? 6 : 5) : 15
         toastTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled else { return }
@@ -426,21 +497,49 @@ final class NotesModel: ObservableObject {
 
     var pickedEntries: [NotesEntry] { finished.filter { picks.contains($0.thread.id) } }
 
+    /// 能勾的：整理好了、还没进 Anki 的
+    var pickable: [NotesEntry] { finished.filter { !isInAnki($0) } }
+
     func togglePick(_ entry: NotesEntry) {
-        guard entry.item != nil, phase != .generating else { return }
+        guard entry.item != nil, !isInAnki(entry), phase != .generating else { return }
         if picks.contains(entry.thread.id) { picks.remove(entry.thread.id) } else { picks.insert(entry.thread.id) }
-        if case .result = bar { bar = .idle }
-        if case .failed = bar { bar = .idle }
     }
 
-    var allPicked: Bool { !finished.isEmpty && finished.allSatisfy { picks.contains($0.thread.id) } }
+    var allPicked: Bool { !pickable.isEmpty && pickable.allSatisfy { picks.contains($0.thread.id) } }
 
     func toggleAll() {
-        picks = allPicked ? [] : Set(finished.map(\.thread.id))
-        if case .result = bar { bar = .idle }
+        picks = allPicked ? [] : Set(pickable.map(\.thread.id))
     }
 
-    func dismissBar() { bar = .idle }
+    var deckForSending: String { chosenDeck ?? topDeck }
+
+    /// 读 Anki 里的牌组：默认的那个按 id 找现在的名字，再列出它下面你自己建的
+    func refreshDecks() {
+        Task { [weak self] in
+            do {
+                let decks = try await AnkiConnect().deckNamesAndIds()
+                guard let self else { return }
+                let top = AnkiPrefs.deckID.flatMap { id in decks.first { $0.value == id }?.key } ?? AnkiPrefs.deckName
+                AnkiPrefs.followRename(top)
+                self.topDeck = top
+                self.deckChoices = [top] + decks.keys.filter { $0.hasPrefix(top + "::") }.sorted()
+                if let chosen = self.chosenDeck, !self.deckChoices.contains(chosen) { self.chosenDeck = nil }
+            } catch AnkiConnectError.notRunning {
+                // Anki 没开：菜单里只有默认的，送的时候再说
+            } catch {
+                self?.log("anki decks failed: \(error)")
+            }
+        }
+    }
+
+    /// 设置里改了默认牌组的名字
+    func setDeck(_ name: String) {
+        AnkiPrefs.setDeck(name)
+        topDeck = AnkiPrefs.deckName
+        deckChoices = [topDeck]
+        chosenDeck = nil
+        refreshDecks()
+    }
 
     func importPicked() {
         guard let day, !pickedEntries.isEmpty, bar != .importing else { return }
@@ -448,74 +547,157 @@ final class NotesModel: ObservableObject {
         bar = .importing
         let dayKey = day.key
         let history = self.history
+        let chosen = chosenDeck
         log("anki import start count=\(entries.count)")
         Task { [weak self] in
             // 截图从文件读进来、拼卡片都不在主线程上做
             let cards: [AnkiCard] = await Task.detached(priority: .userInitiated) {
                 entries.compactMap { entry in
                     guard let item = entry.item else { return nil }
-                    let shot = entry.thread.turns[0].hasScreenshot
-                        ? try? Data(contentsOf: history.screenshotURLs(turnID: entry.thread.turns[0].id).closeUp) : nil
-                    return AnkiCardBuilder.card(item: item, question: entry.thread.turns[0].question, day: dayKey, time: entry.time, screenshot: shot)
+                    let turn = entry.thread.turns[0]
+                    let shot = turn.hasScreenshot ? try? Data(contentsOf: history.screenshotURLs(turnID: turn.id).closeUp) : nil
+                    return AnkiCardBuilder.card(item: item, question: turn.question,
+                                                kind: AnkiCardBuilder.kind(via: turn.via, hasScreenshot: turn.hasScreenshot),
+                                                day: dayKey, time: entry.time, screenshot: shot)
                 }
             }.value
+            let anki = AnkiConnect()
             do {
-                let result = try await AnkiConnect().add(cards)
+                _ = try await anki.version()
+                // 老版本的「Ask Free」牌组里有卡：先问一次搬不搬
+                if !AnkiPrefs.legacyAsked {
+                    let count = try await anki.legacyCardCount()
+                    if count > 0 {
+                        self?.legacyQuestion = count
+                        self?.bar = .idle
+                        return
+                    }
+                    AnkiPrefs.legacyAsked = true
+                }
+                let deck: String
+                if let chosen {
+                    deck = chosen
+                } else {
+                    let top = try await anki.deck(id: AnkiPrefs.deckID, orCreate: AnkiPrefs.deckName)
+                    AnkiPrefs.deckID = top.id
+                    AnkiPrefs.followRename(top.name)
+                    self?.topDeck = top.name
+                    deck = top.name
+                }
+                let result = try await anki.add(cards, deck: deck, customized: AnkiPrefs.customizedStyle)
                 guard let self else { return }
                 // 新加的和已经有了的，都是「已在 Anki」
                 try? self.store.markInAnki(result.added + result.skipped)
                 self.ledger = self.store.ankiLedger()
                 self.picks = self.picks.subtracting(result.added + result.skipped)
+                self.bar = .idle
+                let markers = cards.filter { (result.added + result.skipped).contains($0.threadID) }.map(\.marker)
                 if result.failed.isEmpty {
-                    self.bar = .result(added: result.added.count, skipped: result.skipped.count)
+                    let detail = result.skipped.isEmpty ? "来源写进了标签" : "\(result.skipped.count) 个 Anki 里已经有了，跳过"
+                    self.showToast("加了 \(result.added.count) 张到「\(deck)」", detail: detail, action: markers.isEmpty ? nil : .browse(markers))
                 } else {
                     // 没加成的不说成「已经有了」，也不记「已在 Anki」，选的还勾着
-                    let done = result.added.count > 0 ? "加了 \(result.added.count) 张，" : ""
-                    self.bar = .failed("\(done)\(result.failed.count) 张没能加进 Anki：牌组里没有它，笔记类型「\(AnkiCardBuilder.modelName)」可能被改过")
+                    self.showToast("加了 \(result.added.count) 张，\(result.failed.count) 张没加进去", detail: "Anki 没收下这几张，勾着的都还在", isError: true)
                 }
                 self.log("anki import done added=\(result.added.count) skipped=\(result.skipped.count) failed=\(result.failed.count)")
             } catch AnkiConnectError.notRunning {
-                self?.bar = .noAnki(timedOut: false)
+                self?.bar = .idle
+                if AnkiPrefs.ankiIsRunning {
+                    self?.showToast("Anki 开着，但连不上 AnkiConnect 插件", detail: "装好插件、重启 Anki 再送，勾着的都还在。", isError: true, action: .howToInstall)
+                } else {
+                    self?.showToast("Anki 没开着，卡片还没送进去", detail: "打开 Anki 就能送，勾着的都还在。", isError: true, action: .openAnkiThenSend)
+                }
                 self?.log("anki not running")
+            } catch AnkiConnectError.customizedStyle {
+                self?.bar = .idle
+                self?.styleQuestion = true
             } catch {
-                self?.bar = .failed((error as? LocalizedError)?.errorDescription ?? "\(error)")
+                self?.bar = .idle
+                self?.showToast("没送进 Anki", detail: (error as? LocalizedError)?.errorDescription ?? "\(error)", isError: true)
                 self?.log("anki import failed: \(error)")
             }
         }
     }
 
-    /// 「打开 Anki」：把 Anki 打开，连得上了就自动接着导入（选的都还勾着）
+    /// 你在 Anki 里改过「学习卡 · 问答」的模板：答了以后记下来，不再问，接着送
+    func answerStyleQuestion(replace: Bool) {
+        styleQuestion = false
+        AnkiPrefs.customizedStyle = replace ? .replace : .keep
+        importPicked()
+    }
+
+    /// 老牌组「Ask Free」：搬进默认牌组，或者留着；只问这一次，答了接着送
+    func answerLegacyQuestion(move: Bool) {
+        legacyQuestion = nil
+        AnkiPrefs.legacyAsked = true
+        guard move else { importPicked(); return }
+        bar = .importing
+        Task { [weak self] in
+            do {
+                let anki = AnkiConnect()
+                let top = try await anki.deck(id: AnkiPrefs.deckID, orCreate: AnkiPrefs.deckName)
+                AnkiPrefs.deckID = top.id
+                try await anki.moveLegacyCards(to: top.name)
+                self?.bar = .idle
+                self?.importPicked()
+            } catch {
+                self?.bar = .idle
+                self?.showToast("没搬过去", detail: (error as? LocalizedError)?.errorDescription ?? "\(error)", isError: true)
+            }
+        }
+    }
+
+    func perform(_ action: NotesToastAction) {
+        dismissToast()
+        switch action {
+        case .openAnkiThenSend: openAnki()
+        case .howToInstall: showAnkiPage?()
+        case .browse(let markers): showInAnki(markers)
+        }
+    }
+
+    /// 「打开 Anki 再送」：把 Anki 打开，连得上了就自动接着送（选的都还勾着）
     func openAnki() {
-        bar = .opening
         openAnkiTask?.cancel()
         if AnkiConnect.configuredURL() == AnkiConnect.defaultURL {
-            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "net.ankiweb.dtop") {
-                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration()) { _, _ in }
-            } else {
-                // 没装 Anki：带去官网下载
-                if let url = URL(string: "https://apps.ankiweb.net") { NSWorkspace.shared.open(url) }
-                showToast("没找到 Anki", detail: "装好 Anki 和 AnkiConnect 插件后再试", isError: true)
-                bar = .noAnki(timedOut: false)
+            guard let url = AnkiPrefs.ankiURL else {
+                showToast("这台 Mac 上没找到 Anki", detail: "装好 Anki 和 AnkiConnect 插件再送", isError: true, action: .howToInstall)
                 return
             }
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = false
+            NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in }
         } else {
             log("anki: dev override URL set, not launching the real Anki app")
         }
+        bar = .opening
         openAnkiTask = Task { [weak self] in
-            for _ in 0..<60 {
+            for _ in 0..<40 {
                 if Task.isCancelled { return }
                 if (try? await AnkiConnect().version()) != nil {
+                    self?.bar = .idle
                     self?.importPicked()
                     return
                 }
                 try? await Task.sleep(for: .seconds(1.5))
             }
-            if !Task.isCancelled { self?.bar = .noAnki(timedOut: true) }
+            guard !Task.isCancelled else { return }
+            self?.bar = .idle
+            self?.showToast("Anki 开着，但连不上 AnkiConnect 插件", detail: "装好插件、重启 Anki 再送，勾着的都还在。", isError: true, action: .howToInstall)
         }
     }
 
-    func showInAnki() {
-        Task { try? await AnkiConnect().browse() }
+    /// 在 Anki 的卡片浏览器里只看这几张；不给就是这一天进了 Anki 的
+    func showInAnki(_ markers: [String]? = nil) {
+        let markers = markers ?? finished.filter(isInAnki).compactMap { $0.item.map { AnkiCardBuilder.idMarker(turnID: $0.turnID) } }
+        guard !markers.isEmpty else { return }
+        Task { [weak self] in
+            do {
+                try await AnkiConnect().browse(markers: markers)
+            } catch {
+                self?.showToast("打不开 Anki 的卡片浏览器", detail: (error as? LocalizedError)?.errorDescription ?? "\(error)", isError: true)
+            }
+        }
     }
 
     // MARK: 在历史里看

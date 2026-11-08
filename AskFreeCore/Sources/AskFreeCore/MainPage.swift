@@ -1,12 +1,12 @@
 import Foundation
 
-/// 主窗口侧栏的十页，从上到下就是这个顺序（「显示」菜单的 ⌘1 到 ⌘9、⌘0，侧栏 ↑↓ 都按它走）。
+/// 主窗口侧栏的十一页，从上到下就是这个顺序（「显示」菜单的 ⌘1 到 ⌘9、⌘0 给前十页，侧栏 ↑↓ 都按它走）。
 public enum MainPage: String, CaseIterable, Identifiable {
-    case start, history, member, hotkeys, models, answer, recording, permissions, general, about
+    case start, history, member, hotkeys, models, answer, anki, recording, permissions, general, about
     public var id: String { rawValue }
 
-    /// 侧栏「设置」小标题下面那七页
-    public static let settings: [MainPage] = [.hotkeys, .models, .answer, .recording, .permissions, .general, .about]
+    /// 侧栏「设置」小标题下面那八页
+    public static let settings: [MainPage] = [.hotkeys, .models, .answer, .anki, .recording, .permissions, .general, .about]
 
     public var title: String {
         switch self {
@@ -16,6 +16,7 @@ public enum MainPage: String, CaseIterable, Identifiable {
         case .hotkeys: return "快捷键"
         case .models: return "语音与模型"
         case .answer: return "回答方式"
+        case .anki: return "Anki"
         case .recording: return "录音"
         case .permissions: return "权限"
         case .general: return "通用"
@@ -31,6 +32,7 @@ public enum MainPage: String, CaseIterable, Identifiable {
         case .hotkeys: return "keyboard"
         case .models: return "waveform"
         case .answer: return "text.bubble"
+        case .anki: return "rectangle.stack"
         case .recording: return "mic"
         case .permissions: return "lock"
         case .general: return "gearshape"

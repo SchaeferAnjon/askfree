@@ -41,6 +41,7 @@
 		773415CAB41EB99DFB8570A8 /* AppDelegate+SelfTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84CBC4296C7E3C9BB92293F5 /* AppDelegate+SelfTest.swift */; };
 		77D2C1E379BBC0D1F2F05BC4 /* NSColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F4E2FD870B9AF6E99863BE1 /* NSColor+Hex.swift */; };
 		8C7931070D50CE5A4199CFF2 /* ModelsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C9892DC8AC3F3FEA46F8D6 /* ModelsPage.swift */; };
+		8CA864516C0D2EA025D8AF9D /* AnkiPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C080AB2DD96A8E9EC202D5 /* AnkiPage.swift */; };
 		94667F3DC00B0FC7760D241C /* PermissionDragHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315440BC111A78CD6CC11E51 /* PermissionDragHelper.swift */; };
 		975B44F0D2BBDBA97DB39E4E /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0F9D8FA3AA65702194ED35 /* Components.swift */; };
 		9A5769A27A780CC3D923D05C /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */; };
@@ -105,6 +106,7 @@
 		7C7338466AF0445FF1CB89EA /* MemberPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemberPage.swift; sourceTree = "<group>"; };
 		84CBC4296C7E3C9BB92293F5 /* AppDelegate+SelfTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+SelfTest.swift"; sourceTree = "<group>"; };
 		85D5F8156A7281BBD0A33ACD /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
+		87C080AB2DD96A8E9EC202D5 /* AnkiPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnkiPage.swift; sourceTree = "<group>"; };
 		881D98F6CEC9229F27EA235F /* AppDelegate+AskAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+AskAI.swift"; sourceTree = "<group>"; };
 		89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
 		9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
@@ -250,6 +252,7 @@
 		BD0DB2803BFD9E0F8E8BF1CE /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				87C080AB2DD96A8E9EC202D5 /* AnkiPage.swift */,
 				3B0F9D8FA3AA65702194ED35 /* Components.swift */,
 				E0A14D5A1941B5D605435F4E /* DemoStage.swift */,
 				66FF3B94E20B83AF3E001633 /* HistoryView.swift */,
@@ -414,6 +417,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CA864516C0D2EA025D8AF9D /* AnkiPage.swift in Sources */,
 				D276659611C34E1606B8E4D7 /* AnswerPanel.swift in Sources */,
 				439D288F780B9D1431A52C41 /* AnswerStyle+Theme.swift in Sources */,
 				CEFE8F43AE100748B50C95EB /* AppAppearance.swift in Sources */,

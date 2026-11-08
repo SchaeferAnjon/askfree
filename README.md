@@ -34,7 +34,7 @@ You are reading a web page, a paper or some code and hit something you don't get
 - **Searches the web by itself**: for news, prices or exchange rates it looks them up; start with 搜一下 ("search") to search right away.
 - **Pictures in the answer**: ask to see a photo of something and 3 images from the web appear below the answer; click one to open the original.
 - **Formulas and code laid out properly**: math in answers is typeset like a textbook, code comes in blocks with syntax colours and a copy button; copying a whole answer keeps the code blocks as written.
-- **History with screenshots**: every question and answer is kept on your Mac with the screenshots sent to the AI, listed by day; search, copy or delete them.
+- **History with screenshots**: every question and answer is kept on your Mac with the screenshots sent to the AI, listed by day; search, copy or delete them. Open one and keep asking from the box at the bottom; the new answer is saved to the same topic.
 - **Daily illustrated notes**: on the **历史** (History) page, **今天的笔记** (Today's notes) turns the day's questions into one page of notes (a summary, then each question's screenshot and the key points of its answer). Pick questions to send to Anki (they go into the 知识 deck); open the page in your browser or export it as PDF. Writing the notes sends that day's questions and answers as text (no screenshots) to your model, or to the membership backend, where one run counts as one question.
 - **Type instead**: when you can't talk, double-tap a key (Control, say), it captures the screen and you type the question.
 
@@ -67,7 +67,7 @@ The answer appears in a panel in the top right corner:
 - Start with 搜一下 ("search") → search the web right away
 - Press Esc while speaking → cancel
 
-**History**: the **历史** (History) page of the main window, or **历史记录** in the menu bar, lists your topics by day. Open one to see each question, answer and the screenshot sent with it; search, copy, delete with a right click, or clear everything.
+**History**: the **历史** (History) page of the main window, or **历史记录** in the menu bar, lists your topics by day. Open one to see each question, answer and the screenshot sent with it; search, copy, delete with a right click, or clear everything. The box at the bottom of a topic continues it: Return sends, Shift-Return starts a new line. Only what you type and that topic's earlier questions and answers are sent, no screenshot.
 
 ## Real screenshots
 
@@ -134,6 +134,7 @@ Open the downloaded `AskFree.dmg`, drag **Ask Free** onto the **Applications** f
   - Your voice goes straight to Volcano Engine to be turned into text. Recordings are not kept. When you ask about the screen, the English words recognized near the pointer go along, and in a follow-up the earlier questions and answers of the topic, so it gets names and terms right.
   - Your question and the screenshots go to the answer model you chose, DeepSeek or Alibaba Cloud Bailian, together with the text Ask Free reads near the pointer (with the text recognition built into macOS, offline) and any text you have selected.
   - Web searches go to the same provider: DeepSeek's search API, or Qwen's built-in web search.
+  - When you keep asking from the bottom of the **历史** (History) page, what you type and that topic's earlier questions and answers go to the same answer model, without screenshots or recordings.
 - **With a membership**, the recording, the question text and the screenshots go to our server (api.us-cloud.uk), which passes them on to Volcano Engine (speech recognition) and DeepSeek (answers and web search) and sends the result back. The server does not keep recordings, screenshots, questions or answers; it records only how much each question used (whether it counted, tokens, recognition time, searches).
   - The first time it connects to the membership server, Ask Free sends a device ID: a hash of this Mac's hardware ID and the app name, which the server hashes again with a salt before storing. It also sends the platform, chip and version; the server keeps only the platform. The server records your network range (IPv4 /24, IPv6 /48) to prevent abuse, never the full IP address.
   - Payments are handled by Stripe; we never see card numbers. Stripe tells us the payment email, the Stripe customer ID and the subscription status, which we use to issue the license code and know how long the membership lasts.

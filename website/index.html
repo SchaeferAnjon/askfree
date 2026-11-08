@@ -804,7 +804,7 @@ h3, h4 { font-weight: 600; }
     <div class="cmd"><div class="say">说话时按 <span class="kbd">Esc</span></div><div class="arrow"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div><div class="does"><b>取消这一句</b><span>什么也不发出去</span></div></div>
   </div>
   <div class="card hist" data-part="历史">
-    <div class="hist-t"><h3>问过的，回头都翻得到</h3><p><b>历史</b>页按天列出问过的话题，点开能看每一轮问答和当时发给 AI 的截图；能搜索、复制，右键删除，也能一键清空。都存在你自己的 Mac 上。</p></div>
+    <div class="hist-t"><h3>问过的，回头都翻得到</h3><p><b>历史</b>页按天列出问过的话题，点开能看每一轮问答和当时发给 AI 的截图；能搜索、复制，右键删除，也能一键清空。看完还能在底下接着问，回答存进同一条。都存在你自己的 Mac 上。</p></div>
     <div class="hist-l">
       <div class="hd">今天</div>
       <div class="hr"><span class="th th1"></span><div><b>这个报错是什么意思？怎么弄好？</b><span>2 轮 · 终端</span></div><em>14:32</em></div>
@@ -873,7 +873,7 @@ h3, h4 { font-weight: 600; }
 <section class="ink" id="privacy" data-part="隐私"><div class="wrap">
   <div class="eyebrow">隐私</div>
   <h2 class="h2">你说的话去了哪里，<br>一步一步写清楚。</h2>
-  <p class="lead">只有按下提问键的那一刻，录音、问题和截图才发出去。自带 Key 时直接发给你自己选的服务商，不经过我们；用会员时经我们的服务器转给火山引擎和 DeepSeek，服务器不存这些内容。</p>
+  <p class="lead">只有按下提问键的那一刻，录音、问题和截图才发出去；在历史页接着问时只发文字。自带 Key 时直接发给你自己选的服务商，不经过我们；用会员时经我们的服务器转给火山引擎和 DeepSeek，服务器不存这些内容。</p>
   <div class="flow">
     <div class="box"><h4><svg class="ico" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="8" rx="1.5"/><path d="M1 13.5h14"/></svg>留在你的 Mac 上</h4><ul>
       <li><svg class="ico" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg><div>自带 Key 时的两个 API Key<small>存在系统钥匙串里</small></div></li>
@@ -1014,7 +1014,7 @@ h3, h4 { font-weight: 600; }
   <article>
     <h1 id="pv-1">隐私说明</h1>
     <p class="g">更新于 2026 年 11 月 7 日，按 Ask Free 1.4.0 和会员服务器的代码逐条核对。</p>
-    <p class="sum">录音、问题和截图只在你按下提问键的时候发出去。用自带 Key 时直接发给你自己选的服务商，不经过我们；用会员时发到我们的服务器，由它转给火山引擎和 DeepSeek，服务器不存这些内容，只记每个问题用了多少。问过的问题和当时的截图只存在你的 Mac 上。你点<b>今天的笔记</b>整理时，会把那一天问答的文字（不含截图）发给模型。另外检查更新会连 GitHub。Ask Free 不做使用统计。</p>
+    <p class="sum">录音、问题和截图只在你按下提问键的时候发出去。用自带 Key 时直接发给你自己选的服务商，不经过我们；用会员时发到我们的服务器，由它转给火山引擎和 DeepSeek，服务器不存这些内容，只记每个问题用了多少。问过的问题和当时的截图只存在你的 Mac 上。你点<b>今天的笔记</b>整理时，会把那一天问答的文字（不含截图）发给模型；在<b>历史</b>页底下接着问时，会把你打的字和这一条前面几轮的问答文字（不含截图）发给模型。另外检查更新会连 GitHub。Ask Free 不做使用统计。</p>
     <h2 id="pv-who">我们是谁</h2>
     <p>Ask Free 是 SchaeferAnjon 个人做的开源软件，基于 kdsz001 的 <a href="https://github.com/kdsz001/typefree" target="_blank" rel="noopener">Typefree</a> 修改而来，以 GPL-3.0 发布，源码在 <a href="https://github.com/SchaeferAnjon/askfree" target="_blank" rel="noopener">GitHub</a>。我们的服务器是 api.us-cloud.uk。用会员时，Ask Free 的识别、回答和联网都经过它；用自带 Key 时，Ask Free 不连它。</p>
     <p>对这份说明有疑问，写邮件到 <a href="mailto:infoschaeferanjon@gmail.com">infoschaeferanjon@gmail.com</a>，或者在 GitHub <a href="https://github.com/SchaeferAnjon/askfree/issues" target="_blank" rel="noopener">提问题</a>。</p>
@@ -1029,7 +1029,7 @@ h3, h4 { font-weight: 600; }
       <li><b>运行日志</b>：<span class="pathlink">~/Library/Logs/AskFree.log</span>，只记步骤和耗时（比如这一问有几个字、花了多少毫秒），不记问题、回答和截图。</li>
     </ul>
     <h2 id="pv-3">什么时候发出去</h2>
-    <p>只在你按住（或轻点）自己设的提问键说完的时候，或者用打字键提问的时候。平时不录音、不截屏，菜单栏图标也不会一直听着。</p>
+    <p>只在你按住（或轻点）自己设的提问键说完的时候，用打字键提问的时候，或者在<b>历史</b>页底下打字接着问的时候。平时不录音、不截屏，菜单栏图标也不会一直听着。</p>
     <p><b>看屏幕问</b>和<b>打字问</b>在按键那一刻截屏；<b>只提问，不看屏幕</b>那个键不截屏，只发语音转出来的文字。在主窗口的回答方式页关掉<b>让 AI 看屏幕</b>，哪种问法都不截屏。</p>
     <h2 id="pv-4">发给谁、发什么</h2>
     <div class="tbl">
@@ -1039,6 +1039,7 @@ h3, h4 { font-weight: 600; }
       <div class="tr"><span>回答问题</span><span>自带 Key 时，你在语音与模型页选的那家：DeepSeek 或阿里百炼千问（手动改配置还能用豆包、智谱）</span><span>识别出的文字或你打的字；看屏幕问、打字问时加上按键那一刻的两张截图，和 Ask Free 在本机从截图里认出的指针附近的字、你选中的文字；追问时带上这个话题前几轮的问答文字</span></div>
       <div class="tr"><span>联网查</span><span>还是同一家：DeepSeek 用它自己的搜索接口，千问用自带的联网搜索。选了豆包或智谱、又填了百炼 Key 时，转给千问</span><span>一个搜索词，说“搜一下”时就是你这句话。转给千问的那一问只带文字，不带截图</span></div>
       <div class="tr"><span>回答配图</span><span>DuckDuckGo 图片搜索，和图片所在的服务器</span><span>默认开着。模型想给你看图、或这一问要联网时，把一个找图的词发给 DuckDuckGo（模型写的搜索词，说“搜一下”时就是你这句话），不含截图和录音；再从图片服务器下载 3 张缩略图，这些服务器能看到你的 IP 地址。在<b>回答方式</b>页关掉<b>联网的回答附上图</b>就都不发</span></div>
+      <div class="tr"><span>历史页接着问</span><span>自带 Key 时，你选的那家模型；用会员时，我们的服务器，再转给 DeepSeek</span><span>你在<b>历史</b>页底下打的字，和这一条前面几轮的问题、回答文字，不含截图和录音。模型要联网、要配图时，同上面「联网查」「回答配图」两行。用会员时一问算一个问题</span></div>
       <div class="tr"><span>每天的笔记</span><span>自带 Key 时，你选的那家模型；用会员时，我们的服务器，再转给 DeepSeek</span><span>你点了<b>今天的笔记</b>或<b>重新整理</b>时，把那一天的问题和回答文字发出去，不含截图和录音。用会员时整理一次算一个问题</span></div>
       <div class="tr"><span>检查更新</span><span>GitHub（github.com 上的 Release）</span><span>每 6 小时取一次最新版本信息（appcast.xml），有新版就下载安装包、核对签名。不带你的问题、录音、截图和 Key；GitHub 能看到你的 IP 地址。在主窗口<b>通用</b>页的<b>更新</b>里关掉<b>自动检查并下载新版本</b>，就不再自动查</span></div>
     </div>

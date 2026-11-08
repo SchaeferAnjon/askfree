@@ -124,7 +124,7 @@ extension AppDelegate {
         case render(String)
     }
 
-    /// 开发版设了 ASKFREE_SHOT_DIR：收到 SIGUSR1 就把这时屏上自己的每个窗口画成 PNG 放进这个目录（不截屏、不用屏幕录制权限）。
+    /// 开发版设了 ASKFREE_SHOT_DIR：收到 SIGUSR1 就把这时屏上自己的每个窗口画成 PNG 放进这个目录（不截屏、不用屏幕录制权限；回答面板缩成的小框 40 高也画）。
     /// 文件名前缀写在目录里的 .name 文件里（没有就用 shot），后面接窗口序号。实测时给回答面板、报错卡、会员页留图用
     func installDevWindowShots() {
         guard AppIdentity.isDevBuild, let path = ProcessInfo.processInfo.environment["ASKFREE_SHOT_DIR"], !path.isEmpty else { return }
@@ -143,7 +143,7 @@ extension AppDelegate {
             }
             CATransaction.flush()
             RunLoop.main.run(until: Date().addingTimeInterval(0.15))
-            for (i, window) in NSApp.windows.enumerated() where window.isVisible && window.frame.width > 120 && window.frame.height > 60 {
+            for (i, window) in NSApp.windows.enumerated() where window.isVisible && window.frame.width > 120 && window.frame.height > 30 {
                 if let name = try? Self.writePNG(of: window, to: directory, name: "\(prefix.isEmpty ? "shot" : prefix)-\(i)") { written.append(name) }
             }
             self?.debugLog("Dev shot: \(written.joined(separator: ", "))")

@@ -18,6 +18,9 @@ import AskFreeCore
 ///   history-changed   通知「历史变了」（实测时从外面改 history.jsonl 来模拟删历史，再发这条让笔记页重新读）
 ///   size <宽> <高>    把主窗口改成这么大（截很长的一页用）
 ///   wait <秒>         后面的命令等这么久再执行
+///   panel-outside-click  当作在回答面板外面按了一下鼠标
+///   panel-mouse in|out|real  回答面板认为鼠标在里面 / 外面 / 回到看真的鼠标
+///   panel-state       写出回答面板：在不在屏上、钉住、一直展开、缩成小框、尺寸
 ///   demo-stream [noimages]  回答面板放一段假的流式回答（出字到四分之一时来三张图），不调模型；
 ///                     期间每帧记面板高度，答完写一行 panel heights 到日志和 command.out：出字期间缩过几次、方向换过几次
 extension AppDelegate {
@@ -65,6 +68,16 @@ extension AppDelegate {
                 if let panel = Self.devSavePanel() { result = "name=\(panel.nameFieldStringValue) dir=\(panel.directoryURL?.path ?? "-")" } else { result = "no panel" }
             case "accept-panel", "cancel-panel":
                 result = Self.devClickPanelButton(accept: command == "accept-panel")
+            case "panel-outside-click":
+                self.answerPanel.handleOutsideClick()
+                result = "clicked"
+            case "panel-mouse":
+                self.answerPanel.devMouseInside = argument == "in" ? true : argument == "out" ? false : nil
+                result = "mouse \(argument)"
+            case "panel-state":
+                let m = self.answerPanel.model
+                let size = self.answerPanel.frame.map { "\(Int($0.width))x\(Int($0.height))" } ?? "-"
+                result = "visible=\(self.answerPanel.isVisible) pinned=\(m.pinned) keepExpanded=\(m.keepExpanded) collapsed=\(m.collapsed) size=\(size)"
             case "demo-stream":
                 self.devDemoStream(withImages: argument != "noimages", directory: directory) { summary in
                     let existing = (try? String(contentsOf: output, encoding: .utf8)) ?? ""

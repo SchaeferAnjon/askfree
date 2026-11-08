@@ -323,6 +323,7 @@ final class AnswerPanel {
                    onCopy: { [weak self] in self?.copyAnswer() },
                    onClose: { [weak self] in self?.hide() },
                    onTogglePin: { [weak self] in self?.togglePin() },
+                   onToggleKeepExpanded: { [weak self] in self?.toggleKeepExpanded() },
                    onHoldStart: { [weak self] in self?.beginFollowUp() ?? false },
                    onHoldEnd: { [weak self] cancelled in self?.endFollowUp(cancelled: cancelled) },
                    onType: { [weak self] in self?.onType?() },
@@ -584,14 +585,23 @@ final class AnswerPanel {
         }
     }
 
-    /// 没固定时，点面板外任何地方就收起（全局监听收不到自己窗口里的点击，所以面板内点击天然不算）
+    /// 点面板外任何地方就缩成小框，钉住了也缩（钉住只是不自己消失）；只有钉住且选了「一直展开」不缩。
+    /// 全局监听收不到自己窗口里的点击，所以面板内点击天然不算
     private func installOutsideClickMonitor() {
         removeOutsideClickMonitor()
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            guard let self, !self.model.pinned, self.panel?.isVisible == true, !self.model.collapsed else { return }
-            self.collapse()
+            self?.handleOutsideClick()
         }
     }
+
+    /// 面板外按下了鼠标（开发版的 panel-outside-click 也走这里）
+    func handleOutsideClick() {
+        guard !model.staysExpanded, panel?.isVisible == true, !model.collapsed else { return }
+        collapse()
+    }
+
+    /// 开发版测鼠标进出：设了就不看真的鼠标位置（不去动用户的鼠标）
+    var devMouseInside: Bool?
 
     private func removeOutsideClickMonitor() {
         if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor); self.outsideClickMonitor = nil }
@@ -604,7 +614,7 @@ final class AnswerPanel {
     // MARK: - 点外面缩成小框
 
     private func collapse() {
-        guard let panel, panel.isVisible, !model.pinned, !model.collapsed else { return }
+        guard let panel, panel.isVisible, !model.staysExpanded, !model.collapsed else { return }
         // 回答还在出 / 正在录音：先不缩，出完再缩
         if model.recording || model.turns.last.map({ $0.state == .thinking || $0.state == .streaming }) == true {
             collapseWhenDone = true
@@ -613,7 +623,8 @@ final class AnswerPanel {
         model.collapsed = true
         hoverArmed = true
         relayoutAfterStateChange()
-        startDismissCountdown()
+        // 钉住的小框一直留在右上角；没钉住的 4 秒不动就淡出
+        if !model.pinned { startDismissCountdown() }
         startHoverPolling()
     }
 
@@ -627,13 +638,27 @@ final class AnswerPanel {
     private func togglePin() {
         model.pinned.toggle()
         if model.pinned {
-            // 小框上点图钉 = 我要留着：直接展开并固定
+            // 小框上点图钉 = 我要留着：直接展开；再点外面照样缩成小框，只是不会自己消失
             cancelDismissCountdown()
             stopHoverPolling()
             hoverArmed = false
             collapseWhenDone = false
             if model.collapsed { model.collapsed = false; relayoutAfterStateChange() }
+        } else if model.collapsed {
+            // 小框上取消钉住：回到没钉住的样子，4 秒不动就淡出
+            startDismissCountdown()
         }
+    }
+
+    /// 钉住时「一直展开」和「点外面缩成小框」之间切换，选的记住；切到一直展开时小框直接展开
+    private func toggleKeepExpanded() {
+        model.keepExpanded.toggle()
+        AskFreeConfig.shared.save(bool: model.keepExpanded, forKey: AnswerModel.keepExpandedKey)
+        guard model.keepExpanded else { return }
+        stopHoverPolling()
+        hoverArmed = false
+        collapseWhenDone = false
+        expand()
     }
 
     private func resetCollapse() {
@@ -687,8 +712,8 @@ final class AnswerPanel {
     }
 
     private func hoverTick() {
-        guard let panel, panel.isVisible, hoverArmed, !model.pinned else { stopHoverPolling(); return }
-        let inside = NSMouseInRect(NSEvent.mouseLocation, panel.frame, false)
+        guard let panel, panel.isVisible, hoverArmed, !model.staysExpanded else { stopHoverPolling(); return }
+        let inside = devMouseInside ?? NSMouseInRect(NSEvent.mouseLocation, panel.frame, false)
         if model.collapsed {
             if inside {
                 if hoverSince == nil { hoverSince = Date() }
@@ -844,7 +869,12 @@ struct PreviousTopic {
 
 final class AnswerModel: ObservableObject {
     @Published var turns: [AnswerTurn] = []
+    /// 钉住：不会自己消失（点外面照样缩成小框，指上去展开）
     @Published var pinned = false
+    /// 钉住时选了「一直展开」：点外面也不缩。记在配置里，下次钉住还是它
+    static let keepExpandedKey = "answer_panel_keep_expanded"
+    @Published var keepExpanded = AskFreeConfig.shared.bool(forKey: AnswerModel.keepExpandedKey)
+    var staysExpanded: Bool { pinned && keepExpanded }
     @Published var recording = false
     @Published var cancelArmed = false
     @Published var copied = false
@@ -896,6 +926,7 @@ struct AnswerView: View {
     let onCopy: () -> Void
     let onClose: () -> Void
     let onTogglePin: () -> Void
+    let onToggleKeepExpanded: () -> Void
     let onHoldStart: () -> Bool
     let onHoldEnd: (_ cancelled: Bool) -> Void
     let onType: () -> Void
@@ -965,8 +996,16 @@ struct AnswerView: View {
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // 钉住以后图钉左边多一颗：图标就是「点外面会怎样」，四角往里收 = 缩成小框，四角往外推（灰底）= 一直展开
+            if model.pinned {
+                PanelIconButton(symbol: model.keepExpanded ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left",
+                                on: model.keepExpanded, filled: model.keepExpanded,
+                                help: model.keepExpanded ? "一直展开：点外面也不缩。点一下改成点外面缩成小框"
+                                                         : "点外面缩成小框，指上去展开。点一下改成一直展开",
+                                action: onToggleKeepExpanded)
+            }
             PanelIconButton(symbol: model.pinned ? "pin.fill" : "pin", on: model.pinned,
-                            help: model.pinned ? "已钉住：点外面也不收起" : "钉住：点外面也不收起", action: onTogglePin)
+                            help: model.pinned ? "已钉住：点一下取消" : "钉住：不会自己消失，点外面缩成小框", action: onTogglePin)
             if !model.collapsed {
                 PanelIconButton(symbol: model.copied ? "checkmark" : "doc.on.doc", on: false,
                                 help: "复制这一轮回答", action: onCopy)
@@ -1362,6 +1401,8 @@ private struct BrandGlyph: View {
 private struct PanelIconButton: View {
     let symbol: String
     let on: Bool
+    /// 开着的开关：常驻灰底（「一直展开」）
+    var filled = false
     let help: String
     let action: () -> Void
     @State private var hovering = false
@@ -1372,7 +1413,7 @@ private struct PanelIconButton: View {
                 .font(.system(size: 13))
                 .foregroundStyle(on || hovering ? Theme.text : Theme.text2)
                 .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(hovering ? Theme.hover : .clear))
+                .background(RoundedRectangle(cornerRadius: 6).fill(filled ? Theme.selected : hovering ? Theme.hover : .clear))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

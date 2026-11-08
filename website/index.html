@@ -814,7 +814,7 @@ h3, h4 { font-weight: 600; }
     </div>
   </div>
   <div class="card hist" data-part="每天的笔记">
-    <div class="hist-t"><h3>一天问过的，整理成一页笔记</h3><p><b>历史</b>页点<b>今天的笔记</b>，AI 把这一天整理成一页图文笔记：小结、每题的截图和要点，目录能收起。能用浏览器打开、导出 PDF，也能挑几题导进 Anki。整理时只发文字，不发截图。</p></div>
+    <div class="hist-t"><h3>一天问过的，整理成一页笔记</h3><p><b>历史</b>页点<b>今天的笔记</b>，AI 把这一天整理成一页图文笔记：小结、每题的截图和要点，目录能收起。能用浏览器打开、导出 PDF，也能挑几题送进 Anki，放进「知识」牌组。整理时只发文字，不发截图。</p></div>
     <div class="np" aria-label="每日笔记页的示意">
       <div class="np-h"><span>‹ 历史</span><span class="d">10 月 31 日</span><span class="sp"></span><span><svg viewBox="0 0 16 16"><path d="M9 3h4v4M13 3L7 9M12 10v3H3V4h3"/></svg><span class="lb"> 用浏览器打开</span></span><span><svg viewBox="0 0 16 16"><path d="M4 2h5l3 3v9H4zM9 2v3h3"/></svg><span class="lb"> 导出 PDF</span></span></div>
       <div class="np-b">
@@ -931,7 +931,7 @@ h3, h4 { font-weight: 600; }
     <details><summary>Intel 芯片的 Mac 能用吗？</summary><p>能。安装包是通用的，Apple 芯片和 Intel 芯片的 Mac 都能用，需要 macOS 14 或更新。</p></details>
     <details><summary>会自动更新吗？</summary><p>会，从 1.2.0 起。每 6 小时到 GitHub 查一次新版本，有新版就在后台下好、核对签名，菜单栏里出<b>重启更新</b>；不点的话，下次退出时装上。在主窗口<b>通用</b>页的<b>更新</b>里能关。装着 1.1.0 或更早版本的，要手动下载一次最新版。</p></details>
     <details><summary>能用英文问吗？</summary><p>能。说话问：火山引擎不指定语种时能认普通话和英语，也认粤语、上海话、闽南语、四川话、陕西话（按它的文档写的，没逐一实测）。打字问：DeepSeek 和千问读得懂的语言都行。问题是英文时，Ask Free 让它用英文答。软件界面只有中文。</p></details>
-    <details><summary>每天的笔记怎么导进 Anki？</summary><p>先在 Anki 里装 AnkiConnect 插件并打开 Anki。然后在<b>历史</b>页点<b>今天的笔记</b>，勾上问题标题前的方框，选牌组，点<b>导入 Anki</b>。导完会告诉你加了几张、几张已经有了；Anki 没开着时会说明，勾选还留着。</p></details>
+    <details><summary>每天的笔记怎么送进 Anki？</summary><p>先在 Anki 里装 AnkiConnect 插件（编号 2055492159）并打开 Anki，设置里的 <b>Anki</b> 页会一项项查给你看。然后在<b>历史</b>页点<b>今天的笔记</b>，勾上问题标题前的方框，点<b>送进 Anki</b>。卡片默认放进「知识」牌组，你在 Anki 里建的「知识::…」也能选；问题在正面，截图在问题下面，翻过来是答案和补充。送完会告诉你加了几张、几张已经有了；Anki 没开着时点提示条上的<b>打开 Anki 再送</b>，勾选还留着。</p></details>
     <details><summary>截图会存下来吗？</summary><p>会存在你自己的 Mac 上，回头在<b>历史</b>页能看到当时的画面；不会上传到别处，在<b>历史</b>页能删。</p></details>
     <details><summary>回答面板会打断我正在做的事吗？</summary><p>不会。面板出现在屏幕右上角，不把你正在用的窗口挤到后面，正在打字的地方还在原处。</p></details>
     <details><summary>能换别的模型吗？</summary><p>自带 Key 时，回答支持 DeepSeek 和阿里百炼千问，语音识别用火山引擎（豆包）。会员固定用 DeepSeek 回答、火山引擎识别。</p></details>
@@ -1024,7 +1024,7 @@ h3, h4 { font-weight: 600; }
       <li><b>会员凭据</b>：用会员时，服务器发给这台 Mac 的一串令牌，也存在钥匙串里。用的是会员还是自带 Key，记在下面的设置文件里。</li>
       <li><b>设置</b>：在 <span class="pathlink">~/.config/askfree/</span>，这个文件夹只有你的账户能打开。</li>
       <li><b>问答历史</b>：每一轮的问题、回答和时间在 <span class="pathlink">history.jsonl</span>；这一轮真发给模型的两张截图（整屏的缩小图和指针附近的放大图），以及回答里找到的图的缩略图，在 <span class="pathlink">history-images/</span>。都在上面那个文件夹里，在<b>历史</b>页能看、能删。历史每一问都会记，目前还没有关掉它的开关。</li>
-      <li><b>每天的笔记</b>：整理出来的笔记在 <span class="pathlink">day-notes/</span>，导出的网页在 <span class="pathlink">notes/</span>，里面有问题、回答要点和截图。在<b>历史</b>页删某一条或清空时，对应那一天的笔记一起删。导进 Anki 的卡片由 Anki 自己存，Ask Free 只通过 Anki 在本机开的 AnkiConnect 接口（127.0.0.1）交给它，不经过网络。</li>
+      <li><b>每天的笔记</b>：整理出来的笔记在 <span class="pathlink">day-notes/</span>，导出的网页在 <span class="pathlink">notes/</span>，里面有问题、回答要点和截图。在<b>历史</b>页删某一条或清空时，对应那一天的笔记一起删。送进 Anki 的卡片由 Anki 自己存，Ask Free 只通过 Anki 在本机开的 AnkiConnect 接口（127.0.0.1）交给它，不经过网络。</li>
       <li><b>录音</b>：不存。松开键后临时转一次格式，转完的临时文件马上删掉，再发给识别服务。</li>
       <li><b>运行日志</b>：<span class="pathlink">~/Library/Logs/AskFree.log</span>，只记步骤和耗时（比如这一问有几个字、花了多少毫秒），不记问题、回答和截图。</li>
     </ul>

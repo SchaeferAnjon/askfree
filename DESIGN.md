@@ -68,7 +68,7 @@ macOS 菜单栏里的问答工具：和 GetNewWord 新版同一套骨架（左�
   - GetNewWord 知识片段：`知识`，分类写成 `主题::<名字>`。
   - Ask Free：`知识`。
   - ChatCards：`知识`，来源写在标签和纸顶小字里。
-- 牌组名用建的时候的界面语言（GetNewWord 英文界面是 `Languages`、`Knowledge`），建好以后软件不再改名；你在 Anki 里改了名，软件跟着你改的名字走：按牌组 id 记（AnkiConnect `deckNamesAndIds`），不按名字。
+- 牌组名用中文「语言学习」「知识」，不跟界面语言变（GetNewWord 已有的牌组就是中文名，换界面语言不另建一套）。建好以后软件不再改名；你在 Anki 里改了名，软件跟着你改的名字走：按牌组 id 记（AnkiConnect `deckNamesAndIds`），不按名字。
 - 不碰别人的牌组：你自己建的和别的软件的，一律不动、不删。软件只删自己建的、已经空了的牌组。
 - 设置里能改默认牌组名，默认就是上面这些。
 
@@ -98,7 +98,8 @@ macOS 菜单栏里的问答工具：和 GetNewWord 新版同一套骨架（左�
 - 单词卡在纸上照「句子在前」：正面那句话 24 号、查的词套取景框；翻过来译文接在句子下面，细线下面「这句里的意思」30 / 600，再一行词、音标、词性，用法例句和截图收进折叠。
 - 颜色全部走 `.card` 上的变量（`--bg --surface --text --text2 --text3 --border --accent --backdrop --sheet --band --shadow`），深色在 `.card.nightMode, .nightMode .card, .card.night_mode, .night_mode .card` 四个选择器里重写；模板里不写死颜色。`--accent` 只给链接和单词的取景框。能读的字最少用 `--text2`。
 - 不用 `id="answer"`、不用 `{{FrontSide}}`，正面不垂直居中，翻面不跳。
-- 「学习卡 · 问答」的模板和样式原文在 anki-learn 的 `Core/Sources/AnkiLearnCore/Anki.swift`（`StudyCard`），三个软件里的副本要一字不差；样式第一行 `/* 卡片家族 v3 */`。
+- 「学习卡 · 问答」的模板和样式原文在 anki-learn 的 `Core/Sources/AnkiLearnCore/Anki.swift`（`StudyCard`），三个软件里的副本要一字不差（Ask Free 在 `AskFreeCore/…/AnkiConnect.swift`，GetNewWord 在 `GetNewWord/Services/StudyCard.swift`）；样式第一行 `/* 卡片家族 v3 */`。模板里的固定字（原文、当时的画面、打开原文）是中文，共用一份，不跟界面语言变。
+- GetNewWord 自己的「GetNewWord」「GetNewWord Snippet」两个笔记类型也放在同一张纸上（外层 `.paper`），样式第一行 `/* GetNewWord card · v3 */`，同样只往新的换。
 
 ### 软件里和 Anki 有关的界面
 
@@ -123,6 +124,7 @@ macOS 菜单栏里的问答工具：和 GetNewWord 新版同一套骨架（左�
 ### 改卡和升级
 
 - 写过的才改，改过的不碰：要更新一张卡时先读 Anki 里现在的字段，和软件上次写进去的一样才改；不一样说明你在 Anki 里改过，留着不动。
-- 样式只往新的换：CSS 第一行 `/* 卡片家族 vN */`。软件只在自己带的版本比 Anki 里的新时才换模板和样式；Anki 里的更新（别的软件先升级了）就不动。第一行不是这个格式，说明你在 Anki 里改过模板：先问「换成新样子 / 留着我改的」，记下答案以后不再问，不悄悄覆盖。
+- 样式只往新的换：CSS 第一行 `/* 卡片家族 vN */`。软件只在自己带的版本比 Anki 里的新时才换模板和样式；Anki 里的更新（别的软件先升级了）就不动。第一行不是这个格式，说明你在 Anki 里改过模板：手动送卡的软件（ChatCards、Ask Free）先问「换成新样子 / 留着我改的」，记下答案以后不再问；自动送的 GetNewWord 不弹窗，留着不动。都不悄悄覆盖。
+- GetNewWord 升级后第一次连上 Anki 搬一次：已经在 Anki 里的词搬进「语言学习::<语言>」、片段搬进「知识」，补上「来自::」「分类::」「主题::」标签，然后删掉空了的老分类牌组（只删它按自己的分类建过的、里面一张卡都没有的）。
 - AnkiConnect 在 Anki 的卡片浏览器或「添加」窗口开着时，不让改笔记类型（回 "Close the affected editor…"）：提示「关掉它再送」，不当成别的错误。
 - 不要单向同步的改法：换模板文字和样式、搬牌组、改字段内容、加标签、新建笔记类型。要单向同步的：加删字段、加删卡片模板、给笔记换笔记类型，所以已有的笔记类型一律不改名、不加删字段。

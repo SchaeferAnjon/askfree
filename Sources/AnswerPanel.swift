@@ -470,7 +470,10 @@ final class AnswerPanel {
             var target = self.fittingSize(of: hosting)
             let current = panel.frame
             self.scrollToBottom()
-            if streaming {
+            // 回答还在出字时，不管是谁要重排（出字、找到的图、小灰字、事后核对），都只按整步长往下长、不缩。
+            // 以前只有出字这一路这样长，别的几路按精确高度定：图在出字途中到了，两套长法来回改窗口，
+            // 2026-11-08 实测 1 秒内 336→313→624→599→601→624→626，面板上下抽。答完 finish 再定一次精确高度。
+            if streaming || self.model.turns.last?.state == .streaming {
                 // 只长不缩，且按整步长；步长撑不过内容区上限（超过上限的部分靠滚动）
                 let clampedContent = min(max(self.model.contentHeight, 24), self.model.maxContentHeight)
                 let maxWindow = target.height - clampedContent + self.model.maxContentHeight

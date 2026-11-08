@@ -21,6 +21,13 @@ extension AppDelegate {
     /// 手势：按住说、松开结束；轻点一下锁定、再点一下结束；按住期间 Esc 取消。
     func ensureAskHotkeyManagers() {
         guard askHotkeyManagers.isEmpty else { return }
+        // 开发版和正式版的提问键是各自设的，常常都是右⌥：两个都开着时按一下两边一起答，
+        // 两张面板叠在右上角同一处各长各的，看着就是上下抽（2026-11-08 日志 19:17、19:36）。正式版开着时开发版不接键
+        if AppIdentity.isDevBuild,
+           !NSRunningApplication.runningApplications(withBundleIdentifier: "io.github.schaeferanjon.askfree").isEmpty {
+            debugLog("AK: 正式版 Ask Free 开着，开发版不接提问键和打字键（要试键先退出正式版）")
+            return
+        }
         typeAskMonitor = DoubleTapMonitor { [weak self] in self?.toggleTypeAsk() }
         debugLog("TA: shortcut=\(TypeAskHotkey.displayName())\(TypeAskHotkey.conflict().map { " conflict=\($0)" } ?? "")")
         for (hotkey, captureScreen) in [(AskHotkey.screen, true), (AskHotkey.plain, false)] {

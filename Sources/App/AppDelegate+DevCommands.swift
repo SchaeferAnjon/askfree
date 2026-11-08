@@ -18,6 +18,8 @@ import AskFreeCore
 ///   history-changed   通知「历史变了」（实测时从外面改 history.jsonl 来模拟删历史，再发这条让笔记页重新读）
 ///   size <宽> <高>    把主窗口改成这么大（截很长的一页用）
 ///   wait <秒>         后面的命令等这么久再执行
+///   demo-stream [noimages]  回答面板放一段假的流式回答（出字到四分之一时来三张图），不调模型；
+///                     期间每帧记面板高度，答完写一行 panel heights 到日志和 command.out：出字期间缩过几次、方向换过几次
 extension AppDelegate {
     func installDevCommands() {
         guard AppIdentity.isDevBuild, let directory = AppIdentity.demoDataDirectory ?? AppIdentity.freshDataDirectory else { return }
@@ -63,6 +65,12 @@ extension AppDelegate {
                 if let panel = Self.devSavePanel() { result = "name=\(panel.nameFieldStringValue) dir=\(panel.directoryURL?.path ?? "-")" } else { result = "no panel" }
             case "accept-panel", "cancel-panel":
                 result = Self.devClickPanelButton(accept: command == "accept-panel")
+            case "demo-stream":
+                self.devDemoStream(withImages: argument != "noimages", directory: directory) { summary in
+                    let existing = (try? String(contentsOf: output, encoding: .utf8)) ?? ""
+                    try? (existing + "## demo-stream done\n\(summary)\n").write(to: output, atomically: true, encoding: .utf8)
+                }
+                result = "started"
             default: result = "unknown command"
             }
             self.debugLog("Dev command: \(line) → \(result.split(separator: "\n").first.map(String.init) ?? "")")
@@ -71,6 +79,94 @@ extension AppDelegate {
         }
         timer.resume()
         devCommandTimer = timer
+    }
+
+    // MARK: 假的流式回答（看面板跳不跳）
+
+    private static let demoAnswer = """
+    `np.exp()` 就是 NumPy 版的「e 的几次方」：给它一个数，返回 e 的那么多次方；给它一个数组，就对每个元素各算一次。
+
+    ```python
+    np.exp(1)
+    # 2.718281828459045
+    ```
+
+    **为什么不直接用 math.exp**
+
+    Python 自带的 `math.exp` 一次只能处理一个数，传数组进去会直接报错。而 sigmoid 的输入 z 在课程里可能是单个样本的标量、一批样本的列向量，也可能是一个 m 维的行向量；你不想为每种情况写一个循环。`np.exp` 对单个数字和数组都能处理，这类「对整个数组一次性做运算」的写法叫向量化，是 NumPy 最核心的价值。
+
+    **放到 sigmoid 里看**
+
+    z = 0 时是 0.5；z 越大越贴近 1；z 越负越贴近 0。代码就是一个式子：
+
+    ```python
+    def sigmoid(z):
+        return 1 / (1 + np.exp(-z))
+    ```
+
+    这里有个坑提前告诉你：当 z 是个很大的负数（比如 -1000）时，-z 变成 1000，`np.exp(1000)` 直接溢出成 inf，于是 1/(1+inf) 得到 0，结果还算对；但如果你写的顺序不小心，就会出现 inf/inf = nan。numpy 会抛一句 RuntimeWarning: overflow encountered in exp，很多人第一次跑作业就被这句话吓到，其实结果是 0 没错。
+
+    还有一个容易混的点：`np.exp` 的底数永远是 e ≈ 2.718，不是 10。要算 10 的 x 次方得用 `np.power(10, x)` 或 `10**x`。
+    """
+
+    func devDemoStream(withImages: Bool, directory: URL, done: @escaping (String) -> Void) {
+        let panel = answerPanel
+        let text = Self.demoAnswer
+        let images = withImages ? Self.devDemoImages(in: directory) : []
+        var heights: [Int] = []
+        var streamingEnd = 0   // 出字结束那一刻 heights 有几项：之前的算「出字期间」
+        let sampler = Timer(timeInterval: 1.0 / 60, repeats: true) { _ in
+            guard let h = panel.frame?.height, panel.isVisible else { return }
+            let v = Int(h.rounded())
+            if heights.last != v { heights.append(v) }
+        }
+        RunLoop.main.add(sampler, forMode: .common)
+        panel.startThread(question: "讲一下这个方式")
+        var sent = 0
+        var imagesSent = false
+        func step() {
+            guard sent < text.count else {
+                streamingEnd = heights.count
+                panel.finish(answer: text)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+                    sampler.invalidate()
+                    let during = Array(heights.prefix(streamingEnd))
+                    let shrinks = zip(during, during.dropFirst()).filter { $1 < $0 }.count
+                    let deltas = zip(heights, heights.dropFirst()).map { $1 - $0 }.filter { $0 != 0 }
+                    let flips = zip(deltas, deltas.dropFirst()).filter { ($0 > 0) != ($1 > 0) }.count
+                    let summary = "panel heights=\(heights.map(String.init).joined(separator: ",")) shrinks-while-streaming=\(shrinks) direction-flips=\(flips) images=\(images.count)"
+                    self.debugLog("Dev demo-stream: \(summary)")
+                    done(summary)
+                }
+                return
+            }
+            sent = min(text.count, sent + 5)
+            panel.updatePartial(String(text.prefix(sent)))
+            if !images.isEmpty, !imagesSent, sent >= text.count / 4 {
+                imagesSent = true
+                panel.setImages(images)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { step() }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { step() }
+    }
+
+    /// 三张本地小图（file:// 地址，AsyncImage 直接读），当成联网找到的图
+    private static func devDemoImages(in directory: URL) -> [AskImage] {
+        let colors: [NSColor] = [.systemTeal, .systemOrange, .systemIndigo]
+        return colors.enumerated().compactMap { index, color in
+            let url = directory.appendingPathComponent("demo-image-\(index).png")
+            if !FileManager.default.fileExists(atPath: url.path) {
+                let image = NSImage(size: NSSize(width: 240, height: 320), flipped: false) { rect in
+                    color.setFill(); rect.fill(); return true
+                }
+                guard let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                      let png = rep.representation(using: .png, properties: [:]) else { return nil }
+                try? png.write(to: url)
+            }
+            return AskImage(thumb: url.absoluteString, full: url.absoluteString, pageURL: url.absoluteString,
+                            title: "demo \(index)", width: 240, height: 320)
+        }
     }
 
     // MARK: 无障碍树（进程内）

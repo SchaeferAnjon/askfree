@@ -22,7 +22,7 @@ import AskFreeCore
 ///   panel-outside-click  当作在回答面板外面按了一下鼠标
 ///   panel-mouse in|out|real  回答面板认为鼠标在里面 / 外面 / 回到看真的鼠标
 ///   panel-state       写出回答面板：在不在屏上、钉住、一直展开、缩成小框、尺寸
-///   demo-stream [noimages]  回答面板放一段假的流式回答（出字到四分之一时来三张图），不调模型；
+///   demo-stream [noimages] [fast]  回答面板放一段假的流式回答（fast：面板一弹出就出字，不等它滑进来）（出字到四分之一时来三张图），不调模型；
 ///                     期间每帧记面板高度，答完写一行 panel heights 到日志和 command.out：出字期间缩过几次、方向换过几次
 extension AppDelegate {
     func installDevCommands() {
@@ -80,9 +80,15 @@ extension AppDelegate {
             case "panel-state":
                 let m = self.answerPanel.model
                 let size = self.answerPanel.frame.map { "\(Int($0.width))x\(Int($0.height))" } ?? "-"
-                result = "visible=\(self.answerPanel.isVisible) pinned=\(m.pinned) keepExpanded=\(m.keepExpanded) collapsed=\(m.collapsed) size=\(size)"
+                // 面板在不在屏幕里：右边缘对不对得上它所在那块屏幕的可见区（应在可见区右缘往里 12）
+                let onScreen = self.answerPanel.frame.map { f in
+                    let screen = NSScreen.screens.first { $0.frame.intersects(f) } ?? NSScreen.main
+                    return "x=\(Int(f.minX)) maxX=\(Int(f.maxX)) screenMaxX=\(Int(screen?.visibleFrame.maxX ?? 0))"
+                } ?? "-"
+                result = "visible=\(self.answerPanel.isVisible) pinned=\(m.pinned) keepExpanded=\(m.keepExpanded) collapsed=\(m.collapsed) size=\(size) \(onScreen)"
             case "demo-stream":
-                self.devDemoStream(withImages: argument != "noimages", directory: directory) { summary in
+                self.devDemoStream(withImages: !argument.contains("noimages"), firstTextAfter: argument.contains("fast") ? 0.05 : 0.8,
+                                   directory: directory) { summary in
                     let existing = (try? String(contentsOf: output, encoding: .utf8)) ?? ""
                     try? (existing + "## demo-stream done\n\(summary)\n").write(to: output, atomically: true, encoding: .utf8)
                 }
@@ -125,7 +131,7 @@ extension AppDelegate {
     还有一个容易混的点：`np.exp` 的底数永远是 e ≈ 2.718，不是 10。要算 10 的 x 次方得用 `np.power(10, x)` 或 `10**x`。
     """
 
-    func devDemoStream(withImages: Bool, directory: URL, done: @escaping (String) -> Void) {
+    func devDemoStream(withImages: Bool, firstTextAfter: TimeInterval, directory: URL, done: @escaping (String) -> Void) {
         let panel = answerPanel
         let text = Self.demoAnswer
         let images = withImages ? Self.devDemoImages(in: directory) : []
@@ -138,6 +144,8 @@ extension AppDelegate {
         }
         RunLoop.main.add(sampler, forMode: .common)
         panel.startThread(question: "讲一下这个方式")
+        // fast：和真提问一样，面板刚弹出就挂上截图那类东西、马上重排一次（这里用一行小灰字代替）
+        if firstTextAfter < 0.5 { panel.setNote("正在看屏幕…") }
         var sent = 0
         var imagesSent = false
         func step() {
@@ -164,7 +172,7 @@ extension AppDelegate {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { step() }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { step() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + firstTextAfter) { step() }
     }
 
     /// 三张本地小图（file:// 地址，AsyncImage 直接读），当成联网找到的图

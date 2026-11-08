@@ -73,6 +73,9 @@ final class AnswerPanel {
     var frame: NSRect? { panel?.frame }
     /// 滑出动画进行中；动画回调只在这一轮没被新的 present 打断时才 orderOut
     private var isHiding = false
+    /// 面板钉在哪块屏幕的右上角（弹出时那块屏幕的可见区）。之后长高、缩小都按它摆，不按窗口此刻的位置：
+    /// 窗口在滑进来的半路上时它的位置还在屏幕外，按它摆会把面板留在屏幕外
+    private var anchor: NSRect?
     private var hideGeneration = 0
     /// 当前话题 id（写历史用；新话题换新 id）
     private(set) var threadID = UUID().uuidString
@@ -272,6 +275,7 @@ final class AnswerPanel {
         guard let panel, let hosting else { return }
         refreshViewsForNewContent()
         let screen = Self.screenUnderMouse()
+        anchor = screen.visibleFrame
         model.maxContentHeight = max(160, screen.visibleFrame.height * 0.7 - 140)   // 140 ≈ 头（两行问题）+ 尾 + 内边距
         // SwiftUI 的内容尺寸要到下一个运行循环才按新内容更新，先同步布局一次再量，
         // 否则会拿到上一条回答的高度，内容悬在中间、上下露出空的磨砂底。
@@ -468,6 +472,8 @@ final class AnswerPanel {
     private func relayout(animated: Bool = true, streaming: Bool = false) {
         guard let panel, let hosting else { return }
         DispatchQueue.main.async {
+            // 正在滑出：别再给它定新位置，免得把滑出的动画顶掉
+            guard !self.isHiding else { return }
             hosting.layoutSubtreeIfNeeded()
             self.tuneScroller()
             var target = self.fittingSize()
@@ -487,7 +493,11 @@ final class AnswerPanel {
             }
             guard abs(target.height - current.height) > 0.5 || abs(target.width - current.width) > 0.5 else { return }
             AnswerPanel.log?(String(format: "AnswerPanel relayout content=%.1f target=%.1f current=%.1f", self.model.contentHeight, target.height, current.height))
-            let frame = NSRect(x: current.maxX - target.width, y: current.maxY - target.height,
+            // 位置一律按屏幕右上角算（面板不能拖）。以前按窗口此刻的右上角算：面板刚开始从屏幕右边滑进来就重排一次
+            // （截图挂上去、出字），此刻窗口还在屏幕外，新动画把它定在屏幕外，看不见却算在屏上，
+            // 下一次按键就接着这个话题问（2026-11-08 开发版复现：x=1524，屏幕右缘 1512）
+            let area = self.anchor ?? (panel.screen ?? Self.screenUnderMouse()).visibleFrame
+            let frame = NSRect(x: area.maxX - target.width - Self.margin, y: area.maxY - Self.margin - target.height,
                                width: target.width, height: target.height)
             // 出字时往下长：每一截 0.12 秒滑过去，底栏不是一下一下蹦。正文区不撑最小高度（见 AnswerView），
             // 动画途中窗口比内容矮也只是正文区少露一截，状态条和字都不动。「减少动态效果」打开时直接定到位

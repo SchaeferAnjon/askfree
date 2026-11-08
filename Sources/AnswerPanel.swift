@@ -277,7 +277,7 @@ final class AnswerPanel {
         // 否则会拿到上一条回答的高度，内容悬在中间、上下露出空的磨砂底。
         hosting.layoutSubtreeIfNeeded()
         tuneScroller()   // 弹出这一帧就是细 overlay 滚动条，不会先闪一下系统的粗条
-        let size = fittingSize(of: hosting)
+        let size = fittingSize()
         let vf = screen.visibleFrame
         let final = NSRect(x: vf.maxX - size.width - Self.margin, y: vf.maxY - size.height - Self.margin,
                            width: size.width, height: size.height)
@@ -363,7 +363,7 @@ final class AnswerPanel {
     private func createPanel() {
         measure = NSHostingView(rootView: TurnsView(model: model, width: Self.contentWidth))
         let hosting = FirstMouseHostingView(rootView: makeAnswerView())
-        let size = fittingSize(of: hosting)
+        let size = fittingSize()
         hosting.frame = NSRect(origin: .zero, size: size)
         hosting.autoresizingMask = [.width, .height]
 
@@ -445,19 +445,21 @@ final class AnswerPanel {
     private var trustMeasure = true
     private static let thinkingRowHeight: CGFloat = 24
 
-    private func fittingSize(of hosting: FirstMouseHostingView) -> NSSize {
+    /// 面板除正文外的高度：状态条 40、两条发丝线、正文上下内边距、底栏 44
+    static let chromeHeight: CGFloat = 40 + 0.5 + bodyPadding.top + bodyPadding.bottom + 0.5 + 44
+
+    /// 面板该多大：缩成小框只剩状态条；否则 chromeHeight + 正文（离屏实测，超过上限的部分靠滚动）。
+    /// 不问 hosting 的 fittingSize：model 改了以后 SwiftUI 要到下一轮才重排，量到的是旧高度。窗口按旧高度摆、
+    /// 内容按新高度排，内容比窗口高，状态条和底栏被上下切掉，正文整体往上顶（2026-11-08 录屏：出字时每长一截闪 0.13 秒）
+    private func fittingSize() -> NSSize {
+        if model.collapsed { return NSSize(width: Self.collapsedWidth, height: 40) }
         if let measure, trustMeasure {
             measure.layoutSubtreeIfNeeded()
             let h = measure.fittingSize.height
-            if h > 1, abs(h - model.contentHeight) > 0.5 {
-                model.contentHeight = h
-                hosting.layoutSubtreeIfNeeded()
-            }
+            if h > 1, abs(h - model.contentHeight) > 0.5 { model.contentHeight = h }
         }
-        var size = hosting.fittingSize
-        if size.width < 10 || size.height < 10 { size = NSSize(width: Self.width, height: 120) }
-        size.width = model.collapsed ? Self.collapsedWidth : Self.width
-        return size
+        let content = min(max(model.contentHeight, 24), model.maxContentHeight)
+        return NSSize(width: Self.width, height: Self.chromeHeight + content)
     }
 
     /// 内容高度变了 → 面板跟着长/缩，顶右角不动；对话超过上限后始终滚到最新一轮
@@ -467,13 +469,14 @@ final class AnswerPanel {
         DispatchQueue.main.async {
             hosting.layoutSubtreeIfNeeded()
             self.tuneScroller()
-            var target = self.fittingSize(of: hosting)
+            var target = self.fittingSize()
             let current = panel.frame
             self.scrollToBottom()
             // 回答还在出字时，不管是谁要重排（出字、找到的图、小灰字、事后核对），都只按整步长往下长、不缩。
             // 以前只有出字这一路这样长，别的几路按精确高度定：图在出字途中到了，两套长法来回改窗口，
             // 2026-11-08 实测 1 秒内 336→313→624→599→601→624→626，面板上下抽。答完 finish 再定一次精确高度。
-            if streaming || self.model.turns.last?.state == .streaming {
+            let streamingNow = streaming || self.model.turns.last?.state == .streaming
+            if streamingNow {
                 // 只长不缩，且按整步长；步长撑不过内容区上限（超过上限的部分靠滚动）
                 let clampedContent = min(max(self.model.contentHeight, 24), self.model.maxContentHeight)
                 let maxWindow = target.height - clampedContent + self.model.maxContentHeight
@@ -485,9 +488,22 @@ final class AnswerPanel {
             AnswerPanel.log?(String(format: "AnswerPanel relayout content=%.1f target=%.1f current=%.1f", self.model.contentHeight, target.height, current.height))
             let frame = NSRect(x: current.maxX - target.width, y: current.maxY - target.height,
                                width: target.width, height: target.height)
-            // 流式出字期间每段都会长高：不做动画，直接定到新高度。动画途中窗口比内容矮，
-            // 文字会被往上挤、一段一跳；逐字流出本身就是过渡，不需要再补动画。
-            if !animated || self.model.turns.last?.state == .streaming {
+            // 出字时往下长：每一截 0.12 秒滑过去，底栏不是一下一下蹦。正文区不撑最小高度（见 AnswerView），
+            // 动画途中窗口比内容矮也只是正文区少露一截，状态条和字都不动。「减少动态效果」打开时直接定到位
+            if streamingNow, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+                NSAnimationContext.runAnimationGroup({ ctx in
+                    ctx.duration = 0.12
+                    ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    panel.animator().setFrame(frame, display: true)
+                }, completionHandler: { [weak panel, weak hosting] in
+                    guard let panel, let hosting, let content = panel.contentView else { return }
+                    hosting.frame = content.bounds
+                    panel.invalidateShadow()
+                })
+                self.scrollToBottom()
+                return
+            }
+            if !animated || streamingNow {
                 panel.setFrame(frame, display: true)
                 if let content = panel.contentView { hosting.frame = content.bounds }
                 panel.invalidateShadow()
@@ -522,7 +538,7 @@ final class AnswerPanel {
     private func settleLayout() {
         guard let panel, let hosting, panel.isVisible, Date() >= frameAnimationEnds else { return }
         hosting.layoutSubtreeIfNeeded()
-        let target = fittingSize(of: hosting)
+        let target = fittingSize()
         let current = panel.frame
         // 核对是纠错，直接定到位。走动画的话，这 0.22 秒里流式出字还在直接设尺寸，两边会打架，
         // 窗口最后停在动画的旧目标上，比内容矮一截，头尾被切掉（DeepSeek 出字快，整条回答 0.3 秒内就流完）
@@ -704,6 +720,9 @@ final class AnswerPanel {
         guard let hosting, let sv = Self.findScrollView(in: hosting) else { return }
         if sv.scrollerStyle != .overlay { sv.scrollerStyle = .overlay }
         sv.autohidesScrollers = true
+        // 出字时窗口往下滑的那 0.12 秒里内容比窗口高一点，滚动条会闪一下：还没长到上限时不要滚动条
+        let growing = model.turns.last?.state == .streaming && model.contentHeight < model.maxContentHeight - 1
+        if sv.hasVerticalScroller == growing { sv.hasVerticalScroller = !growing }
         sv.scrollerKnobStyle = .default
         if let scroller = sv.verticalScroller {
             if scroller.controlSize != .small { scroller.controlSize = .small }
@@ -900,9 +919,10 @@ struct AnswerView: View {
                     let idx = tops.filter { $0.value <= threshold }.keys.max() ?? 0
                     if idx != model.headerIndex { model.headerIndex = idx }
                 }
-                // 高度由 AnswerPanel 离屏实测后写入 model，超过上限才滚动。窗口比内容高的那一瞬间
-                // （流式出字时窗口按整步长预留），多出来的空间给回答区：状态条钉在顶上、底栏贴在底下
-                .frame(minHeight: clampedContentHeight, idealHeight: clampedContentHeight, maxHeight: .infinity)
+                // 窗口高度由 AnswerPanel 按离屏实测的正文高度算好再摆，这里只填满状态条和底栏之间：
+                // 窗口比内容高（流式出字时按整步长预留）多出来的给回答区；窗口一时比内容矮也只是正文区少露一截，
+                // 不撑开（撑开会让整块内容比窗口高，状态条和底栏被上下切掉）
+                .frame(minHeight: 0, idealHeight: clampedContentHeight, maxHeight: .infinity)
                 Hairline()
                 footer
             }
@@ -1153,7 +1173,8 @@ struct TurnsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             answerContent(turn)
-            if !turn.images.isEmpty { AskImagesRow(images: turn.images) }
+            // 图挂在回答下面：出字时每多一行字，一排大图就往下挪一行，看着像面板在跳。答完再放出来
+            if !turn.images.isEmpty, turn.state == .answered { AskImagesRow(images: turn.images) }
         }
     }
 

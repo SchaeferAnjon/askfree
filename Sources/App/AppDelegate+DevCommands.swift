@@ -18,6 +18,7 @@ import AskFreeCore
 ///   history-changed   通知「历史变了」（实测时从外面改 history.jsonl 来模拟删历史，再发这条让笔记页重新读）
 ///   size <宽> <高>    把主窗口改成这么大（截很长的一页用）
 ///   wait <秒>         后面的命令等这么久再执行
+///   composer <文字>   历史详情底下的输入框：给它光标、打进这些字、按回车（走和真按回车一样的那条路）
 ///   panel-outside-click  当作在回答面板外面按了一下鼠标
 ///   panel-mouse in|out|real  回答面板认为鼠标在里面 / 外面 / 回到看真的鼠标
 ///   panel-state       写出回答面板：在不在屏上、钉住、一直展开、缩成小框、尺寸
@@ -68,6 +69,8 @@ extension AppDelegate {
                 if let panel = Self.devSavePanel() { result = "name=\(panel.nameFieldStringValue) dir=\(panel.directoryURL?.path ?? "-")" } else { result = "no panel" }
             case "accept-panel", "cancel-panel":
                 result = Self.devClickPanelButton(accept: command == "accept-panel")
+            case "composer":
+                result = Self.devTypeInComposer(argument)
             case "panel-outside-click":
                 self.answerPanel.handleOutsideClick()
                 result = "clicked"
@@ -180,6 +183,22 @@ extension AppDelegate {
             return AskImage(thumb: url.absoluteString, full: url.absoluteString, pageURL: url.absoluteString,
                             title: "demo \(index)", width: 240, height: 320)
         }
+    }
+
+    static func devTypeInComposer(_ text: String) -> String {
+        func find(_ view: NSView) -> ComposerTextView.FocusTextView? {
+            if let tv = view as? ComposerTextView.FocusTextView { return tv }
+            for sub in view.subviews { if let found = find(sub) { return found } }
+            return nil
+        }
+        for window in NSApp.windows where window.isVisible {
+            guard let content = window.contentView, let textView = find(content) else { continue }
+            window.makeFirstResponder(textView)
+            textView.insertText(text, replacementRange: NSRange(location: NSNotFound, length: 0))
+            textView.doCommand(by: #selector(NSResponder.insertNewline(_:)))
+            return "typed \(text.count) chars + return"
+        }
+        return "no composer"
     }
 
     // MARK: 无障碍树（进程内）

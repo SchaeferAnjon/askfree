@@ -55,6 +55,7 @@
 		BAC3B30528F08B8B7365F887 /* MicrophoneRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBD6B87FE20993017771AFE /* MicrophoneRowView.swift */; };
 		BB238FF3743D4E99F102267F /* NotesModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28566DA6245E4B6B39E6B01 /* NotesModel.swift */; };
 		BD5A6110D7727629E670C52D /* HotkeyChooser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD549AC86DEBCD241104A8F5 /* HotkeyChooser.swift */; };
+		C1047F1397AB9A6D2E23F0D5 /* HistoryChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9869A5967C4E34BA28012EE5 /* HistoryChat.swift */; };
 		C5C3AF0798126B52EE26790C /* AskFreeCore in Frameworks */ = {isa = PBXBuildFile; productRef = D724F3889579F56C96885303 /* AskFreeCore */; };
 		CB2F5004EE513FE9FF8B7DE0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 6528D5C979CBDEA3F8F3C47D /* Sparkle */; };
 		CEFE8F43AE100748B50C95EB /* AppAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF5DC5CBB30D7DD4243165E /* AppAppearance.swift */; };
@@ -63,6 +64,7 @@
 		DA0D4DF620488AE0C9C3D7EB /* StartPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A957B8F9F7692476D7E761E3 /* StartPage.swift */; };
 		DA2C1F4CA548C79244B39E3E /* Membership.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70ACA12A6B8E963007C519D8 /* Membership.swift */; };
 		DA910A11F57413C0395846A4 /* statusbar-icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 35BC95FD9432395907798308 /* statusbar-icon.png */; };
+		DE3875401125FBA4B930F37A /* HistoryComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98E9E89A9A4FC00751672D5 /* HistoryComposer.swift */; };
 		E28FC0B85040C616C516735C /* NotesExport in Frameworks */ = {isa = PBXBuildFile; productRef = CEF8FAE598A89B20802EF9B9 /* NotesExport */; };
 		E4D4AB2A3C9536A117893BB4 /* AppDelegate+DevCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41ADFD95BCADE13CC86F010F /* AppDelegate+DevCommands.swift */; };
 		E805883ECBBCEF65A726BB2E /* MainThreadStallMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A02D1429DEFA17AD1B2C7A /* MainThreadStallMonitor.swift */; };
@@ -111,6 +113,7 @@
 		89F27E2B3062FB4F103913F6 /* OverlayWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayWindow.swift; sourceTree = "<group>"; };
 		9133FCDB6DFD39D8E631ED17 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		92A05B8A2971AC616DFD082C /* HotkeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyRecorderView.swift; sourceTree = "<group>"; };
+		9869A5967C4E34BA28012EE5 /* HistoryChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryChat.swift; sourceTree = "<group>"; };
 		A0CB230834F1F8D755B800B1 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		A4A987EE3E0E73C6C48B494C /* ScreenSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshot.swift; sourceTree = "<group>"; };
 		A518FA7F65153DCDE424E500 /* VPButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPButton.swift; sourceTree = "<group>"; };
@@ -121,6 +124,7 @@
 		AE11FCE0B8AE7B0E409FE907 /* ModelSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSettings.swift; sourceTree = "<group>"; };
 		AF9EE32E716AB8A5AB31D4F6 /* AppDelegate+Hotkeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Hotkeys.swift"; sourceTree = "<group>"; };
 		B4D906EB63C4C19C62359156 /* ThirdPartyNotices.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ThirdPartyNotices.txt; sourceTree = "<group>"; };
+		B98E9E89A9A4FC00751672D5 /* HistoryComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryComposer.swift; sourceTree = "<group>"; };
 		BDEF40A2A336E870D54DFD6D /* KeyAwareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyAwareView.swift; sourceTree = "<group>"; };
 		BF5A3E8E58EE8D10883D9288 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		C1A02D1429DEFA17AD1B2C7A /* MainThreadStallMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainThreadStallMonitor.swift; sourceTree = "<group>"; };
@@ -255,6 +259,8 @@
 				87C080AB2DD96A8E9EC202D5 /* AnkiPage.swift */,
 				3B0F9D8FA3AA65702194ED35 /* Components.swift */,
 				E0A14D5A1941B5D605435F4E /* DemoStage.swift */,
+				9869A5967C4E34BA28012EE5 /* HistoryChat.swift */,
+				B98E9E89A9A4FC00751672D5 /* HistoryComposer.swift */,
 				66FF3B94E20B83AF3E001633 /* HistoryView.swift */,
 				AD549AC86DEBCD241104A8F5 /* HotkeyChooser.swift */,
 				DE7928DC40D2AF04FDD9EF8C /* MainWindow.swift */,
@@ -438,6 +444,8 @@
 				975B44F0D2BBDBA97DB39E4E /* Components.swift in Sources */,
 				1279EA1A82F2DD0F685AEA7C /* DemoStage.swift in Sources */,
 				0E2D967D9AF19EBC362E290F /* FlippedView.swift in Sources */,
+				C1047F1397AB9A6D2E23F0D5 /* HistoryChat.swift in Sources */,
+				DE3875401125FBA4B930F37A /* HistoryComposer.swift in Sources */,
 				6F5F125736C6426B641DA67C /* HistoryView.swift in Sources */,
 				BD5A6110D7727629E670C52D /* HotkeyChooser.swift in Sources */,
 				AE4C64FD964D4AAC3EF689BF /* HotkeyManager.swift in Sources */,

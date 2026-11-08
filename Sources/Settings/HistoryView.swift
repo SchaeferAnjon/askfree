@@ -374,6 +374,7 @@ struct HistoryView: View {
 struct HistoryDetail: View {
     let thread: AskHistoryThread
     let onDelete: () -> Void
+    @ObservedObject private var chat = HistoryChat.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -402,6 +403,7 @@ struct HistoryDetail: View {
             }
             .padding(.horizontal, 16)
             .frame(height: 40)
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     VStack(alignment: .leading, spacing: 6) {
@@ -417,6 +419,11 @@ struct HistoryDetail: View {
                     ForEach(thread.turns.indices, id: \.self) { i in
                         turn(thread.turns[i], index: i)
                     }
+                    // 在历史页里接着问的这一轮：出字时在这里，答完存进历史、换成上面的一轮
+                    if let pending = chat.pending, pending.threadID == thread.id {
+                        HistoryPendingTurn(pending: pending, thread: thread, chat: chat)
+                    }
+                    Color.clear.frame(height: 1).id(Self.bottomID)
                 }
                 .padding(.horizontal, 32)
                 .padding(.top, 4)
@@ -424,9 +431,19 @@ struct HistoryDetail: View {
                 .frame(maxWidth: 680, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            // 发出去、出字、答完都跟到最底下
+            .onChange(of: chat.pending) { _, pending in
+                guard pending?.threadID == thread.id || pending == nil else { return }
+                proxy.scrollTo(Self.bottomID, anchor: .bottom)
+            }
+            .onChange(of: thread.turns.count) { _, _ in proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+            }
+            HistoryComposer(thread: thread, chat: chat)
         }
         .background(Theme.bg)
     }
+
+    private static let bottomID = "history-detail-bottom"
 
     private var meta: String {
         var parts = [HistoryKind.of(thread).title, HistoryFormat.shortTime(thread.startedAt)]
